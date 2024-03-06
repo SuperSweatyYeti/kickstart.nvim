@@ -87,16 +87,13 @@ return {
       },
     }
 
-    -- vim.keymap.set('n', '<Leader>dt', ':DapToggleBreakpoint<CR>')
-    -- vim.keymap.set('n', '<Leader>dc', ':DapContinue<CR>')
-    -- vim.keymap.set('n', '<Leader>dx', ':DapTerminate<CR>')
-    -- vim.keymap.set('n', '<Leader>do', ':DapStepOver<CR>')
-
     -- Basic debugging keymaps, feel free to change to your liking!
     vim.keymap.set('n', '<Leader>dc', dap.continue, { desc = 'Debug: Start/Continue' })
     vim.keymap.set('n', '<Leader>di', dap.step_into, { desc = 'Debug: Step Into' })
     vim.keymap.set('n', '<Leader>do', dap.step_over, { desc = 'Debug: Step Over' })
     vim.keymap.set('n', '<Leader>dO', dap.step_out, { desc = 'Debug: Step Out' })
+    vim.keymap.set('n', '<Leader>dB', dap.step_back, { desc = 'Debug: Step Back' })
+    vim.keymap.set('n', '<Leader>dT', dap.terminate, { desc = 'Debug: Terminate' })
     vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, { desc = 'Debug: Toggle Breakpoint' })
     vim.keymap.set('n', '<leader>B', function()
       dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
@@ -116,7 +113,7 @@ return {
           step_into = '⏎',
           step_over = '⏭',
           step_out = '⏮',
-          step_back = 'b',
+          step_back = '🔙',
           run_last = '▶▶',
           terminate = '⏹',
           disconnect = '⏏',
