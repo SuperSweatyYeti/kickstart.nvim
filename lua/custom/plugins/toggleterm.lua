@@ -1,6 +1,8 @@
 return {
   -- ToggleTerm
   -- main
+  -- feature
+  -- feature2
   {
     'akinsho/toggleterm.nvim',
     version = '*',
