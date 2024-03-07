@@ -12,5 +12,8 @@ return {
     dependencies = {
       'nvim-lua/plenary.nvim',
     },
+    keys = {
+      vim.keymap.set('n', '<leader>lg', [[:LazyGit<enter>]], { desc = '[L]azyGit' }),
+    },
   },
 }
