@@ -8,7 +8,7 @@ return {
       'MunifTanjim/nui.nvim',
       -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
     },
-    opts = {
+    keys = {
       -- See top of file need to disable netrw
       vim.keymap.set('n', '<leader>f', [[:Neotree toggle<enter>]]),
     },
