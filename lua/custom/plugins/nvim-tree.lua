@@ -1,25 +1,4 @@
 return {
-  -- {
-  --   'nvim-tree/nvim-tree.lua',
-  --   config = function()
-  --     vim.keymap.set('n', '<leader>e', ':NvimTreeToggle<CR>', { silent = true })
-  --   end,
-  --   require('nvim-tree').setup(),
-  -- },
-
-  -- -- Side Folder Navigation Nvim Tree
-  -- {
-  --   'nvim-tree/nvim-tree.lua',
-  --   version = '*',
-  --   api = require 'nvim-tree.api',
-  --   opts = {
-  --     -- See top of file need to disable netrw
-  --     vim.keymap.set('n', '<leader>f', [[:NvimTreeToggle<enter>]]),
-  --   },
-  -- },
-  -- -- Side Folder Navigation Nvim Tree ICONS
-  -- { 'nvim-tree/nvim-web-devicons', version = '*', opts = {} },
-
   {
     'nvim-neo-tree/neo-tree.nvim',
     branch = 'v3.x',
