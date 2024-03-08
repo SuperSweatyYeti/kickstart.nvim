@@ -2,7 +2,7 @@ return {
   {
     ------------------ Custom Keymaps ---------------------------------
     -- Easier to change back to normal mode 'Double tap i'
-    vim.keymap.set({ 'v', 'i' }, 'ii', '<Esc><Esc>', {}),
+    vim.keymap.set({ 'v', 'i' }, 'ii', '<Esc><Esc>', { desc = 'escape mode' }),
     -- Quickly get to end and beggining of line
     vim.keymap.set('n', '<S-h>', '<Home>', {}),
     vim.keymap.set('n', '<S-l>', '<End>', {}),
@@ -27,9 +27,9 @@ return {
     -- Pane Splits
     --
     -- Split Vertical
-    vim.keymap.set('n', '<leader>Sv', ':vsplit\n', {}),
+    vim.keymap.set('n', '<leader>Sv', ':vsplit\n', { desc = 'Split pane vertically' }),
     -- Split Horizontal
-    vim.keymap.set('n', '<leader>Sh', ':split\n', {}),
+    vim.keymap.set('n', '<leader>Sh', ':split\n', { desc = 'Split pane horizontally' }),
     ------------------ END Custom Keymaps -----------------------------
   },
 }
