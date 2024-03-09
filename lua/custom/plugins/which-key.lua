@@ -30,6 +30,7 @@ return {
         ['<leader>l'] = { name = '[L]azyGit', _ = 'which_key_ignore' },
         ['<leader>T'] = { name = '[T]abs', _ = 'which_key_ignore' },
         ['<leader>S'] = { name = '[S]plits', _ = 'which_key_ignore' },
+        ['<leader>u'] = { name = '[u]ndo', _ = 'which_key_ignore' },
       }
     end,
   },
