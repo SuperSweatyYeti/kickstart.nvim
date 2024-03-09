@@ -278,10 +278,11 @@ require('lazy').setup {
         ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
         ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
         ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
+        ['<leader>s'] = { name = '[s]earch', _ = 'which_key_ignore' },
         ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
         ['<leader>l'] = { name = '[L]azyGit', _ = 'which_key_ignore' },
         ['<leader>T'] = { name = '[T]abs', _ = 'which_key_ignore' },
+        ['<leader>S'] = { name = '[S]plits', _ = 'which_key_ignore' },
       }
     end,
   },
