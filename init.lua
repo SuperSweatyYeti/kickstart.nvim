@@ -654,8 +654,6 @@ require('lazy').setup({
   --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
   { import = 'custom.plugins' },
   { import = 'custom.themes' },
-  -- { import = 'custom.plugins' },
-  {
   ui = {
     -- If you have a Nerd Font, set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons otherwise define a unicode icons table
@@ -675,7 +673,6 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
-},
 })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
