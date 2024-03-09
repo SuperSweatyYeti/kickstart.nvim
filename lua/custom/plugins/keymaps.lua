@@ -27,9 +27,9 @@ return {
     -- Pane Splits
     --
     -- Split Vertical
-    vim.keymap.set('n', '<leader>Sv', ':vsplit\n', { desc = 'Split pane vertically' }),
+    vim.keymap.set('n', '<leader>Sv', ':vsplit\n', { desc = 'Split pane [v]ertically' }),
     -- Split Horizontal
-    vim.keymap.set('n', '<leader>Sh', ':split\n', { desc = 'Split pane horizontally' }),
+    vim.keymap.set('n', '<leader>Sh', ':split\n', { desc = 'Split pane [h]orizontally' }),
     ------------------ END Custom Keymaps -----------------------------
   },
 }
