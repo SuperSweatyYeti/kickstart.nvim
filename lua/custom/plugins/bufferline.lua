@@ -1,4 +1,5 @@
 return {
+  -- Show Buffers in Tabs at the top of the screen
   {
     'akinsho/bufferline.nvim',
     version = '*',
