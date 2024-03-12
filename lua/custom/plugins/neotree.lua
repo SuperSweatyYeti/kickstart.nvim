@@ -18,28 +18,36 @@ return {
         -- A list of functions, each representing a global custom command
         -- that will be available in all sources (if not overridden in `opts[source_name].commands`)
         -- see `:h neo-tree-custom-commands-global`
+
+        use_default_mappings = false,
         commands = {},
         window = {
           position = 'left',
           width = 40,
           mapping_options = {
             noremap = false,
-            nowait = true,
+            nowait = false,
           },
           mappings = {
             ['u'] = 'navigate_up',
             ['.'] = 'set_root',
-            ['E'] = {
+            ['<space>'] = {
               'toggle_node',
               nowait = false, -- disable `nowait` if you have existing combos starting with this char that you want to use
             },
+            ['<CR>'] = {
+              'toggle_node',
+              nowait = false, -- disable `nowait` if you have existing combos starting with this char that you want to use
+            },
+            ['P'] = { 'toggle_preview', config = { use_float = true, use_image_nvim = true } },
             -- Read `# Preview Mode` for more information
             ['l'] = 'focus_preview',
             ['S'] = 'open_split',
             ['s'] = 'open_vsplit',
             -- ["S"] = "split_with_window_picker",
             -- ["s"] = "vsplit_with_window_picker",
-            ['<leader>n'] = 'open_tabnew',
+            ['n'] = 'open_tabnew',
+            ['<cr>'] = 'open',
             -- ["<cr>"] = "open_drop",
             -- ['t'] = 'open_tab_drop',
             ['w'] = 'open_with_window_picker',
@@ -76,9 +84,36 @@ return {
             ['<'] = 'prev_source',
             ['>'] = 'next_source',
             ['i'] = 'show_file_details',
+            ['/'] = 'fuzzy_finder',
+          },
+          fuzzy_finder_mappings = { -- define keymaps for filter popup window in fuzzy_finder_mode
+            ['<C-n>'] = 'move_cursor_down',
+            ['<C-p>'] = 'move_cursor_up',
           },
         },
       }
     end,
   },
 }
+
+-- require('neo-tree').setup {
+--   window = {
+--     mappings = {
+--       ['A'] = 'command_a',
+--       ['i'] = {
+--         function(state)
+--           local node = state.tree:get_node()
+--           print(node.path)
+--         end,
+--         desc = 'print path',
+--       },
+--     },
+--   },
+--   filesystem = {
+--     window = {
+--       mappings = {
+--         ['A'] = 'command_b',
+--       },
+--     },
+--   },
+-- },

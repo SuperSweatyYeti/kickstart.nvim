@@ -18,11 +18,10 @@ return {
     vim.keymap.set('n', '<A-k>', '<C-w>-', {}),
     vim.keymap.set('n', '<A-l>', '<C-w>>', {}),
     -- Change tabs with hjkl
-    vim.keymap.set('n', '<leader>Th', ':BufferLineCycleNext\n', {}),
-    vim.keymap.set('n', '<leader>Tl', ':BufferLineCyclePrev\n', {}),
-    vim.keymap.set('n', '<leader>bco', ':BufferLineCloseOthers\n', {}),
-    vim.keymap.set('n', '<A-L>', ':BufferLineCycleNext\n', {}),
-    vim.keymap.set('n', '<A-H>', ':BufferLineCyclePrev\n', {}),
+    vim.keymap.set('n', '<leader>Th', ':tabNext\n', {}),
+    vim.keymap.set('n', '<leader>Tl', ':tabPrevious\n', {}),
+    vim.keymap.set('n', '<A-L>', ':tabNext\n', {}),
+    vim.keymap.set('n', '<A-H>', ':tabPrevious\n', {}),
     --
     -- Pane Splits
     --
