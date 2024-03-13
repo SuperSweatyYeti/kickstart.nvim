@@ -1,6 +1,5 @@
-vim.g.indent_blankline_context_patterns = { 'class', 'function', 'method', 'if', 'while', 'for' }
+vim.g.indent_blankline_context_patterns = { 'class', 'function', 'method', 'if', 'while', 'for', 'context' }
 return {
-
   -- Add indentation guides even on blank lines
   {
     'lukas-reineke/indent-blankline.nvim',
@@ -11,12 +10,5 @@ return {
         show_exact_scope = true,
       },
     },
-    -- config = function ()
-    --    require('indent-blankline').setup {
-    --
-    --
-    --
-    --    }
-    --  end,
   },
 }
