@@ -31,6 +31,7 @@ return {
         ['<leader>T'] = { name = '[T]abs', _ = 'which_key_ignore' },
         ['<leader>S'] = { name = '[S]plits', _ = 'which_key_ignore' },
         ['<leader>u'] = { name = '[u]ndo', _ = 'which_key_ignore' },
+        ['<leader>y'] = { name = '[y]ank', _ = 'which_key_ignore' },
       }
     end,
   },
