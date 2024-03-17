@@ -31,6 +31,8 @@ return {
           mappings = {
             ['u'] = 'navigate_up',
             ['.'] = 'set_root',
+            ['H'] = 'toggle_hidden',
+            ['<C-h>'] = 'toggle_hidden',
             ['<space>'] = {
               'toggle_node',
               nowait = false, -- disable `nowait` if you have existing combos starting with this char that you want to use
