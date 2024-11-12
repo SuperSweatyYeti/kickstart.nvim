@@ -41,6 +41,7 @@ return {
     vim.keymap.set('n', '<Leader>dB', dap.step_back, { desc = 'Debug: Step Back' })
     vim.keymap.set('n', '<Leader>dT', dap.terminate, { desc = 'Debug: Terminate' })
     vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, { desc = 'Debug: Toggle Breakpoint' })
+    vim.keymap.set('n', '<leader>dU', dapui.toggle, { desc = 'Debug: Toggle Dap UI' })
     vim.keymap.set('n', '<leader>B', function()
       dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
     end, { desc = 'Debug: Set Breakpoint' })
@@ -69,7 +70,8 @@ return {
           -- Keep original functionality
           require('mason-nvim-dap').default_setup(config)
         end,
-        -- Python Setup set default mason venv as the command
+        -- Python Setup with the correct path of the venv where debugpy
+        -- gets installed by mason
         python = function(config)
           config.adapters = {
             type = 'executable',
