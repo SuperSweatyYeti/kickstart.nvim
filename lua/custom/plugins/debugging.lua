@@ -34,9 +34,13 @@ return {
     end
 
     -- Debugging keymaps, feel free to change to your liking!
+    vim.keymap.set('n', '<F7>', dapui.toggle, { desc = 'Debug: See last session result.' })
     vim.keymap.set('n', '<Leader>dc', dap.continue, { desc = 'Debug: Start/Continue' })
+    vim.keymap.set('n', '<F5>', dapui.continue, { desc = 'Debug: Start/Continue' })
     vim.keymap.set('n', '<Leader>di', dap.step_into, { desc = 'Debug: Step Into' })
+    vim.keymap.set('n', '<F11>', dapui.step_into, { desc = 'Debug: Step Into' })
     vim.keymap.set('n', '<Leader>do', dap.step_over, { desc = 'Debug: Step Over' })
+    vim.keymap.set('n', '<F11>', dapui.step_over, { desc = 'Debug: Step Over' })
     vim.keymap.set('n', '<Leader>dO', dap.step_out, { desc = 'Debug: Step Out' })
     vim.keymap.set('n', '<Leader>dB', dap.step_back, { desc = 'Debug: Step Back' })
     vim.keymap.set('n', '<Leader>dT', dap.terminate, { desc = 'Debug: Terminate' })
@@ -92,13 +96,6 @@ return {
 
   -- TEST HERE
 
-  -- -- NOTE: Yes, you can install new plugins here!
-  -- 'mfussenegger/nvim-dap',
-  -- -- NOTE: And you can specify dependencies as well
-  -- dependencies = {
-  --   -- Creates a beautiful debugger UI
-  --   'rcarriga/nvim-dap-ui',
-  --
   --   -- Installs the debug adapters for you
   --   'williamboman/mason.nvim',
   --   'jay-babu/mason-nvim-dap.nvim',
