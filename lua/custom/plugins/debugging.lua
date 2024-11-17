@@ -40,7 +40,7 @@ return {
     vim.keymap.set('n', '<Leader>di', dap.step_into, { desc = 'Debug: Step Into' })
     vim.keymap.set('n', '<F11>', dapui.step_into, { desc = 'Debug: Step Into' })
     vim.keymap.set('n', '<Leader>do', dap.step_over, { desc = 'Debug: Step Over' })
-    vim.keymap.set('n', '<F11>', dapui.step_over, { desc = 'Debug: Step Over' })
+    vim.keymap.set('n', '<F10>', dapui.step_over, { desc = 'Debug: Step Over' })
     vim.keymap.set('n', '<Leader>dO', dap.step_out, { desc = 'Debug: Step Out' })
     vim.keymap.set('n', '<Leader>dB', dap.step_back, { desc = 'Debug: Step Back' })
     vim.keymap.set('n', '<Leader>dT', dap.terminate, { desc = 'Debug: Terminate' })
