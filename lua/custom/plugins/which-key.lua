@@ -16,22 +16,33 @@ return {
 
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
-    event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-    config = function() -- This is the function that runs, AFTER loading
+    event = 'vimenter', -- sets the loading event to 'vimenter'
+    config = function() -- this is the function that runs, after loading
       require('which-key').setup()
 
-      -- Document existing key chains
-      require('which-key').register {
-        ['<leader>c'] = { name = '[c]ode', _ = 'which_key_ignore' },
-        ['<leader>d'] = { name = '[d]ocument', _ = 'which_key_ignore' },
-        ['<leader>r'] = { name = '[r]ename', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[s]earch', _ = 'which_key_ignore' },
-        ['<leader>w'] = { name = '[w]orkspace', _ = 'which_key_ignore' },
-        ['<leader>l'] = { name = '[l]azyGit', _ = 'which_key_ignore' },
-        ['<leader>T'] = { name = '[T]abs', _ = 'which_key_ignore' },
-        ['<leader>S'] = { name = '[S]plits', _ = 'which_key_ignore' },
-        ['<leader>u'] = { name = '[u]ndo', _ = 'which_key_ignore' },
-        ['<leader>y'] = { name = '[y]ank', _ = 'which_key_ignore' },
+      -- document existing key chains
+      require('which-key').add {
+    { "<leader>S", group = "[S]plits", hidden = true },
+    { "<leader>T", group = "[T]abs", hidden = true },
+    { "<leader>c", group = "[c]ode", hidden = true },
+    { "<leader>d", group = "[d]ocument", hidden = true },
+    { "<leader>l", group = "[l]azyGit", hidden = true },
+    { "<leader>r", group = "[r]ename", hidden = true },
+    { "<leader>s", group = "[s]earch", hidden = true },
+    { "<leader>u", group = "[u]ndo", hidden = true },
+    { "<leader>w", group = "[w]orkspace", hidden = true },
+    { "<leader>y", group = "[y]ank", hidden = true },
+        -- OLD Spec
+        -- ['<leader>c'] = { name = '[c]ode', _ = 'which_key_ignore' },
+        -- ['<leader>d'] = { name = '[d]ocument', _ = 'which_key_ignore' },
+        -- ['<leader>r'] = { name = '[r]ename', _ = 'which_key_ignore' },
+        -- ['<leader>s'] = { name = '[s]earch', _ = 'which_key_ignore' },
+        -- ['<leader>w'] = { name = '[w]orkspace', _ = 'which_key_ignore' },
+        -- ['<leader>l'] = { name = '[L]azyGit', _ = 'which_key_ignore' },
+        -- ['<leader>T'] = { name = '[T]abs', _ = 'which_key_ignore' },
+        -- ['<leader>S'] = { name = '[S]plits', _ = 'which_key_ignore' },
+        -- ['<leader>u'] = { name = '[u]ndo', _ = 'which_key_ignore' },
+        -- ['<leader>y'] = { name = '[y]ank', _ = 'which_key_ignore' },
       }
     end,
   },
