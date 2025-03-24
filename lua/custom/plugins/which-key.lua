@@ -22,16 +22,16 @@ return {
 
       -- document existing key chains
       require('which-key').add {
-    { "<leader>S", group = "[S]plits", hidden = true },
-    { "<leader>T", group = "[T]abs", hidden = true },
-    { "<leader>c", group = "[c]ode", hidden = true },
-    { "<leader>d", group = "[d]ocument", hidden = true },
-    { "<leader>l", group = "[l]azyGit", hidden = true },
-    { "<leader>r", group = "[r]ename", hidden = true },
-    { "<leader>s", group = "[s]earch", hidden = true },
-    { "<leader>u", group = "[u]ndo", hidden = true },
-    { "<leader>w", group = "[w]orkspace", hidden = true },
-    { "<leader>y", group = "[y]ank", hidden = true },
+    { "<leader>S", group = "[S]plits", hidden = false },
+    { "<leader>T", group = "[T]abs", hidden = false },
+    { "<leader>c", group = "[c]ode", hidden = false },
+    { "<leader>d", group = "[d]ocument", hidden = false },
+    { "<leader>l", group = "[l]azyGit", hidden = false },
+    { "<leader>r", group = "[r]ename", hidden = false },
+    { "<leader>s", group = "[s]earch", hidden = false },
+    { "<leader>u", group = "[u]ndo", hidden = false },
+    { "<leader>w", group = "[w]orkspace", hidden = false },
+    { "<leader>y", group = "[y]ank", hidden = false },
         -- OLD Spec
         -- ['<leader>c'] = { name = '[c]ode', _ = 'which_key_ignore' },
         -- ['<leader>d'] = { name = '[d]ocument', _ = 'which_key_ignore' },
