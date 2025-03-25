@@ -11,6 +11,7 @@ return {
     opts = {
       -- See top of file need to disable netrw
       vim.keymap.set('n', '<leader>f', '<cmd>Neotree toggle<cr>', { desc = 'Neotree toggle' }),
+      vim.keymap.set('n', '<leader>f<leader>', '<cmd>Neotree toggle<cr>', { desc = 'Neotree toggle' }),
     },
     config = function()
       require('neo-tree').setup {
