@@ -159,10 +159,10 @@ vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Easier to close buffer
-vim.keymap.set('n', '<leader>C', '<cmd>q<CR>', { desc = '[C]lose Buffer' } )
+vim.keymap.set('n', '<leader>C', '<cmd>q<CR>', { desc = '[C]lose Buffer' })
 -- Step back and forth through buffer history
-vim.keymap.set('n', '<leader>bn', '<cmd>bNext<CR>', { desc = '[n]ext buffer' } )
-vim.keymap.set('n', '<leader>bp', '<cmd>bprevious<CR>', { desc = '[p]revious buffer' } )
+vim.keymap.set('n', '<leader>bn', '<cmd>bNext<CR>', { desc = '[n]ext buffer' })
+vim.keymap.set('n', '<leader>bp', '<cmd>bprevious<CR>', { desc = '[p]revious buffer' })
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [d]iagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [d]iagnostic message' })
@@ -552,6 +552,10 @@ require('lazy').setup({
           --  completions whenever it has completion options available.
           ['<C-Space>'] = cmp.mapping.complete {},
 
+          -- Scroll through the doc preview
+          ['<C-K>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-J>'] = cmp.mapping.scroll_docs(4),
+
           -- Think of <c-l> as moving to the right of your snippet expansion.
           --  So if you have a snippet that's like:
           --  function $name($args)
@@ -560,12 +564,12 @@ require('lazy').setup({
           --
           -- <c-l> will move you to the right of each of the expansion locations.
           -- <c-h> is similar, except moving you backwards.
-          ['<C-l>'] = cmp.mapping(function()
+          ['<C-L>'] = cmp.mapping(function()
             if luasnip.expand_or_locally_jumpable() then
               luasnip.expand_or_jump()
             end
           end, { 'i', 's' }),
-          ['<C-h>'] = cmp.mapping(function()
+          ['<C-H>'] = cmp.mapping(function()
             if luasnip.locally_jumpable(-1) then
               luasnip.jump(-1)
             end

@@ -20,8 +20,8 @@ return {
     -- Change tabs with hjkl
     vim.keymap.set('n', '<leader>Th', ':tabNext\n', {}),
     vim.keymap.set('n', '<leader>Tl', ':tabPrevious\n', {}),
-    vim.keymap.set('n', '<A-L>', ':tabNext\n', {}),
-    vim.keymap.set('n', '<A-H>', ':tabPrevious\n', {}),
+    -- vim.keymap.set('n', '<A-L>', ':tabNext\n', {}),
+    -- vim.keymap.set('n', '<A-H>', ':tabPrevious\n', {}),
     --
     -- Pane Splits
     --
