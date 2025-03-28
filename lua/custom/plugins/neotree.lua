@@ -1,7 +1,7 @@
 return {
   {
     'nvim-neo-tree/neo-tree.nvim',
-    branch = 'v3.x',
+    -- branch = 'v3.x',
     dependencies = {
       'nvim-lua/plenary.nvim',
       'nvim-tree/nvim-web-devicons', -- not strictly required, but recommended
@@ -18,6 +18,7 @@ return {
         -- Change behavior when opening just a folder?
         filesystem = {
           hijack_netrw_behavior = 'open_current',
+          -- hijack_netrw_behavior = 'disabled',
           bind_to_cwd = true, -- true creates a 2-way binding between vim's cwd and neo-tree's root
           cwd_target = {
             sidebar = 'tab', -- sidebar is when position = left or right
@@ -39,6 +40,10 @@ return {
             nowait = false,
           },
           mappings = {
+            --['/'] = 'fuzzy_finder',
+            -- disable fuzzy finder
+            ['/'] = 'noop',
+
             ['u'] = 'navigate_up',
             ['.'] = 'set_root',
             ['H'] = 'toggle_hidden',
@@ -54,7 +59,7 @@ return {
             ['s'] = 'open_vsplit',
             -- ["S"] = "split_with_window_picker",
             -- ["s"] = "vsplit_with_window_picker",
-            ['n'] = 'open_tabnew',
+            ['o'] = 'open_tabnew',
             ['<cr>'] = 'open',
             -- ["<cr>"] = "open_drop",
             -- ['t'] = 'open_tab_drop',
@@ -92,7 +97,6 @@ return {
             ['<'] = 'prev_source',
             ['>'] = 'next_source',
             ['i'] = 'show_file_details',
-            ['/'] = 'fuzzy_finder',
           },
           fuzzy_finder_mappings = { -- define keymaps for filter popup window in fuzzy_finder_mode
             ['<C-n>'] = 'move_cursor_down',
