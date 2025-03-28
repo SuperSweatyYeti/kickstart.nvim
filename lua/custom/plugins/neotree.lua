@@ -15,6 +15,15 @@ return {
     },
     config = function()
       require('neo-tree').setup {
+        -- Change behavior when opening just a folder?
+        filesystem = {
+          hijack_netrw_behavior = 'open_current',
+          bind_to_cwd = true, -- true creates a 2-way binding between vim's cwd and neo-tree's root
+          cwd_target = {
+            sidebar = 'tab', -- sidebar is when position = left or right
+            current = 'window', -- current is when position = current
+          },
+        },
 
         -- A list of functions, each representing a global custom command
         -- that will be available in all sources (if not overridden in `opts[source_name].commands`)
