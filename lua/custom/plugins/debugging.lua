@@ -21,6 +21,7 @@ return {
         dapui.close()
       end
     end,
+
     keys = {
       {
         '<leader>db',
@@ -39,19 +40,33 @@ return {
       },
 
       {
-        '<leader>dso',
+        '<leader>do',
         function()
           require('dap').step_over()
         end,
         desc = 'Step Over',
       },
+      {
+        '<leader>dO',
+        function()
+          require('dap').step_out()
+        end,
+        desc = 'Step Out',
+      },
 
       {
-        '<leader>dsi',
+        '<leader>di',
         function()
           require('dap').step_into()
         end,
         desc = 'Step Into',
+      },
+      {
+        '<leader>dB',
+        function()
+          require('dap').step_back()
+        end,
+        desc = 'Step Back',
       },
 
       {
