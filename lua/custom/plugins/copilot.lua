@@ -1,13 +1,15 @@
 return {
   {
+    -- Requires nodejs to be installed
     'zbirenbaum/copilot.lua',
     enabled = true,
     cmd = 'Copilot',
-    event = 'InsertEnter',
+    -- event = 'InsertEnter',
     config = function()
       require('copilot').setup {
         -- Disable the default keymap to accept suggestions
         vim.keymap.set('i', '<Tab>', '<Tab>'),
+        vim.keymap.set('i', '<leader>cp', '<cmd>Copilot<cr>', { desc = "Start Copilot"}),
         panel = {
           enabled = false,
           auto_refresh = false,
@@ -124,11 +126,10 @@ return {
           -- See Configuration section for options
         },
         config = function()
-          require('CopilotChat').setup {
+          require('CopilotChat').setup {}
             vim.keymap.set('n', '<leader>cc', function()
               require('CopilotChat').toggle()
-            end, { desc = 'Toggle Copilot [c]hat' }), -- Keybinding to open Copilot Chat
-          }
+            end, { desc = 'Toggle Copilot [c]hat' }) -- Keybinding to open Copilot Chat
         end,
       },
     },

@@ -1,5 +1,6 @@
 return {
   {
+    -- Enter into lazygit directly through nvim
     'kdheepak/lazygit.nvim',
     enabled = true,
     cmd = {
