@@ -1,4 +1,4 @@
-return  {
+return {
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
     event = 'InsertEnter',
@@ -89,7 +89,8 @@ return  {
         },
         sources = {
           -- if copilot is enabled, you can use this source to get suggestions
-          { name = 'copilot',  -- Only works if you have `copilot` installed and enabled
+          {
+            name = 'copilot', -- Only works if you have `copilot` installed and enabled
             -- NOTE: This source will only work if you have `copilot` installed
             -- and configured properly. Otherwise, it will fallback to other sources.
             -- You can also disable this in the filetype settings below.

@@ -1,6 +1,9 @@
 return {
+  -- Make a funcition that can enable or disable all plugins in this file
+
   {
     'zbirenbaum/copilot.lua',
+    enable = true,
     cmd = 'Copilot',
     event = 'InsertEnter',
     config = function()
@@ -24,7 +27,7 @@ return {
         },
         suggestion = {
           enabled = false, -- Disabled because we are using `copilot-cmp` for completion
-          auto_trigger = true,
+          auto_trigger = false,
           hide_during_completion = true,
           debounce = 75,
           keymap = {
@@ -61,7 +64,8 @@ return {
         root_dir = function()
           return vim.fs.dirname(vim.fs.find('.git', { upward = true })[1])
         end,
-
+        -- Disabled the following lines to prevent copilot issue with neotree and telescope buffers
+        -- which was returning nil values sometimes
         -- should_attach = function(_, _)
         --   if not vim.bo.buflisted then
         --     logger.debug "not attaching, buffer is not 'buflisted'"
@@ -86,6 +90,7 @@ return {
   -- Plugin to have copilot sugestions play nice with nvim-cmp
   {
     'zbirenbaum/copilot-cmp',
+    enable = true,
     config = function()
       require('copilot_cmp').setup()
     end,
@@ -93,10 +98,11 @@ return {
   -- Additon to lualine to show copilot status
   {
     'AndreM222/copilot-lualine',
+    enable = true,
     -- Edit lualine setup to include copilot in the statusline
     config = function()
       -- Ensure lualine is loaded before setting up
-      local statusline = require('lualine')
+      local statusline = require 'lualine'
       if not statusline then
         return
       end
@@ -105,6 +111,26 @@ return {
         sections = {
           lualine_x = { 'copilot', 'encoding', 'fileformat', 'filetype' },
         },
+      }
+    end,
+  },
+
+  {
+    'CopilotC-Nvim/CopilotChat.nvim',
+    enable = true,
+    dependencies = {
+      { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
+      { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
+    },
+    build = 'make tiktoken', -- Only on MacOS or Linux
+    opts = {
+      -- See Configuration section for options
+    },
+    config = function()
+      require('CopilotChat').setup {
+        vim.keymap.set('n', '<leader>cc', function()
+          require('CopilotChat').toggle()
+        end, { desc = 'Toggle Copilot [c]hat' }), -- Keybinding to open Copilot Chat
       }
     end,
   },
