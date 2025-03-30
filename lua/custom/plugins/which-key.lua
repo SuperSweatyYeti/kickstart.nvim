@@ -16,6 +16,7 @@ return {
 
   { -- Useful plugin to show you pending keybinds.
     'folke/which-key.nvim',
+    enabled = true,
     event = 'vimenter', -- sets the loading event to 'vimenter'
     config = function() -- this is the function that runs, after loading
       require('which-key').setup()
