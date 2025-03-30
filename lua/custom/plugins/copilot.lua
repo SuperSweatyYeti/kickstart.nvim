@@ -1,9 +1,7 @@
 return {
-  -- Make a funcition that can enable or disable all plugins in this file
-
   {
     'zbirenbaum/copilot.lua',
-    enable = true,
+    enabled = true,
     cmd = 'Copilot',
     event = 'InsertEnter',
     config = function()
@@ -26,7 +24,7 @@ return {
           },
         },
         suggestion = {
-          enabled = false, -- Disabled because we are using `copilot-cmp` for completion
+          enabled = true, -- Disabled because we are using `copilot-cmp` for completion
           auto_trigger = false,
           hide_during_completion = true,
           debounce = 75,
@@ -86,52 +84,53 @@ return {
         server_opts_overrides = {},
       }
     end,
-  },
-  -- Plugin to have copilot sugestions play nice with nvim-cmp
-  {
-    'zbirenbaum/copilot-cmp',
-    enable = true,
-    config = function()
-      require('copilot_cmp').setup()
-    end,
-  },
-  -- Additon to lualine to show copilot status
-  {
-    'AndreM222/copilot-lualine',
-    enable = true,
-    -- Edit lualine setup to include copilot in the statusline
-    config = function()
-      -- Ensure lualine is loaded before setting up
-      local statusline = require 'lualine'
-      if not statusline then
-        return
-      end
-      -- Setup lualine with copilot
-      statusline.setup {
-        sections = {
-          lualine_x = { 'copilot', 'encoding', 'fileformat', 'filetype' },
-        },
-      }
-    end,
-  },
-
-  {
-    'CopilotC-Nvim/CopilotChat.nvim',
-    enable = true,
     dependencies = {
-      { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
-      { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
+      -- Plugin to have copilot sugestions play nice with nvim-cmp
+      {
+        'zbirenbaum/copilot-cmp',
+        -- enable = true,
+        config = function()
+          require('copilot_cmp').setup()
+        end,
+      },
+      -- Additon to lualine to show copilot status
+      {
+        'AndreM222/copilot-lualine',
+        -- enable = true,
+        -- Edit lualine setup to include copilot in the statusline
+        config = function()
+          -- Ensure lualine is loaded before setting up
+          local statusline = require 'lualine'
+          if not statusline then
+            return
+          end
+          -- Setup lualine with copilot
+          statusline.setup {
+            sections = {
+              lualine_x = { 'copilot', 'encoding', 'fileformat', 'filetype' },
+            },
+          }
+        end,
+      },
+      {
+        'CopilotC-Nvim/CopilotChat.nvim',
+        -- enable = true,
+        dependencies = {
+          { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
+          { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
+        },
+        build = 'make tiktoken', -- Only on MacOS or Linux
+        opts = {
+          -- See Configuration section for options
+        },
+        config = function()
+          require('CopilotChat').setup {
+            vim.keymap.set('n', '<leader>cc', function()
+              require('CopilotChat').toggle()
+            end, { desc = 'Toggle Copilot [c]hat' }), -- Keybinding to open Copilot Chat
+          }
+        end,
+      },
     },
-    build = 'make tiktoken', -- Only on MacOS or Linux
-    opts = {
-      -- See Configuration section for options
-    },
-    config = function()
-      require('CopilotChat').setup {
-        vim.keymap.set('n', '<leader>cc', function()
-          require('CopilotChat').toggle()
-        end, { desc = 'Toggle Copilot [c]hat' }), -- Keybinding to open Copilot Chat
-      }
-    end,
   },
 }
