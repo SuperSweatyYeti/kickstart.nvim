@@ -1,6 +1,7 @@
 return {
   {
     'nvim-neo-tree/neo-tree.nvim',
+    enabled = true,
     -- branch = 'v3.x',
     dependencies = {
       'nvim-lua/plenary.nvim',
@@ -108,24 +109,3 @@ return {
   },
 }
 
--- require('neo-tree').setup {
---   window = {
---     mappings = {
---       ['A'] = 'command_a',
---       ['i'] = {
---         function(state)
---           local node = state.tree:get_node()
---           print(node.path)
---         end,
---         desc = 'print path',
---       },
---     },
---   },
---   filesystem = {
---     window = {
---       mappings = {
---         ['A'] = 'command_b',
---       },
---     },
---   },
--- },

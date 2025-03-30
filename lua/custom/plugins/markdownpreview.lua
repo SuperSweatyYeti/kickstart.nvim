@@ -2,6 +2,7 @@ return {
   -- install without yarn or npm
   {
     'iamcco/markdown-preview.nvim',
+    enabled = true,
     cmd = { 'MarkdownPreviewToggle', 'MarkdownPreview', 'MarkdownPreviewStop' },
     ft = { 'markdown' },
     build = function()

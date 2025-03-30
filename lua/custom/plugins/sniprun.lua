@@ -2,7 +2,8 @@ return {
   -- Run code in neovim
   {
     'michaelb/sniprun',
-    branch = 'master',
+    enabled = true,
+    -- branch = 'master',
 
     build = 'sh install.sh',
     -- do 'sh install.sh 1' if you want to force compile locally

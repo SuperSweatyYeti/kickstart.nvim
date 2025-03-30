@@ -2,6 +2,7 @@ return {
 
   {
     'unblevable/quick-scope',
+    enabled = true,
     -- Quickscope only highlight when f search
     init = function()
       vim.cmd [[

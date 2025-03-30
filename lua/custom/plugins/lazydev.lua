@@ -2,6 +2,7 @@ return {
   -- Plugin to add LSP features and other stuff to make configuring neovim plugins nicer
   {
     "folke/lazydev.nvim",
+    enabled = true,
     ft = "lua", -- only load on lua files
     opts = {
       library = {
