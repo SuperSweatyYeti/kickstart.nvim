@@ -23,20 +23,14 @@ return {
       end
       vim.cmd 'hi DapBreakpointColor guifg=#fa4848'
       vim.cmd 'hi DapBreakpointConditionColor guifg=#fa4848'
-      vim.cmd 'hi DapStoppedColor guifg=#faa448'
+      vim.cmd 'hi DapStoppedColor guifg=#faa448' -- yello\w background for stopped line
+      vim.cmd 'hi DapStoppedLineBgColor guibg=#57551e'
       vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpointConditionColor' })
       vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
-      vim.fn.sign_define('DapStopped', { texthl = 'DapStoppedColor', linehl = '', numhl = '' })
+      vim.fn.sign_define('DapStopped', { texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
 
-      -- vim.highlight.create('DapBreakpoint', { ctermbg = 0, guifg = '#993939', guibg = '#31353f' }, false)
-      -- vim.highlight.create('DapLogPoint', { ctermbg = 0, guifg = '#61afef', guibg = '#31353f' }, false)
-      -- vim.highlight.create('DapStopped', { ctermbg = 0, guifg = '#98c379', guibg = '#31353f' }, false)
-
-      -- vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpoint', linehl = 'DapBreakpoint', numhl = 'DapBreakpoint' })
-      -- vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpoint', linehl = 'DapBreakpoint', numhl = 'DapBreakpoint' })
-      -- vim.fn.sign_define('DapBreakpointRejected', { text = '', texthl = 'DapBreakpoint', linehl = 'DapBreakpoint', numhl = 'DapBreakpoint' })
-      -- vim.fn.sign_define('DapLogPoint', { text = '', texthl = 'DapLogPoint', linehl = 'DapLogPoint', numhl = 'DapLogPoint' })
-      -- vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStopped', linehl = 'DapStopped', numhl = 'DapStopped' })
+      -- reload current color scheme to pick up colors override if it was set up in a lazy plugin definition fashion
+      -- vim.cmd.colorscheme(vim.g.colors_name)
     end,
 
     keys = {
@@ -194,6 +188,14 @@ return {
               local python = vim.fn.expand '~/.local/share/nvim/mason/packages/debugpy/venv/bin/python'
               -- require('dap-python').setup(python)
               require('dap-python').setup(python)
+              table.insert(require('dap').configurations.python, {
+                type = 'python',
+                request = 'launch',
+                name = 'Module',
+                console = 'integratedTerminal',
+                module = 'src', -- edit this to be your app's main module
+                cwd = '${workspaceFolder}',
+              })
             end,
             -- Consider the mappings at
             -- https://github.com/mfussenegger/nvim-dap-python?tab=readme-ov-file#mappings
