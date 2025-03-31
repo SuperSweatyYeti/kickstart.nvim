@@ -22,9 +22,21 @@ return {
         dapui.close()
       end
       vim.cmd 'hi DapBreakpointColor guifg=#fa4848'
+      vim.cmd 'hi DapBreakpointConditionColor guifg=#fa4848'
       vim.cmd 'hi DapStoppedColor guifg=#faa448'
-      vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
+      vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpointConditionColor' })
+      vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
       vim.fn.sign_define('DapStopped', { texthl = 'DapStoppedColor', linehl = '', numhl = '' })
+
+      -- vim.highlight.create('DapBreakpoint', { ctermbg = 0, guifg = '#993939', guibg = '#31353f' }, false)
+      -- vim.highlight.create('DapLogPoint', { ctermbg = 0, guifg = '#61afef', guibg = '#31353f' }, false)
+      -- vim.highlight.create('DapStopped', { ctermbg = 0, guifg = '#98c379', guibg = '#31353f' }, false)
+
+      -- vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpoint', linehl = 'DapBreakpoint', numhl = 'DapBreakpoint' })
+      -- vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpoint', linehl = 'DapBreakpoint', numhl = 'DapBreakpoint' })
+      -- vim.fn.sign_define('DapBreakpointRejected', { text = '', texthl = 'DapBreakpoint', linehl = 'DapBreakpoint', numhl = 'DapBreakpoint' })
+      -- vim.fn.sign_define('DapLogPoint', { text = '', texthl = 'DapLogPoint', linehl = 'DapLogPoint', numhl = 'DapLogPoint' })
+      -- vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStopped', linehl = 'DapStopped', numhl = 'DapStopped' })
     end,
 
     keys = {
@@ -34,6 +46,11 @@ return {
           require('dap').toggle_breakpoint()
         end,
         desc = 'Toggle Breakpoint',
+      },
+      {
+        '<leader>dbc',
+        ':lua require("dap").toggle_breakpoint(" i == 5 ")',
+        desc = 'Toggle Conditional Breakpoint',
       },
 
       {
