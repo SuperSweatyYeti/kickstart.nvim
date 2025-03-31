@@ -4,6 +4,7 @@ return {
     'zbirenbaum/copilot.lua',
     enabled = true,
     cmd = 'Copilot',
+    vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = "Start Copilot"}),
     -- event = 'InsertEnter',
     config = function()
       require('copilot').setup {
