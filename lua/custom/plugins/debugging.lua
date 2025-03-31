@@ -137,10 +137,21 @@ return {
           },
           {
             'theHamsta/nvim-dap-virtual-text',
-            config = true,
+            -- config = true,
             dependencies = {
               'mfussenegger/nvim-dap',
             },
+            config = function()
+              local virtualtext = require 'nvim-dap-virtual-text'
+              virtualtext.setup {
+                display_callback = function(variable)
+                  if #variable.value > 15 then
+                    return ' ' .. variable.value:sub(1, 15) .. '...'
+                  end
+                  return ' ' .. variable.value
+                end,
+              }
+            end,
           },
           -- Languages Section
           {
