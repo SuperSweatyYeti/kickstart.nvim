@@ -9,7 +9,7 @@ return {
       require('copilot').setup {
         -- Disable the default keymap to accept suggestions
         vim.keymap.set('i', '<Tab>', '<Tab>'),
-        vim.keymap.set('i', '<leader>cp', '<cmd>Copilot<cr>', { desc = "Start Copilot"}),
+        vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = "Start Copilot"}),
         panel = {
           enabled = false,
           auto_refresh = false,
