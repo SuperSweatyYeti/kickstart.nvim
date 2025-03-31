@@ -4,8 +4,8 @@ return {
     -- Easier to change back to normal mode 'Double tap i'
     vim.keymap.set({ 'v', 'i' }, 'ii', '<Esc><Esc>', { desc = 'escape mode' }),
     -- Quickly get to end and beggining of line
-    vim.keymap.set('n', '<S-h>', '<Home>', {}),
-    vim.keymap.set('n', '<S-l>', '<End>', {}),
+    vim.keymap.set({'n', 'v'}, '<S-h>', '<Home>', {}),
+    vim.keymap.set({'n', 'v'}, '<S-l>', '<End>', {}),
     -- vim.keymap.set('v', 'ii', "<Esc>", {})
     -- Easier to navigate between panes
     vim.keymap.set('n', '<C-h>', '<C-w>h', {}),
