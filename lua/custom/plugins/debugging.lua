@@ -21,6 +21,10 @@ return {
       dap.listeners.before.event_exited.dapui_config = function()
         dapui.close()
       end
+      vim.cmd 'hi DapBreakpointColor guifg=#fa4848'
+      vim.cmd 'hi DapStoppedColor guifg=#faa448'
+      vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
+      vim.fn.sign_define('DapStopped', { texthl = 'DapStoppedColor', linehl = '', numhl = '' })
     end,
 
     keys = {
@@ -157,9 +161,10 @@ return {
           },
           {
             'mfussenegger/nvim-dap-python',
-            lazy = true,
-            config = function()
+            -- lazy = true,
+            config = function(_, opts)
               local python = vim.fn.expand '~/.local/share/nvim/mason/packages/debugpy/venv/bin/python'
+              -- require('dap-python').setup(python)
               require('dap-python').setup(python)
             end,
             -- Consider the mappings at
