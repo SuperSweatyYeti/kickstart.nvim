@@ -221,7 +221,18 @@ return {
     -- Copied from LazyVim/lua/lazyvim/plugins/extras/dap/core.lua and
     -- modified.
     dependencies = {
+      {
       'rcarriga/nvim-dap-ui',
+        keys = {
+          {
+            '<leader>du',
+            function()
+              require('dapui').toggle {}
+            end,
+            desc = 'Dap UI',
+          },
+        },
+      },
       'nvim-neotest/nvim-nio',
       -- Specific languages here
       {
