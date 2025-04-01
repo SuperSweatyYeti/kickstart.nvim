@@ -4,7 +4,7 @@ return {
   {
     'mfussenegger/nvim-dap',
     enabled = true,
-    lazy = true,
+    -- lazy = true,
     -- Copied from LazyVim/lua/lazyvim/plugins/extras/dap/core.lua and
     -- modified.
     config = function()
@@ -126,8 +126,8 @@ return {
               automatic_installation = {
                 -- These will be configured by separate plugins.
                 exclude = {
-                  'delve',
-                  'python',
+                  -- 'delve',
+                  -- 'python',
                 },
               },
               -- DAP servers: Mason will be invoked to install these if necessary.
@@ -135,7 +135,7 @@ return {
                 'bash',
                 'codelldb',
                 'php',
-                'python',
+                'debugpy',
               },
             },
             dependencies = {
@@ -186,7 +186,6 @@ return {
             -- lazy = true,
             config = function(_, opts)
               local python = vim.fn.expand '~/.local/share/nvim/mason/packages/debugpy/venv/bin/python'
-              -- require('dap-python').setup(python)
               require('dap-python').setup(python)
               table.insert(require('dap').configurations.python, {
                 type = 'python',
@@ -201,6 +200,7 @@ return {
             -- https://github.com/mfussenegger/nvim-dap-python?tab=readme-ov-file#mappings
             dependencies = {
               'mfussenegger/nvim-dap',
+              'rcarriga/nvim-dap-ui',
             },
           },
           -- keep-sorted end
@@ -211,104 +211,6 @@ return {
   -- keep-sorted end
 }
 
---[[
--- NOTE: Previous config here
-return {
-  'mfussenegger/nvim-dap',
-  dependencies = {
-    -- Python Debug adapter
-    -- NOTE need to install debugpy with `pip install debugpy`
-    'mfussenegger/nvim-dap-python',
-    -- NOTE Needed for python 
-    'nvim-neotest/nvim-nio',
-    -- Pretty UI
-    'rcarriga/nvim-dap-ui',
-    -- Mason plugin to install debug adapters
-    'jay-babu/mason-nvim-dap.nvim',
-  },
-  config = function()
-    -- Variable for python venv mason path user's Home folder
-    local userFolder =  os.getenv( "HOME" )
 
-    local dap = require 'dap'
-    local dapui = require 'dapui'
-    require('dap-python').setup()
-    require('dapui').setup()
 
-    -- Open/Close Dap UI automatically when debugging
-    dap.listeners.before.attach.dapui_config = function()
-      dapui.open()
-    end
-    dap.listeners.before.launch.dapui_config = function()
-      dapui.open()
-    end
-    dap.listeners.before.event_terminated.dapui_config = function()
-      dapui.close()
-    end
-    dap.listeners.before.event_exited.dapui_config = function()
-      dapui.close()
-    end
 
-    -- Debugging keymaps, feel free to change to your liking!
-    vim.keymap.set('n', '<F7>', dapui.toggle, { desc = 'Debug: See last session result.' })
-    vim.keymap.set('n', '<Leader>dc', dap.continue, { desc = 'Debug: Start/Continue' })
-    vim.keymap.set('n', '<F5>', dapui.continue, { desc = 'Debug: Start/Continue' })
-    vim.keymap.set('n', '<Leader>di', dap.step_into, { desc = 'Debug: Step Into' })
-    vim.keymap.set('n', '<F11>', dapui.step_into, { desc = 'Debug: Step Into' })
-    vim.keymap.set('n', '<Leader>do', dap.step_over, { desc = 'Debug: Step Over' })
-    vim.keymap.set('n', '<F10>', dapui.step_over, { desc = 'Debug: Step Over' })
-    vim.keymap.set('n', '<Leader>dO', dap.step_out, { desc = 'Debug: Step Out' })
-    vim.keymap.set('n', '<Leader>dB', dap.step_back, { desc = 'Debug: Step Back' })
-    vim.keymap.set('n', '<Leader>dT', dap.terminate, { desc = 'Debug: Terminate' })
-    vim.keymap.set('n', '<leader>db', dap.toggle_breakpoint, { desc = 'Debug: Toggle Breakpoint' })
-    vim.keymap.set('n', '<leader>dU', dapui.toggle, { desc = 'Debug: Toggle Dap UI' })
-    vim.keymap.set('n', '<leader>B', function()
-      dap.set_breakpoint(vim.fn.input 'Breakpoint condition: ')
-    end, { desc = 'Debug: Set Breakpoint' })
-    vim.keymap.set('n', '<leader>drb', dap.clear_breakpoints, { desc = 'Debug: [r]emove all [b]reakpoints' })
-
-    -- mason-nvim setup
-    require('mason-nvim-dap').setup {
-      -- You'll need to check that you have the required things installed
-      -- online, please don't ask me how to install them :)
-      ensure_installed = {
-        -- Update this to ensure that you have the debuggers for the langs you want
-        'delve',
-        'debugpy',
-      },
-      -- Makes a best effort to setup the various debuggers with
-      -- reasonable debug configurations
-      automatic_setup = true,
-
-      -- You can provide additional configuration to the handlers,
-      -- see mason-nvim-dap README for more information
-      handlers = {
-
-        function(config)
-          -- all sources with no handler get passed here
-
-          -- Keep original functionality
-          require('mason-nvim-dap').default_setup(config)
-        end,
-        -- Python Setup with the correct path of the venv where debugpy
-        -- gets installed by mason
-        python = function(config)
-          config.adapters = {
-            type = 'executable',
-            -- command  '/usr/bin/python',
-            -- This should be the default config honestly?
-            command = (userFolder .. '/.local/share/nvim/mason/packages/debugpy/venv/bin/python'),
-            args = {
-              '-m',
-              'debugpy.adapter',
-            },
-          }
-          require('mason-nvim-dap').default_setup(config) -- don't forget this!
-        end,
-      },
-
-    }
-  end,
-
-}
- --]]
