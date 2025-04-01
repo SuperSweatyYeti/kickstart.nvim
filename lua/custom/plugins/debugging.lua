@@ -238,25 +238,9 @@ return {
 
       {
         'jay-babu/mason-nvim-dap.nvim',
-        ---@type MasonNvimDapSettings
-        opts = {
-          -- This line is essential to making automatic installation work
-          -- :exploding-brain
-          handlers = {},
-          automatic_installation = {
-            -- These will be configured by separate plugins.
-            exclude = {
-              -- 'delve',
-              -- 'python',
-            },
-          },
-          -- DAP servers: Mason will be invoked to install these if necessary.
-          ensure_installed = {
-            'bash',
-            'codelldb',
-            'php',
-            'debugpy',
-          },
+        require('mason-nvim-dap').setup {
+          ensure_installed = { 'stylua', 'jq' },
+          handlers = {}, -- sets up dap in the predefined manner
         },
       },
       -- Specific languages here
