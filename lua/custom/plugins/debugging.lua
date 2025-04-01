@@ -235,16 +235,6 @@ return {
       },
 
       'nvim-neotest/nvim-nio',
-
-      {
-        'jay-babu/mason-nvim-dap.nvim',
-        config = function()
-          require('mason-nvim-dap').setup {
-            ensure_installed = { 'stylua', 'jq' },
-            handlers = {}, -- sets up dap in the predefined manner
-          }
-        end,
-      },
       -- Specific languages here
       {
         'mfussenegger/nvim-dap-python',
