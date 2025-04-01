@@ -260,8 +260,8 @@ return {
           local virtualtext = require 'nvim-dap-virtual-text'
           virtualtext.setup {
             display_callback = function(variable)
-              if #variable.value > 20 then
-                return ' ' .. variable.value:sub(1, 20) .. '...'
+              if #variable.value > 25 then
+                return ' ' .. variable.value:sub(1, 25) .. '...'
               end
               return ' ' .. variable.value
             end,
