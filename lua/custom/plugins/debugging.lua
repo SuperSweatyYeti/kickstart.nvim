@@ -262,14 +262,16 @@ return {
           virtualtext.setup {
             display_callback = function(variable)
               if #variable.value > 25 then
-                return ' ' .. variable.value:sub(1, 25) .. '...'
+                return '= ' .. variable.value:sub(1, 25) .. '...'
               end
-              return ' ' .. variable.value
+              return '= ' .. variable.value
             end,
             -- position of virtual text, see `:h nvim_buf_set_extmark()`, default tries to inline the virtual text. Use 'eol' to set to end of line
             -- virt_text_pos = vim.fn.has 'nvim-0.10' == 1 and 'inline' or 'eol',
 
             virt_text_pos = vim.fn.has 'nvim-0.10' == 1 and 'eol',
+            highlight_changed_variables = false, 
+            all_frames = false,
           }
         end,
       },
@@ -298,7 +300,7 @@ return {
       vim.cmd 'hi DapStoppedLineBgColor guibg=#57551e'
       vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpointConditionColor' })
       vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
-      vim.fn.sign_define('DapStopped', { texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
+      vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
 
       -- reload current color scheme to pick up colors override if it was set up in a lazy plugin definition fashion
       -- vim.cmd.colorscheme(vim.g.colors_name)
