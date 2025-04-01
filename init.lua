@@ -468,6 +468,8 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
+        -- NOTE: You can put all the tools that you want mason to automatically install here
+        -- check what mason has availble by running :Mason
         'stylua', -- Used to format lua code
         'debugpy',
         'python-lsp-server',
