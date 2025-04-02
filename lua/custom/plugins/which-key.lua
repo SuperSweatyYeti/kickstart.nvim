@@ -27,6 +27,7 @@ return {
         { mode = { 'n', 'v' }, { '<leader>R', group = 'Snip[R]un', hidden = false } },
         --{ mode = {'n'}, { '<leader>R', group = 'Snip [R]un', hidden = false }, },
         { mode = {'n'}, { '<leader>T', group = '[T]abs', hidden = false }, },
+        { mode = {'n'}, { '<leader>l', group = '[l]sp', hidden = false }, },
         { mode = {'n'}, { '<leader>b', group = '[b]uffers', hidden = false }, },
         { mode = {'n'},{ '<leader>c', group = '[c]ode', hidden = false },},
         { mode = {'n'},{ '<leader>d', group = '[d]ocument', hidden = false },},

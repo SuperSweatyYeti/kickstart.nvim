@@ -324,6 +324,24 @@ require('lazy').setup({
       --    That is to say, every time a new file is opened that is associated with
       --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
       --    function will be executed to configure the current buffer
+
+      -- Disable ESLint LSP server and hide virtual text in Neovim
+      -- Add this to your init.lua or init.vim file
+      local isLspDiagnosticsVisible = true
+      vim.keymap.set('n', '<leader>ld', function()
+        isLspDiagnosticsVisible = not isLspDiagnosticsVisible
+        vim.diagnostic.config {
+          virtual_text = isLspDiagnosticsVisible,
+          underline = isLspDiagnosticsVisible,
+        }
+      end, { desc = '[l] [d]isable lsp warnings and virtual text' })
+
+      -- Set symbols for errors and warnings
+      vim.fn.sign_define('DiagnosticSignError', { text = '', texthl = 'DiagnosticSignError' })
+      vim.fn.sign_define('DiagnosticSignWarn', { text = '', texthl = 'DiagnosticSignWarn' })
+      vim.fn.sign_define('DiagnosticSignInfo', { text = '', texthl = 'DiagnosticSignInfo' })
+      vim.fn.sign_define('DiagnosticSignHint', { text = '', texthl = 'DiagnosticSignHint' })
+
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
         callback = function(event)
