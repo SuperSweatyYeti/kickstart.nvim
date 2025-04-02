@@ -316,8 +316,8 @@ return {
       },
       {
         '<leader>dbc',
-        ':lua require("dap").toggle_breakpoint(" i == 5 ")',
-        desc = 'Toggle Conditional Breakpoint',
+        ':lua require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))<enter>',
+        desc = 'Set [d]ebug [b]reakpoint [c]onditional',
       },
 
       {
