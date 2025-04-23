@@ -1,16 +1,18 @@
+-- Copilot Model Variable
+local copilotModel = 'claude-3.7-sonnet-thought'
 return {
   {
     -- Requires nodejs to be installed
     'zbirenbaum/copilot.lua',
     enabled = true,
     cmd = 'Copilot',
-    vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = "Start Copilot"}),
+    vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
     -- event = 'InsertEnter',
     config = function()
       require('copilot').setup {
         -- Disable the default keymap to accept suggestions
         vim.keymap.set('i', '<Tab>', '<Tab>'),
-        vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = "Start Copilot"}),
+        vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
         panel = {
           enabled = false,
           auto_refresh = false,
@@ -61,7 +63,8 @@ return {
         },
         copilot_node_command = 'node', -- Node.js version must be > 20
         workspace_folders = {},
-        copilot_model = '', -- Current LSP default is gpt-35-turbo, supports gpt-4o-copilot
+        -- Set Claude 3.7 as the default model
+        copilot_model = copilotModel, -- Current LSP default is gpt-35-turbo, supports gpt-4o-copilot
         root_dir = function()
           return vim.fs.dirname(vim.fs.find('.git', { upward = true })[1])
         end,
@@ -118,20 +121,50 @@ return {
       {
         'CopilotC-Nvim/CopilotChat.nvim',
         -- enable = true,
+        -- Variable
         dependencies = {
           { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
           { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
         },
         build = 'make tiktoken', -- Only on MacOS or Linux
         opts = {
+          -- Shared config starts here (can be passed to functions at runtime and configured via setup function)
+
+          -- system_prompt = 'COPILOT_INSTRUCTIONS', -- System prompt to use (can be specified manually in prompt via /).
+
+          -- vim.keymap.set('n', '<leader>cc', function()
+          --   require('CopilotChat').toggle()
+          -- end, { desc = 'Toggle Copilot [c]hat' }), -- Keybinding to open Copilot Chat
+          vim.keymap.set('n', '<leader>cct', '<cmd>CopilotChatToggle<cr>', { desc = 'Toggle Copilot [c]chat [t]oggle' }),
+          vim.keymap.set('n', '<leader>ccm', '<cmd>CopilotChatModels<cr>', { desc = 'Select Copilot [c]hat [m]odel' }),
+          model = copilotModel, -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
+          agent = 'copilot', -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
+          context = 'files', -- Default context or array of contexts to use (can be specified manually in prompt via #).
+          -- sticky = nil, -- Default sticky prompt or array of sticky prompts to use at start of every new chat.
+          --
+          -- temperature = 0.1, -- GPT result temperature
+          -- headless = false, -- Do not write to chat buffer and use history (useful for using custom processing)
+          -- stream = nil, -- Function called when receiving stream updates (returned string is appended to the chat buffer)
+          -- callback = nil, -- Function called when full response is received (retuned string is stored to history)
+          -- remember_as_sticky = true, -- Remember model/agent/context as sticky prompts when asking questions
+
+          -- default window options
+          window = {
+            layout = 'vertical', -- 'vertical', 'horizontal', 'float', 'replace', or a function that returns the layout
+            width = 0.3, -- fractional width of parent, or absolute width in columns when > 1
+            height = 0.3, -- fractional height of parent, or absolute height in rows when > 1
+            -- Options below only apply to floating windows
+            -- relative = 'editor', -- 'editor', 'win', 'cursor', 'mouse'
+            border = 'single', -- Add a border to the floating window
+            row = nil, -- row position of the window, default is centered
+            col = nil, -- column position of the window, default is centered
+            title = 'Copilot Chat', -- Add a title to the chat window
+            footer = copilotModel, -- Show current model in footer
+            zindex = 1, -- determines if window is on top or below other floating windows
+          },
           -- See Configuration section for options
         },
-        config = function()
-          require('CopilotChat').setup {}
-            vim.keymap.set('n', '<leader>cc', function()
-              require('CopilotChat').toggle()
-            end, { desc = 'Toggle Copilot [c]hat' }) -- Keybinding to open Copilot Chat
-        end,
+        -- end,
       },
     },
   },
