@@ -137,6 +137,7 @@ return {
           -- end, { desc = 'Toggle Copilot [c]hat' }), -- Keybinding to open Copilot Chat
           vim.keymap.set('n', '<leader>cct', '<cmd>CopilotChatToggle<cr>', { desc = 'Toggle Copilot [c]chat [t]oggle' }),
           vim.keymap.set('n', '<leader>ccm', '<cmd>CopilotChatModels<cr>', { desc = 'Select Copilot [c]hat [m]odel' }),
+          vim.keymap.set('n', '<leader>ccr', '<cmd>CopilotChatReset<cr>', { desc = 'Select Copilot [c]hat [r]eset' }),
           model = copilotModel, -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
           agent = 'copilot', -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
           context = 'file', -- Default context or array of contexts to use (can be specified manually in prompt via #).
@@ -161,6 +162,61 @@ return {
             title = 'Copilot Chat', -- Add a title to the chat window
             footer = copilotModel, -- Show current model in footer
             zindex = 1, -- determines if window is on top or below other floating windows
+          },
+          -- default mappings
+          -- see config/mappings.lua for implementation
+          mappings = {
+            complete = {
+              insert = '<Tab>',
+            },
+            close = {
+              normal = 'q',
+              insert = '<C-c>',
+            },
+            reset = {
+              normal = '',
+              insert = '',
+            },
+            submit_prompt = {
+              normal = '<CR>',
+              insert = '<C-s>',
+            },
+            toggle_sticky = {
+              normal = 'grr',
+            },
+            clear_stickies = {
+              normal = 'grx',
+            },
+            accept_diff = {
+              normal = '<C-y>',
+              insert = '<C-y>',
+            },
+            jump_to_diff = {
+              normal = 'gj',
+            },
+            quickfix_answers = {
+              normal = 'gqa',
+            },
+            quickfix_diffs = {
+              normal = 'gqd',
+            },
+            yank_diff = {
+              normal = 'gy',
+              register = '"', -- Default register to use for yanking
+            },
+            show_diff = {
+              normal = 'gd',
+              full_diff = false, -- Show full diff instead of unified diff when showing diff window
+            },
+            show_info = {
+              normal = 'gi',
+            },
+            show_context = {
+              normal = 'gc',
+            },
+            show_help = {
+              normal = 'gh',
+            },
           },
           -- See Configuration section for options
         },
