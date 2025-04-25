@@ -101,7 +101,7 @@ return {
           { name = 'path' },
         },
       }
-      vim.g.cmp_use_borders = false
+      vim.g.cmp_use_borders = true
       -- Use Borders?
       -- Use Borders?
       if vim.g.cmp_use_borders then
