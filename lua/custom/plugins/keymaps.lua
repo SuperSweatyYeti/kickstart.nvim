@@ -8,18 +8,18 @@ return {
     vim.keymap.set({'n', 'v'}, '<S-l>', '<End>', {}),
     -- vim.keymap.set('v', 'ii', "<Esc>", {})
     -- Easier to navigate between panes
-    vim.keymap.set({'n','V'}, '<C-h>', '<C-w>h', {}),
-    vim.keymap.set({'n','V'}, '<C-j>', '<C-w>j', {}),
-    vim.keymap.set({'n','V'}, '<C-k>', '<C-w>k', {}),
-    vim.keymap.set({'n','V'}, '<C-l>', '<C-w>l', {}),
+    vim.keymap.set({'n','v'}, '<C-h>', '<C-w>h', {}),
+    vim.keymap.set({'n','v'}, '<C-j>', '<C-w>j', {}),
+    vim.keymap.set({'n','v'}, '<C-k>', '<C-w>k', {}),
+    vim.keymap.set({'n','v'}, '<C-l>', '<C-w>l', {}),
     -- Resize panes with hjkl
-    vim.keymap.set({'n','V'}, '<A-h>', '<C-w><', {}),
-    vim.keymap.set({'n','V'}, '<A-j>', '<C-w>+', {}),
-    vim.keymap.set({'n','V'}, '<A-k>', '<C-w>-', {}),
-    vim.keymap.set({'n','V'}, '<A-l>', '<C-w>>', {}),
+    vim.keymap.set({'n','v'}, '<A-h>', '<C-w><', {}),
+    vim.keymap.set({'n','v'}, '<A-j>', '<C-w>+', {}),
+    vim.keymap.set({'n','v'}, '<A-k>', '<C-w>-', {}),
+    vim.keymap.set({'n','v'}, '<A-l>', '<C-w>>', {}),
     -- Change tabs with hjkl
-    vim.keymap.set({'n','V'}, '<leader>Th', ':tabNext\n', {}),
-    vim.keymap.set({'n','V'}, '<leader>Tl', ':tabPrevious\n', {}),
+    vim.keymap.set({'n','v'}, '<leader>Th', ':tabNext\n', {}),
+    vim.keymap.set({'n','v'}, '<leader>Tl', ':tabPrevious\n', {}),
     -- vim.keymap.set('n', '<A-L>', ':tabNext\n', {}),
     -- vim.keymap.set('n', '<A-H>', ':tabPrevious\n', {}),
     --
