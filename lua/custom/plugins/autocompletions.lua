@@ -101,6 +101,17 @@ return {
           { name = 'path' },
         },
       }
+      vim.g.cmp_use_borders = false
+      -- Use Borders?
+      -- Use Borders?
+      if vim.g.cmp_use_borders then
+        cmp.setup {
+          window = {
+            completion = cmp.config.window.bordered(),
+            documentation = cmp.config.window.bordered(),
+          },
+        }
+      end
     end,
   },
 }

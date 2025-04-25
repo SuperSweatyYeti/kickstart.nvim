@@ -139,7 +139,7 @@ return {
           vim.keymap.set('n', '<leader>ccm', '<cmd>CopilotChatModels<cr>', { desc = 'Select Copilot [c]hat [m]odel' }),
           model = copilotModel, -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
           agent = 'copilot', -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
-          context = 'files', -- Default context or array of contexts to use (can be specified manually in prompt via #).
+          context = 'file', -- Default context or array of contexts to use (can be specified manually in prompt via #).
           -- sticky = nil, -- Default sticky prompt or array of sticky prompts to use at start of every new chat.
           --
           -- temperature = 0.1, -- GPT result temperature

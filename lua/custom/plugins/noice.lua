@@ -29,7 +29,6 @@ return {
 
     -- Keymap to toggle noice notifications
     vim.keymap.set('n', '<leader>nt', function()
-      local noice = require("noice")
       -- Check if Noice is enabled using the is_enabled function
       if vim.g.noice_enabled == true then
         vim.cmd("NoiceDismiss")
