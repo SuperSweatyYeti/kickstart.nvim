@@ -1,5 +1,6 @@
 return {
   'folke/noice.nvim',
+  enabled = true,
   event = 'VeryLazy',
   opts = {
     -- add any options here
@@ -13,9 +14,36 @@ return {
     'rcarriga/nvim-notify',
   },
   config = function()
+    -- Need this variable to track status of noice so we can toggle with keymap
+    vim.g.noice_enabled = true
     require('noice').setup {
+      require('which-key').setup(),
 
-      -- Recording macro notification
+      require('which-key').add {
+        { mode = {'n'}, { '<leader>n', group = '[n]oice plugin notifcations', hidden = false }, },
+      },
+
+      vim.keymap.set('n', '<leader>nc', '<cmd>NotificationsClear<enter><cmd>NoiceDismiss<enter>', { desc = 'Dismiss [c]lear all [n]oice plugin notifications' }),
+
+      vim.keymap.set('n', '<leader>nd', '<cmd>NoiceDisable<enter>', { desc = 'Disable [d]isable [n]oice notifications' }),
+
+    -- Keymap to toggle noice notifications
+    vim.keymap.set('n', '<leader>nt', function()
+      local noice = require("noice")
+      -- Check if Noice is enabled using the is_enabled function
+      if vim.g.noice_enabled == true then
+        vim.cmd("NoiceDismiss")
+        vim.cmd("NotificationsClear")
+        vim.cmd("NoiceDisable")
+        vim.notify("Noice disabled", vim.log.levels.INFO)
+        vim.g.noice_enabled = false
+      else
+        vim.cmd("NoiceEnable")
+        vim.notify("Noice enabled", vim.log.levels.INFO)
+        vim.g.noice_enabled = true
+      end
+    end, { desc = '[t]oggle [n]oice notifications' }),
+
       vim.api.nvim_create_autocmd('RecordingEnter', {
         callback = function()
           local msg = string.format('Register:  %s', vim.fn.reg_recording())
