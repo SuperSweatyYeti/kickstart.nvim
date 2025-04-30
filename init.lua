@@ -90,7 +90,6 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
-
 -- NOTE: these options might be viable in versions
 -- of neovim 0.11+ possbily soon ??
 --
@@ -101,10 +100,8 @@ vim.g.maplocalleader = ' '
 -- Might not need if above options start working
 vim.g.use_borders = true
 
-
 -- Set to true if you have a Nerd Font installed
 vim.g.have_nerd_font = true
-
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -204,55 +201,6 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
-
-
--- Toggle a more vanilla view that is conducive to copying text
-local clean_view_enabled = false
-function CleanViewToggle()
-  local gs_ok, gitsigns = pcall(require, "gitsigns")
-
-  if not clean_view_enabled then
-    vim.opt.number = false
-    vim.opt.relativenumber = false
-    vim.cmd("IBLDisable")
-    vim.cmd("TSContextDisable")
-    vim.diagnostic.disable()
-    -- Disable mini.indentscope
-    vim.b.miniindentscope_disable = true
-    local ns_id = vim.api.nvim_get_namespaces()["MiniIndentscope"]
-    if ns_id then
-      vim.api.nvim_buf_clear_namespace(0, ns_id, 0, -1)
-    end
-    -- Disable gitsigns
-    if gs_ok then
-      gitsigns.detach()
-      vim.opt.signcolumn = "no"
-    end
-    vim.cmd("silent! redraw")
-    clean_view_enabled = true
-  else
-    vim.opt.number = true
-    vim.opt.relativenumber = true
-    vim.cmd("IBLEnable")
-    vim.cmd("TSContextEnable")
-    vim.diagnostic.enable()
-    -- Re-enable mini.indentscope
-    vim.b.miniindentscope_disable = false
-    local ok, scope = pcall(require, "mini.indentscope")
-    if ok and type(scope.enable) == "function" then
-      scope.enable()
-    end
-    -- Re-enable gitsigns
-    if gs_ok and type(gitsigns.attach) == "function" then
-      gitsigns.attach()
-      vim.opt.signcolumn = "yes"
-    end
-    clean_view_enabled = false
-  end
-end
--- And a keymap for it
-vim.api.nvim_set_keymap('n', '<leader>cvt', ':lua CleanViewToggle()<CR>', { noremap = true, silent = true, desc = "[c]lean [v]iew [t]oggle Toggle" })
-
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -373,7 +321,6 @@ require('lazy').setup(
     { import = 'custom.plugins' },
     { import = 'custom.themes' },
   },
-
   {
     ui = {
       -- If you have a Nerd Font, set icons to an empty table which will use the
@@ -396,6 +343,12 @@ require('lazy').setup(
     },
   }
 )
+
+-- NOTE: You can import other lua settings folders here.
+-- We are using the plenary plugin to make loading all lua config files within 
+-- a folder more dynamic. See this file for an example: ./lua/custom/settings/init.lua
+-- Each folder you import needs to have it's own init.lua file following the example.
+require 'custom.settings'
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
