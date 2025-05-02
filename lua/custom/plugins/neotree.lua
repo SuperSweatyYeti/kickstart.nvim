@@ -35,7 +35,7 @@ return {
         commands = {},
         window = {
           position = 'left',
-          width = 40,
+          width = '25%',
           mapping_options = {
             noremap = false,
             nowait = false,
