@@ -56,5 +56,5 @@ function CleanViewToggle()
   end
 end
 -- Add a keybind for it
-vim.api.nvim_set_keymap('n', '<leader>cvt', ':lua CleanViewToggle()<CR>', { noremap = true, silent = true, desc = "[c]lean [v]iew [t]oggle Toggle" })
+vim.api.nvim_set_keymap('n', '<leader>cv', '<cmd>lua CleanViewToggle()<enter>', { noremap = true, silent = true, desc = "[c]lean [v]iew [t]oggle Toggle" })
 
