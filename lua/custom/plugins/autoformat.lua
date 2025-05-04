@@ -12,6 +12,14 @@ return {
       -- },
       formatters_by_ft = {
         lua = { 'stylua' },
+        xml = { 'xmlformatter' },
+        json = { 'prettier' },
+        yaml = { 'yamlfmt' },
+        yml = { 'yamlfmt' },
+        sh = { 'beautysh' },
+        zsh = { 'beautysh' },
+        bash = { 'beautysh' },
+        bash = { 'beautysh' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
