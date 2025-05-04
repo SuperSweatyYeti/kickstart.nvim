@@ -5,7 +5,7 @@ return {
     'stevearc/conform.nvim',
     enabled = true,
     opts = {
-      notify_on_error = false,
+      notify_on_error = true,
       -- format_on_save = {
       --   timeout_ms = 500,
       --   lsp_fallback = true,
@@ -16,10 +16,10 @@ return {
         json = { 'prettier' },
         yaml = { 'yamlfmt' },
         yml = { 'yamlfmt' },
-        sh = { 'beautysh' },
-        zsh = { 'beautysh' },
-        bash = { 'beautysh' },
-        bash = { 'beautysh' },
+        sh = { 'shfmt' },
+        zsh = { 'shfmt' },
+        zshrc = { 'shfmt' },
+        bash = { 'shfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
