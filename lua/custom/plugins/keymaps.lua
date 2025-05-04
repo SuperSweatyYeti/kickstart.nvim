@@ -37,7 +37,7 @@ return {
       local zero = vim.fn.getreginfo '0'
       -- Swap the contents
       vim.fn.setreg('"', zero.regcontents, zero.regtype)
-      vim.fn.setreg('2', unnamed.regcontents, unnamed.regtype)
+      vim.fn.setreg('1', unnamed.regcontents, unnamed.regtype)
     end, { desc = 'Swap last yank with previous yank' }),
 
     ------------------ END Custom Keymaps -----------------------------
