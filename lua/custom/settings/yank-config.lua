@@ -1,3 +1,7 @@
+-- NOTE: This config changes the default behavior of yanking and buffers such that my paste buffer never gets overridden unless i explicitly yank something else. Changing and deleting does not overwrite the clipboard and unnamed buffer with this config.
+-- NOTE: I can toggle this behavior off with :TogglePreserveYank  .
+
+
 -- Deep compare registers
 local function reg_equal(a, b)
   return vim.deep_equal(a.regcontents, b.regcontents) and a.regtype == b.regtype
