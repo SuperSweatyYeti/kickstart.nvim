@@ -101,7 +101,7 @@ local destructive_motions = {
   { mode = 'n', key = 'dap' },
   { mode = 'n', key = 'dip' },
   -- visual mode
-  { mode = 'v', key = 'd' },
+  -- { mode = 'v', key = 'd' },
   { mode = 'v', key = 'c' },
   { mode = 'v', key = 'x' },
   { mode = 'v', key = 'p' },
