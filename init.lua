@@ -165,7 +165,7 @@ vim.opt.scrolloff = 10
 -- NOTE: debugging lua code here
 -- Recursive function to print a table's contents
 
-function print_item(item, indent)
+function lua_print(item, indent)
   indent = indent or 0
   local spaces = string.rep("  ", indent)
 

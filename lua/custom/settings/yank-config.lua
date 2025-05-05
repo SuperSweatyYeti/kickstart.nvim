@@ -1,6 +1,5 @@
 -- NOTE: This config changes the default behavior of yanking and buffers such that my paste buffer never gets overridden unless i explicitly yank something else. Changing and deleting does not overwrite the clipboard and unnamed buffer with this config.
--- NOTE: I can toggle this behavior off with :TogglePreserveYank  .
-
+-- NOTE: I can toggle this behavior off with :TogglePreserveYank .
 
 -- Deep compare registers
 local function reg_equal(a, b)
@@ -14,7 +13,11 @@ vim.g.preserve_yank_enabled = true
 local function preserve_yank_and_clipboard(keys)
   return function()
     if not vim.g.preserve_yank_enabled then
-      vim.cmd.normal { keys, bang = true }
+      if keys:sub(1, 1) == 'c' then
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), 'n', false)
+      else
+        vim.cmd.normal { keys, bang = true }
+      end
       return
     end
 
@@ -119,12 +122,3 @@ vim.api.nvim_create_user_command('TogglePreserveYank', function()
   print('Preserve yank & clipboard is now ' .. (vim.g.preserve_yank_enabled and 'enabled' or 'disabled'))
 end, { desc = 'Toggle preserving yank/clipboard during destructive operations' })
 
-
--- Define the statusline function
-function _G.preserve_yank_status()
-  if vim.g.preserve_yank_enabled == true then
-    return '📋'  -- Display the clipboard icon when enabled
-  else
-    return ''  -- Return nothing when it's disabled
-  end
-end
