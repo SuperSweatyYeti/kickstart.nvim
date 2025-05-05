@@ -118,3 +118,13 @@ vim.api.nvim_create_user_command('TogglePreserveYank', function()
   vim.g.preserve_yank_enabled = not vim.g.preserve_yank_enabled
   print('Preserve yank & clipboard is now ' .. (vim.g.preserve_yank_enabled and 'enabled' or 'disabled'))
 end, { desc = 'Toggle preserving yank/clipboard during destructive operations' })
+
+
+-- Define the statusline function
+function _G.preserve_yank_status()
+  if vim.g.preserve_yank_enabled == true then
+    return '📋'  -- Display the clipboard icon when enabled
+  else
+    return ''  -- Return nothing when it's disabled
+  end
+end
