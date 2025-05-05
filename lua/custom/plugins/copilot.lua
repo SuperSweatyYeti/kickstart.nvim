@@ -110,12 +110,6 @@ return {
           if not statusline then
             return
           end
-          -- Setup lualine with copilot
-          statusline.setup {
-            sections = {
-              lualine_x = { 'copilot', 'encoding', 'fileformat', 'filetype' },
-            },
-          }
         end,
       },
       {

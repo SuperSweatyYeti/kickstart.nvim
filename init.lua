@@ -161,6 +161,34 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+
+-- NOTE: debugging lua code here
+-- Recursive function to print a table's contents
+
+function print_item(item, indent)
+  indent = indent or 0
+  local spaces = string.rep("  ", indent)
+
+  if type(item) == "table" then
+    print(spaces .. "{")
+    for key, value in pairs(item) do
+      local key_str = (type(key) == "string") and key or ("[" .. tostring(key) .. "]")
+      if type(value) == "table" then
+        print(spaces .. "  " .. key_str .. ": {")
+        print_item(value, indent + 2)
+        print(spaces .. "  }")
+      else
+        print(spaces .. "  " .. key_str .. ": " .. tostring(value))
+      end
+    end
+    print(spaces .. "}")
+  else
+    print(spaces .. tostring(item))
+  end
+end
+
+
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 

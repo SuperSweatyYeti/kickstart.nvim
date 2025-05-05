@@ -20,6 +20,9 @@ return {
     -- Change tabs with hjkl
     vim.keymap.set({ 'n', 'v' }, '<leader>Th', ':tabNext\n', {}),
     vim.keymap.set({ 'n', 'v' }, '<leader>Tl', ':tabPrevious\n', {}),
+    -- Map <leader>/ to search for the visual selection
+    vim.api.nvim_set_keymap('v', '<leader>/', 'y/<C-r>"<CR>', { noremap = true, silent = true }),
+
     -- vim.keymap.set('n', '<A-L>', ':tabNext\n', {}),
     -- vim.keymap.set('n', '<A-H>', ':tabPrevious\n', {}),
     --
@@ -29,6 +32,5 @@ return {
     vim.keymap.set('n', '<leader>Sv', ':vsplit\n', { desc = 'Split pane [v]ertically' }),
     -- Split Horizontal
     vim.keymap.set('n', '<leader>Sh', ':split\n', { desc = 'Split pane [h]orizontally' }),
-
   },
 }
