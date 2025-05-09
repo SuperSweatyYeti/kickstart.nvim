@@ -49,5 +49,8 @@ return {
         -- ['<leader>y'] = { name = '[y]ank', _ = 'which_key_ignore' },
       }
     end,
+    opts = {
+      layout = { align = 'center' },
+    },
   },
 }

@@ -8,15 +8,15 @@ return {
     vim.keymap.set({ 'n', 'v' }, '<S-l>', '<End>', {}),
     -- vim.keymap.set('v', 'ii', "<Esc>", {})
     -- Easier to navigate between panes
-    vim.keymap.set({ 'n', 'v' }, '<C-h>', '<C-w>h', {noremap = true}),
-    vim.keymap.set({ 'n', 'v' }, '<C-j>', '<C-w>j', {noremap = true}),
-    vim.keymap.set({ 'n', 'v' }, '<C-k>', '<C-w>k', {noremap = true}),
-    vim.keymap.set({ 'n', 'v' }, '<C-l>', '<C-w>l', {noremap = true}),
+    vim.keymap.set({ 'n', 'v' }, '<C-h>', '<C-w>h', { noremap = true }),
+    vim.keymap.set({ 'n', 'v' }, '<C-j>', '<C-w>j', { noremap = true }),
+    vim.keymap.set({ 'n', 'v' }, '<C-k>', '<C-w>k', { noremap = true }),
+    vim.keymap.set({ 'n', 'v' }, '<C-l>', '<C-w>l', { noremap = true }),
     -- Resize panes with hjkl
-    vim.keymap.set({ 'n', 'v' }, '<A-h>', '<C-w><', {noremap = true}),
-    vim.keymap.set({ 'n', 'v' }, '<A-j>', '<C-w>+', {noremap = true}),
-    vim.keymap.set({ 'n', 'v' }, '<A-k>', '<C-w>-', {noremap = true}),
-    vim.keymap.set({ 'n', 'v' }, '<A-l>', '<C-w>>', {noremap = true}),
+    vim.keymap.set({ 'n', 'v' }, '<A-h>', '<C-w><', { noremap = true }),
+    vim.keymap.set({ 'n', 'v' }, '<A-j>', '<C-w>+', { noremap = true }),
+    vim.keymap.set({ 'n', 'v' }, '<A-k>', '<C-w>-', { noremap = true }),
+    vim.keymap.set({ 'n', 'v' }, '<A-l>', '<C-w>>', { noremap = true }),
     -- Change tabs with hjkl
     vim.keymap.set({ 'n', 'v' }, '<leader>Th', ':tabNext\n', {}),
     vim.keymap.set({ 'n', 'v' }, '<leader>Tl', ':tabPrevious\n', {}),
@@ -32,5 +32,10 @@ return {
     vim.keymap.set('n', '<leader>Sv', ':vsplit\n', { desc = 'Split pane [v]ertically' }),
     -- Split Horizontal
     vim.keymap.set('n', '<leader>Sh', ':split\n', { desc = 'Split pane [h]orizontally' }),
+    -- Add empty lines before and after cursor line
+    -- before
+    vim.keymap.set('n', 'gO', "<Cmd>call append(line('.') - 1, repeat([''], v:count1))<CR>k", { desc = 'Append Line Before' }),
+    -- after
+    vim.keymap.set('n', 'go', "<Cmd>call append(line('.'), repeat([''], v:count1))<CR>j", { desc = 'Append Line After' }),
   },
 }
