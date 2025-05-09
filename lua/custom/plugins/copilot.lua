@@ -117,7 +117,7 @@ return {
         -- enable = true,
         -- Variable
         dependencies = {
-          { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
+          -- { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
           { 'nvim-lua/plenary.nvim', branch = 'master' }, -- for curl, log and async functions
         },
         build = 'make tiktoken', -- Only on MacOS or Linux
@@ -134,7 +134,7 @@ return {
           vim.keymap.set('n', '<leader>ccr', '<cmd>CopilotChatReset<cr>', { desc = 'Select Copilot [c]hat [r]eset' }),
           model = copilotModel, -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
           agent = 'copilot', -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
-          context = 'file', -- Default context or array of contexts to use (can be specified manually in prompt via #).
+          context = 'buffer:current', -- Default context or array of contexts to use (can be specified manually in prompt via #).
           -- sticky = nil, -- Default sticky prompt or array of sticky prompts to use at start of every new chat.
           --
           -- temperature = 0.1, -- GPT result temperature
