@@ -1,6 +1,8 @@
 return {
   {
     ------------------ Custom Keymaps ---------------------------------
+    -- Quick exit without saving
+    vim.keymap.set({ 'n' }, '<leader>QQ', '<cmd>qa!<enter>', { desc = '[Q]uit quit without saving' }),
     -- Easier to change back to normal mode 'Double tap i'
     vim.keymap.set({ 'v', 'i' }, 'ii', '<Esc><Esc>', { desc = 'escape mode' }),
     -- Quickly get to end and beggining of line

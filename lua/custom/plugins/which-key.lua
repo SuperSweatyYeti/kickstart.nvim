@@ -31,6 +31,7 @@ return {
         { mode = { 'n' }, { '<leader>c', group = '[c]ode', hidden = false } },
         { mode = { 'n' }, { '<leader>d', group = '[d]ocument', hidden = false } },
         { mode = { 'n' }, { '<leader>l', group = '[l]azyGit', hidden = false } },
+        { mode = { 'n' }, { '<leader>Q', group = '[Q]uit quit', hidden = false } },
         { mode = { 'n' }, { '<leader>r', group = '[r]ename', hidden = false } },
         { mode = { 'n' }, { '<leader>s', group = '[s]earch', hidden = false } },
         { mode = { 'n' }, { '<leader>u', group = '[u]ndo', hidden = false } },
