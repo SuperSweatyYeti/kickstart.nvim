@@ -107,7 +107,7 @@ vim.g.have_nerd_font = true
 -- NOTE: Detect our OS here
 -- We may need to enable or disable stuff based on our OS type
 vim.g.OSName = vim.loop.os_uname().sysname
--- Variable bools based on what our OS name is...
+
 ---
 -- Checks if the operating system is Windows.
 -- @return boolean true if the OS name contains "windows", otherwise false.
