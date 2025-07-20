@@ -107,10 +107,54 @@ vim.g.have_nerd_font = true
 -- NOTE: Detect our OS here
 -- We may need to enable or disable stuff based on our OS type
 vim.g.OSName = vim.loop.os_uname().sysname
--- Variable bool based on if our OS is windows
-vim.g.isOSWindows = string.find(string.lower(vim.g.OSName), "windows")
-vim.g.isOSLinux = string.find(string.lower(vim.g.OSName), "linux")
-vim.g.isOSMac = string.find(string.lower(vim.g.OSName), "darwin")
+-- Variable bools based on what our OS name is...
+---
+-- Checks if the operating system is Windows.
+-- @return boolean true if the OS name contains "windows", otherwise false.
+---
+function is_os_windows()
+  local os_name = vim.g.OSName or ""
+  -- Check if the lowercase version of the OS name contains "windows".
+  if string.find(string.lower(os_name), "windows") then
+    -- If the substring is found, explicitly return true.
+    return true
+  else
+    -- If the substring is not found, explicitly return false.
+    return false
+  end
+end
+
+---
+-- Checks if the operating system is Linux.
+-- @return boolean true if the OS name contains "linux", otherwise false.
+---
+function is_os_linux()
+  local os_name = vim.g.OSName or ""
+  -- Check if the lowercase version of the OS name contains "linux".
+  if string.find(string.lower(os_name), "linux") then
+    -- If the substring is found, explicitly return true.
+    return true
+  else
+    -- If the substring is not found, explicitly return false.
+    return false
+  end
+end
+
+---
+-- Checks if the operating system is Mac os.
+-- @return boolean true if the OS name contains "darwin", otherwise false.
+---
+function is_os_darwin()
+  local os_name = vim.g.OSName or ""
+  -- Check if the lowercase version of the OS name contains "darwin".
+  if string.find(string.lower(os_name), "darwin") then
+    -- If the substring is found, explicitly return true.
+    return true
+  else
+    -- If the substring is not found, explicitly return false.
+    return false
+  end
+end
 
 
 -- [[ Setting options ]]

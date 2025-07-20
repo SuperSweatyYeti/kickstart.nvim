@@ -4,7 +4,12 @@ return {
     -- Quick exit without saving
     vim.keymap.set({ 'n' }, '<leader>QQ', '<cmd>qa!<enter>', { desc = '[Q]uit quit without saving' }),
     -- Easier to change back to normal mode 'Double tap i'
-    vim.keymap.set({ 'v', 'i' }, 'ii', '<Esc><Esc>', { desc = 'escape mode' }),
+    -- Insert mode escape
+    vim.keymap.set('i', 'ii', '<Esc>', { noremap = true, silent = true, desc = 'Escape insert mode' }),
+    -- Visual mode escape
+    vim.keymap.set('v', 'iiv', '<Esc>', { noremap = true, silent = true, desc = 'Escape visual mode' }),
+    -- Visual block (x) mode escape
+    vim.keymap.set('x', 'iiv', '<Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
     -- Quickly get to end and beggining of line
     vim.keymap.set({ 'n', 'v' }, '<S-h>', '<Home>', {}),
     vim.keymap.set({ 'n', 'v' }, '<S-l>', '<End>', {}),
