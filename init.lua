@@ -103,6 +103,16 @@ vim.g.use_borders = true
 -- Set to true if you have a Nerd Font installed
 vim.g.have_nerd_font = true
 
+
+-- NOTE: Detect our OS here
+-- We may need to enable or disable stuff based on our OS type
+vim.g.OSName = vim.loop.os_uname().sysname
+-- Variable bool based on if our OS is windows
+vim.g.isOSWindows = string.find(string.lower(vim.g.OSName), "windows")
+vim.g.isOSLinux = string.find(string.lower(vim.g.OSName), "linux")
+vim.g.isOSMac = string.find(string.lower(vim.g.OSName), "darwin")
+
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
