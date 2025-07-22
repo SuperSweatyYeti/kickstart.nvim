@@ -17,7 +17,11 @@ return { -- Collection of various small independent plugins/modules
     require('mini.surround').setup()
 
     -- VScode like indent highlighting
-    require('mini.indentscope').setup()
+    require('mini.indentscope').setup {
+      mappings = {
+        object_scope = 'is',
+      },
+    }
 
     -- Simple and easy statusline.
     --  You could remove this setup call if you don't like it,

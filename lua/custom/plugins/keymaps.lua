@@ -5,15 +5,18 @@ return {
     vim.keymap.set({ 'n' }, '<leader>QQ', '<cmd>qa!<enter>', { desc = '[Q]uit quit without saving' }),
     -- Easier to change back to normal mode 'Double tap i'
     -- Insert mode escape
-    vim.keymap.set('i', 'ii', '<Esc>', { noremap = true, silent = true, desc = 'Escape insert mode' }),
+    vim.keymap.set('i', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape insert mode' }),
     -- Visual mode escape
-    vim.keymap.set('v', 'iiv', '<Esc>', { noremap = true, silent = true, desc = 'Escape visual mode' }),
+    vim.keymap.set('v', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual mode' }),
     -- Visual block (x) mode escape
-    vim.keymap.set('x', 'iiv', '<Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
+    vim.keymap.set('x', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
     -- Quickly get to end and beggining of line
     vim.keymap.set({ 'n', 'v' }, '<S-h>', '<Home>', {}),
     vim.keymap.set({ 'n', 'v' }, '<S-l>', '<End>', {}),
     -- vim.keymap.set('v', 'ii', "<Esc>", {})
+    -- Better Indenting
+    vim.keymap.set({ 'v' }, '<', '<gv', { noremap = true }),
+    vim.keymap.set({ 'v' }, '>', '>gv', { noremap = true }),
     -- Easier to navigate between panes
     vim.keymap.set({ 'n', 'v' }, '<C-h>', '<C-w>h', { noremap = true }),
     vim.keymap.set({ 'n', 'v' }, '<C-j>', '<C-w>j', { noremap = true }),
