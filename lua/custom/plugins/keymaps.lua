@@ -10,6 +10,10 @@ return {
     vim.keymap.set('v', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual mode' }),
     -- Visual block (x) mode escape
     vim.keymap.set('x', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
+    -- Past and PRESERVE YANK
+    vim.keymap.set({ 'x', 'v' }, 'p', [["0p]], { silent = true, desc = 'Paste without overwriting yank' }),
+
+    vim.keymap.set('x', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
     -- Quickly get to end and beggining of line
     vim.keymap.set({ 'n', 'v' }, '<S-h>', '<Home>', {}),
     vim.keymap.set({ 'n', 'v' }, '<S-l>', '<End>', {}),
