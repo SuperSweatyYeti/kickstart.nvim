@@ -10,8 +10,16 @@ return {
     vim.keymap.set('v', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual mode' }),
     -- Visual block (x) mode escape
     vim.keymap.set('x', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
-    -- Past and PRESERVE YANK
-    vim.keymap.set({ 'x', 'v' }, 'p', [["0p]], { silent = true, desc = 'Paste without overwriting yank' }),
+    -- ONLY EVER Paste last Yank
+    vim.keymap.set({ 'n', 'v' }, 'p', '"0p', { noremap = true, silent = true, desc = 'Paste last yank' }),
+    -- Normal mode 'x': delete char into register 0 'last yank'
+    vim.keymap.set('n', 'x', function()
+      vim.cmd 'normal! "0x'
+    end, { noremap = true, silent = true }),
+    -- Visual mode 'x': delete selection into register 0 'last yank'
+    vim.keymap.set('x', 'x', function()
+      vim.cmd 'normal! "0d'
+    end, { noremap = true, silent = true }),
 
     vim.keymap.set('x', 'ii', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
     -- Quickly get to end and beggining of line
