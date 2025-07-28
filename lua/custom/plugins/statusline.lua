@@ -8,6 +8,7 @@ return {
     config = function()
       -- Define the statusline function for showing our custom yank behavior toggle
       -- defined in lua/settings/yank-config.lua
+
       function preserve_yank_status()
         if vim.g.preserve_yank_enabled == true then
           return '📋' -- Display the clipboard icon when enabled
