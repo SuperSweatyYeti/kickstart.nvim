@@ -103,7 +103,6 @@ vim.g.use_borders = true
 -- Set to true if you have a Nerd Font installed
 vim.g.have_nerd_font = true
 
-
 -- NOTE: Detect our OS here
 -- We may need to enable or disable stuff based on our OS type
 vim.g.OSName = vim.loop.os_uname().sysname
@@ -113,9 +112,9 @@ vim.g.OSName = vim.loop.os_uname().sysname
 -- @return boolean true if the OS name contains "windows", otherwise false.
 ---
 function is_os_windows()
-  local os_name = vim.g.OSName or ""
+  local os_name = vim.g.OSName or ''
   -- Check if the lowercase version of the OS name contains "windows".
-  if string.find(string.lower(os_name), "windows") then
+  if string.find(string.lower(os_name), 'windows') then
     -- If the substring is found, explicitly return true.
     return true
   else
@@ -129,9 +128,9 @@ end
 -- @return boolean true if the OS name contains "linux", otherwise false.
 ---
 function is_os_linux()
-  local os_name = vim.g.OSName or ""
+  local os_name = vim.g.OSName or ''
   -- Check if the lowercase version of the OS name contains "linux".
-  if string.find(string.lower(os_name), "linux") then
+  if string.find(string.lower(os_name), 'linux') then
     -- If the substring is found, explicitly return true.
     return true
   else
@@ -145,9 +144,9 @@ end
 -- @return boolean true if the OS name contains "darwin", otherwise false.
 ---
 function is_os_darwin()
-  local os_name = vim.g.OSName or ""
+  local os_name = vim.g.OSName or ''
   -- Check if the lowercase version of the OS name contains "darwin".
-  if string.find(string.lower(os_name), "darwin") then
+  if string.find(string.lower(os_name), 'darwin') then
     -- If the substring is found, explicitly return true.
     return true
   else
@@ -155,7 +154,6 @@ function is_os_darwin()
     return false
   end
 end
-
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -215,33 +213,30 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
-
 -- NOTE: debugging lua code here
 -- Recursive function to print a table's contents
 
 function lua_print(item, indent)
   indent = indent or 0
-  local spaces = string.rep("  ", indent)
+  local spaces = string.rep('  ', indent)
 
-  if type(item) == "table" then
-    print(spaces .. "{")
+  if type(item) == 'table' then
+    print(spaces .. '{')
     for key, value in pairs(item) do
-      local key_str = (type(key) == "string") and key or ("[" .. tostring(key) .. "]")
-      if type(value) == "table" then
-        print(spaces .. "  " .. key_str .. ": {")
+      local key_str = (type(key) == 'string') and key or ('[' .. tostring(key) .. ']')
+      if type(value) == 'table' then
+        print(spaces .. '  ' .. key_str .. ': {')
         print_item(value, indent + 2)
-        print(spaces .. "  }")
+        print(spaces .. '  }')
       else
-        print(spaces .. "  " .. key_str .. ": " .. tostring(value))
+        print(spaces .. '  ' .. key_str .. ': ' .. tostring(value))
       end
     end
-    print(spaces .. "}")
+    print(spaces .. '}')
   else
     print(spaces .. tostring(item))
   end
 end
-
-
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -290,13 +285,85 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
 --  See `:help vim.highlight.on_yank()`
-vim.api.nvim_create_autocmd('TextYankPost', {
-  desc = 'Highlight when yanking (copying) text',
-  group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
-  callback = function()
-    vim.highlight.on_yank()
-  end,
-})
+--
+--  Backup config KickStart
+-- vim.api.nvim_create_autocmd('TextYankPost', {
+--   desc = 'Highlight when yanking (copying) text',
+--   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+--   callback = function()
+--     vim.highlight.on_yank()
+--   end,
+-- })
+-- Backup config KickStart end
+
+-- -- Backup AI
+-- -- Function to perform yank + highlight + restore cursor
+-- local function yank_and_restore_cursor(type)
+--   local curpos = vim.api.nvim_win_get_cursor(0)
+--
+--   -- Yank based on type
+--   if type == 'v' or type == 'V' or type == '\22' then  -- visual, line, block
+--     vim.cmd('normal! "' .. vim.v.register .. 'y' )
+--   else
+--     vim.cmd('normal! "' .. vim.v.register .. 'y' .. type)
+--   end
+--
+--   -- Highlight
+--   vim.highlight.on_yank { higroup = 'IncSearch', timeout = 200 }
+--
+--   -- Restore cursor
+--   vim.defer_fn(function()
+--     pcall(vim.api.nvim_win_set_cursor, 0, curpos)
+--   end, 10)
+-- end
+--
+-- -- Visual mode mapping
+-- vim.keymap.set({ 'v','x' }, 'y', function()
+--   yank_and_restore_cursor(vim.fn.visualmode())
+-- end, { noremap = true, silent = true })
+-- -- Bacup AI end
+-- NOTE: Better yank behavior
+-- Operatorfunc: perform yank + highlight + restore cursor
+_G.yank_and_restore_cursor = function(type)
+  local curpos = vim.api.nvim_win_get_cursor(0)
+
+  if type == "char" then
+    vim.cmd('normal! `[v`]y')
+  elseif type == "line" then
+    vim.cmd('normal! `[V`]y')
+  elseif type == "block" then
+    vim.cmd('normal! `[\22`]y')  -- \22 = <C-V>
+  end
+  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+  vim.defer_fn(function()
+    pcall(vim.api.nvim_win_set_cursor, 0, curpos)
+  end, 10)
+end
+-- Remap 'y' in normal mode to use operatorfunc
+vim.keymap.set('n', 'y', function()
+  _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
+  vim.o.operatorfunc = 'v:lua.yank_and_restore_cursor'
+  return 'g@'
+end, { expr = true })
+-- Visual mode 'y' override (works fine)
+vim.keymap.set('x', 'y', function()
+  _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
+  vim.cmd('normal! y')
+  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+  vim.defer_fn(function()
+    pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
+  end, 10)
+end, { noremap = true, silent = true })
+-- Special case: map 'yy' to visual line + yank + restore cursor
+vim.keymap.set('n', 'yy', function()
+  local curpos = vim.api.nvim_win_get_cursor(0)
+  vim.cmd('normal! V')  -- visual line select current line
+  vim.cmd('normal! y')  -- yank it
+  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+  vim.api.nvim_win_set_cursor(0, curpos)  -- restore cursor position
+end, { noremap = true, silent = true })
+
+
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -318,116 +385,113 @@ vim.opt.rtp:prepend(lazypath)
 --    :Lazy update
 --
 -- NOTE: Here is where you install your plugins.
-require('lazy').setup(
-  {
-    -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-    'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+require('lazy').setup({
+  -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
+  'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
-    -- NOTE: Plugins can also be added by using a table,
-    -- with the first argument being the link and the following
-    -- keys can be used to configure plugin behavior/loading/etc.
-    --
-    -- Use `opts = {}` to force a plugin to be loaded.
-    --
-    --  This is equivalent to:
-    --    require('Comment').setup({})
+  -- NOTE: Plugins can also be added by using a table,
+  -- with the first argument being the link and the following
+  -- keys can be used to configure plugin behavior/loading/etc.
+  --
+  -- Use `opts = {}` to force a plugin to be loaded.
+  --
+  --  This is equivalent to:
+  --    require('Comment').setup({})
 
-    -- "gc" to comment visual regions/lines
-    { 'numToStr/Comment.nvim', opts = {} },
+  -- "gc" to comment visual regions/lines
+  { 'numToStr/Comment.nvim', opts = {} },
 
-    -- Here is a more advanced example where we pass configuration
-    -- options to `gitsigns.nvim`. This is equivalent to the following lua:
-    --    require('gitsigns').setup({ ... })
-    --
-    -- See `:help gitsigns` to understand what the configuration keys do
-    { -- Adds git related signs to the gutter, as well as utilities for managing changes
-      'lewis6991/gitsigns.nvim',
-      opts = {
-        signs = {
-          add = { text = '+' },
-          change = { text = '~' },
-          delete = { text = '_' },
-          topdelete = { text = '‾' },
-          changedelete = { text = '~' },
-        },
+  -- Here is a more advanced example where we pass configuration
+  -- options to `gitsigns.nvim`. This is equivalent to the following lua:
+  --    require('gitsigns').setup({ ... })
+  --
+  -- See `:help gitsigns` to understand what the configuration keys do
+  { -- Adds git related signs to the gutter, as well as utilities for managing changes
+    'lewis6991/gitsigns.nvim',
+    opts = {
+      signs = {
+        add = { text = '+' },
+        change = { text = '~' },
+        delete = { text = '_' },
+        topdelete = { text = '‾' },
+        changedelete = { text = '~' },
       },
     },
-
-    -- NOTE: Plugins can also be configured to run lua code when they are loaded.
-    --
-    -- This is often very useful to both group configuration, as well as handle
-    -- lazy loading plugins that don't need to be loaded immediately at startup.
-    --
-    -- For example, in the following configuration, we use:
-    --  event = 'VimEnter'
-    --
-    -- which loads which-key before all the UI elements are loaded. Events can be
-    -- normal autocommands events (`:help autocmd-events`).
-    --
-    -- Then, because we use the `config` key, the configuration only runs
-    -- after the plugin has been loaded:
-    --  config = function() ... end
-
-    -- NOTE: Plugins can specify dependencies.
-    --
-    -- The dependencies are proper plugin specifications as well - anything
-    -- you do for a plugin at the top level, you can do for a dependency.
-    --
-    -- Use the `dependencies` key to specify the dependencies of a particular plugin
-
-    -- Highlight todo, notes, etc in comments
-    {
-      'folke/todo-comments.nvim',
-      event = 'VimEnter',
-      dependencies = { 'nvim-lua/plenary.nvim' },
-      opts = { signs = false },
-    },
-
-    -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
-    -- init.lua. If you want these files, they are in the repository, so you can just download them and
-    -- put them in the right spots if you want.
-
-    -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for kickstart
-    --
-    --  Here are some example plugins that I've included in the kickstart repository.
-    --  Uncomment any of the lines below to enable them (you will need to restart nvim).
-    --
-    -- require 'kickstart.plugins.debug',
-    -- require 'kickstart.plugins.indent_line',
-
-    -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
-    --    This is the easiest way to modularize your config.
-    --
-    --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-    --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
-    { import = 'custom.plugins' },
-    { import = 'custom.themes' },
   },
+
+  -- NOTE: Plugins can also be configured to run lua code when they are loaded.
+  --
+  -- This is often very useful to both group configuration, as well as handle
+  -- lazy loading plugins that don't need to be loaded immediately at startup.
+  --
+  -- For example, in the following configuration, we use:
+  --  event = 'VimEnter'
+  --
+  -- which loads which-key before all the UI elements are loaded. Events can be
+  -- normal autocommands events (`:help autocmd-events`).
+  --
+  -- Then, because we use the `config` key, the configuration only runs
+  -- after the plugin has been loaded:
+  --  config = function() ... end
+
+  -- NOTE: Plugins can specify dependencies.
+  --
+  -- The dependencies are proper plugin specifications as well - anything
+  -- you do for a plugin at the top level, you can do for a dependency.
+  --
+  -- Use the `dependencies` key to specify the dependencies of a particular plugin
+
+  -- Highlight todo, notes, etc in comments
   {
-    ui = {
-      -- If you have a Nerd Font, set icons to an empty table which will use the
-      -- default lazy.nvim defined Nerd Font icons otherwise define a unicode icons table
-      icons = vim.g.have_nerd_font and {} or {
-        cmd = '⌘',
-        config = '🛠',
-        event = '📅',
-        ft = '📂',
-        init = '⚙',
-        keys = '🗝',
-        plugin = '🔌',
-        runtime = '💻',
-        require = '🌙',
-        source = '📄',
-        start = '🚀',
-        task = '📌',
-        lazy = '💤 ',
-      },
+    'folke/todo-comments.nvim',
+    event = 'VimEnter',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    opts = { signs = false },
+  },
+
+  -- The following two comments only work if you have downloaded the kickstart repo, not just copy pasted the
+  -- init.lua. If you want these files, they are in the repository, so you can just download them and
+  -- put them in the right spots if you want.
+
+  -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for kickstart
+  --
+  --  Here are some example plugins that I've included in the kickstart repository.
+  --  Uncomment any of the lines below to enable them (you will need to restart nvim).
+  --
+  -- require 'kickstart.plugins.debug',
+  -- require 'kickstart.plugins.indent_line',
+
+  -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
+  --    This is the easiest way to modularize your config.
+  --
+  --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
+  --    For additional information, see `:help lazy.nvim-lazy.nvim-structuring-your-plugins`
+  { import = 'custom.plugins' },
+  { import = 'custom.themes' },
+}, {
+  ui = {
+    -- If you have a Nerd Font, set icons to an empty table which will use the
+    -- default lazy.nvim defined Nerd Font icons otherwise define a unicode icons table
+    icons = vim.g.have_nerd_font and {} or {
+      cmd = '⌘',
+      config = '🛠',
+      event = '📅',
+      ft = '📂',
+      init = '⚙',
+      keys = '🗝',
+      plugin = '🔌',
+      runtime = '💻',
+      require = '🌙',
+      source = '📄',
+      start = '🚀',
+      task = '📌',
+      lazy = '💤 ',
     },
-  }
-)
+  },
+})
 
 -- NOTE: You can import other lua settings folders here.
--- We are using the plenary plugin to make loading all lua config files within 
+-- We are using the plenary plugin to make loading all lua config files within
 -- a folder more dynamic. See this file for an example: ./lua/custom/settings/init.lua
 -- Each folder you import needs to have it's own init.lua file following the example.
 require 'custom.settings'
