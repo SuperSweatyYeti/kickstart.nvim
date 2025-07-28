@@ -282,6 +282,7 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
+-- NOTE: 
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
 --  See `:help vim.highlight.on_yank()`
@@ -322,30 +323,103 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 --   yank_and_restore_cursor(vim.fn.visualmode())
 -- end, { noremap = true, silent = true })
 -- -- Bacup AI end
--- NOTE: Better yank behavior
--- Operatorfunc: perform yank + highlight + restore cursor
-_G.yank_and_restore_cursor = function(type)
-  local curpos = vim.api.nvim_win_get_cursor(0)
 
-  if type == "char" then
+-- -- NOTE: Better yank behavior
+--
+-- -- Operatorfunc: perform yank + highlight + restore cursor
+-- _G.yank_and_restore_cursor = function(type)
+--   local curpos = vim.api.nvim_win_get_cursor(0)
+--
+--   if type == "char" then
+--     vim.cmd('normal! `[v`]y')
+--   elseif type == "line" then
+--     vim.cmd('normal! `[V`]y')
+--   elseif type == "block" then
+--     vim.cmd('normal! `[\22`]y')  -- \22 = <C-V>
+--   end
+--   vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+--   vim.defer_fn(function()
+--     pcall(vim.api.nvim_win_set_cursor, 0, curpos)
+--   end, 10)
+-- end
+
+-- -- backup start
+-- -- When user hits 'y' in normal mode
+-- vim.keymap.set('n', 'y', function()
+--   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)  -- Save position *before* motion
+--   vim.o.operatorfunc = 'v:lua.yank_and_restore_cursor'
+--   return 'g@'
+-- end, { expr = true })
+--
+-- _G.yank_and_restore_cursor = function(type)
+--   if type == 'char' then
+--     vim.cmd('normal! `[v`]y')
+--   elseif type == 'line' then
+--     vim.cmd('normal! `[V`]y')
+--   elseif type == 'block' then
+--     vim.cmd('normal! `[\22`]y')
+--   end
+--   vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+--   -- Restore the saved cursor position after a small delay
+--   vim.defer_fn(function()
+--     if _G._saved_cursor then
+--       pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
+--     end
+--   end, 10)
+-- end
+--
+-- -- Remap 'y' in normal mode to use operatorfunc
+-- vim.keymap.set('n', 'y', function()
+--   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
+--   vim.o.operatorfunc = 'v:lua.yank_and_restore_cursor'
+--   return 'g@'
+-- end, { expr = true })
+-- -- Visual mode 'y' override (works fine)
+-- vim.keymap.set('x', 'y', function()
+--   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
+--   vim.cmd('normal! y')
+--   vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+--   vim.defer_fn(function()
+--     pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
+--   end, 10)
+-- end, { noremap = true, silent = true })
+-- -- Special case: map 'yy' to visual line + yank + restore cursor
+-- vim.keymap.set('n', 'yy', function()
+--   local curpos = vim.api.nvim_win_get_cursor(0)
+--   vim.cmd('normal! V')  -- visual line select current line
+--   vim.cmd('normal! y')  -- yank it
+--   vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+--   vim.api.nvim_win_set_cursor(0, curpos)  -- restore cursor position
+-- end, { noremap = true, silent = true })
+-- -- backup end
+
+-- Define the operatorfunc to yank + highlight + restore cursor
+_G.yank_and_restore_cursor = function(type)
+  if type == 'char' then
     vim.cmd('normal! `[v`]y')
-  elseif type == "line" then
+  elseif type == 'line' then
     vim.cmd('normal! `[V`]y')
-  elseif type == "block" then
-    vim.cmd('normal! `[\22`]y')  -- \22 = <C-V>
+  elseif type == 'block' then
+    vim.cmd('normal! `[\22`]y')  -- \22 is <C-v> for block
   end
+
   vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+
   vim.defer_fn(function()
-    pcall(vim.api.nvim_win_set_cursor, 0, curpos)
+    if _G._saved_cursor then
+      pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
+    end
   end, 10)
 end
--- Remap 'y' in normal mode to use operatorfunc
+
+-- Normal mode 'y' remap to use operatorfunc with saved cursor
 vim.keymap.set('n', 'y', function()
   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
   vim.o.operatorfunc = 'v:lua.yank_and_restore_cursor'
   return 'g@'
-end, { expr = true })
--- Visual mode 'y' override (works fine)
+end, { expr = true, noremap = true })
+
+-- Visual mode 'y' remap to yank + restore cursor
 vim.keymap.set('x', 'y', function()
   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
   vim.cmd('normal! y')
@@ -354,14 +428,10 @@ vim.keymap.set('x', 'y', function()
     pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
   end, 10)
 end, { noremap = true, silent = true })
--- Special case: map 'yy' to visual line + yank + restore cursor
-vim.keymap.set('n', 'yy', function()
-  local curpos = vim.api.nvim_win_get_cursor(0)
-  vim.cmd('normal! V')  -- visual line select current line
-  vim.cmd('normal! y')  -- yank it
-  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
-  vim.api.nvim_win_set_cursor(0, curpos)  -- restore cursor position
-end, { noremap = true, silent = true })
+
+-- Make 'yy' reuse the same yank logic via motion
+vim.keymap.set('n', 'yy', 'y_', { noremap = true, silent = true })
+
 
 
 
