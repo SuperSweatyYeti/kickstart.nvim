@@ -57,7 +57,14 @@ git clone https://github.com/SuperSweatyYeti/kickstart.nvim.git "${XDG_CONFIG_HO
 
 
 
-#### Windows 
+#### Windows
+
+Install Dependencies:
+- GCC
+- ripgrep
+```powershell
+winget install MartinStorsjo.LLVM-MinGW.MSVCRT BurntSushi.ripgrep.GNU
+```
 
 If you're using `cmd.exe`:
 
