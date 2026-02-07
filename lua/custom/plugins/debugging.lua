@@ -79,6 +79,9 @@ return {
       dap.listeners.before.event_exited.dapui_config = function()
         dapui.close()
       end
+      dap.listeners.before.disconnect['dapui_config'] = function()
+        dapui.close()
+      end
       vim.cmd 'hi DapBreakpointColor guifg=#fa4848'
       vim.cmd 'hi DapBreakpointConditionColor guifg=#fa4848'
       vim.cmd 'hi DapStoppedColor guifg=#faa448' -- yello\w background for stopped line

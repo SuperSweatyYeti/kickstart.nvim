@@ -210,6 +210,7 @@ return {
         'debugpy',
         'python-lsp-server',
         'pylint',
+        'powershell-editor-services',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
