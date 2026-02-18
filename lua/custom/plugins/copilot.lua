@@ -6,7 +6,9 @@ return {
     'zbirenbaum/copilot.lua',
     enabled = true,
     cmd = 'Copilot',
-    vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
+    vim.keymap.set('n', '<leader>cps', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
+    vim.keymap.set('n', '<leader>cpt', '<cmd>Copilot toggle<cr>', { desc = 'Toggle Copilot status' }),
+    vim.keymap.set('n', '<leader>cpx', '<cmd>Copilot disable<cr>', { desc = 'Disable Copilot' }),
     -- event = 'InsertEnter',
     config = function()
       require('copilot').setup {
@@ -29,7 +31,7 @@ return {
           },
         },
         suggestion = {
-          enabled = true, -- Disabled because we are using `copilot-cmp` for completion
+          enabled = false, -- Disabled because we are using `copilot-cmp` for completion
           auto_trigger = false,
           hide_during_completion = true,
           debounce = 75,
