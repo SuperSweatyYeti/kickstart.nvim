@@ -1,5 +1,5 @@
 -- Copilot Model Variable
-local copilotModel = 'claude-3.7-sonnet-thought'
+local copilotModel = 'claude-opus-4.6'
 return {
   {
     -- Requires nodejs to be installed
