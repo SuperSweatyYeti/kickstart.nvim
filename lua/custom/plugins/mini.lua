@@ -18,6 +18,9 @@ return { -- Collection of various small independent plugins/modules
 
     -- VScode like indent highlighting
     require('mini.indentscope').setup {
+      draw = {
+        animation = require('mini.indentscope').gen_animation.none(), -- Disable animation for indent scope
+      },
       mappings = {
         object_scope = 'is',
       },
