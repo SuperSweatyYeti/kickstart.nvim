@@ -1,6 +1,6 @@
 -- Set to false to disable PowerShell debugging
 -- Disable this config file
-local enabled = true
+local enabled = false
 
 if not enabled then
   return {}
