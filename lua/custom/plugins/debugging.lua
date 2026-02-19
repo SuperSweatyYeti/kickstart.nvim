@@ -65,16 +65,25 @@ return {
       end
       vim.cmd 'hi DapBreakpointColor guifg=#fa4848'
       vim.cmd 'hi DapBreakpointConditionColor guifg=#fa4848'
-      vim.cmd 'hi DapStoppedColor guifg=#faa448' -- yello\w background for stopped line
+      vim.cmd 'hi DapStoppedColor guifg=#f7ce00'
       vim.cmd 'hi DapStoppedLineBgColor guibg=#57551e'
+      vim.cmd 'hi DapStoppedOnBreakpointColor guifg=#ec5d00'
       vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpointConditionColor' })
       vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
       vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
 
+      -- Change DapStopped sign when stopped on a breakpoint
+      dap.listeners.after.event_stopped['custom_stopped_on_bp'] = function(_, body)
+        if body and body.reason == 'breakpoint' then
+          vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedOnBreakpointColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
+        else
+          vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
+        end
+      end
+
       -- reload current color scheme to pick up colors override if it was set up in a lazy plugin definition fashion
       -- vim.cmd.colorscheme(vim.g.colors_name)
     end,
-
     keys = {
       {
         '<leader>db',
