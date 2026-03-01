@@ -20,8 +20,8 @@ function CleanViewToggle()
     saved_listchars = vim.opt.listchars:get()
 
     -- Disable virtual text plugins
-    vim.cmd("IBLDisable")
-    vim.cmd("TSContextDisable")
+    pcall(vim.cmd, "IBLDisable")
+    pcall(vim.cmd, "TSContextDisable")
 
     -- Safely disable diagnostics if available
     if vim.diagnostic and vim.diagnostic.disable then
@@ -55,8 +55,8 @@ function CleanViewToggle()
     vim.opt.listchars = saved_listchars
 
     -- Re-enable plugins
-    vim.cmd("IBLEnable")
-    vim.cmd("TSContextEnable")
+    pcall(vim.cmd, "IBLEnable")
+    pcall(vim.cmd, "TSContextEnable")
 
     -- Safely enable diagnostics if available
     if vim.diagnostic and vim.diagnostic.enable then
@@ -80,4 +80,3 @@ vim.api.nvim_set_keymap('n', '<leader>cv', '<cmd>lua CleanViewToggle()<CR>', {
   silent = true,
   desc = "[c]lean [v]iew Toggle"
 })
-
