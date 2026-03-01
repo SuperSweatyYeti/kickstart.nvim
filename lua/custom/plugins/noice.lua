@@ -31,7 +31,7 @@ return {
     }
 
     require('which-key').add {
-      { mode = { 'n' }, { '<leader>n', group = '[n]oice plugin notifcations', hidden = false } },
+      { mode = { 'n' }, { '<leader>n', group = '[n]oice plugin notifications', hidden = false } },
     }
 
     vim.keymap.set(
