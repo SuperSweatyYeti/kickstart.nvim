@@ -98,7 +98,7 @@ vim.g.maplocalleader = ' '
 
 -- Use borders for completion and documentation windows from plugins
 -- Might not need if above options start working
-vim.g.use_borders = true
+vim.o.winborder = 'rounded'
 
 -- Set to true if you have a Nerd Font installed
 vim.g.have_nerd_font = true
