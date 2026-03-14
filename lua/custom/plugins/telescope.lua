@@ -62,7 +62,7 @@ return {
         --
         defaults = {
           mappings = {
-            i = { ['ii'] = actions.close },
+            i = { ['JJ'] = actions.close },
           },
         },
         -- pickers = {}
