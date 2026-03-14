@@ -30,8 +30,12 @@
 
 -- NOTE: nice aliases for quickfix do
 -- Aliases: :Qdo → :cdo, :Qfdo → :cfdo
-vim.api.nvim_create_user_command('Qdo', function(opts) vim.cmd('cdo ' .. opts.args) end, { nargs = '+' })
-vim.api.nvim_create_user_command('Qfdo', function(opts) vim.cmd('cfdo ' .. opts.args) end, { nargs = '+' })
+vim.api.nvim_create_user_command('Qdo', function(opts)
+  vim.cmd('cdo ' .. opts.args)
+end, { nargs = '+' })
+vim.api.nvim_create_user_command('Qfdo', function(opts)
+  vim.cmd('cfdo ' .. opts.args)
+end, { nargs = '+' })
 
 -- Escape special characters for vim regex patterns
 local function escape_vim_regex(str)
@@ -393,10 +397,7 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
     end
 
     if not pending then
-      vim.notify(
-        '[SearchReplaceAll] Done! Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count,
-        vim.log.levels.INFO
-      )
+      vim.notify('[SearchReplaceAll] Done! Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count, vim.log.levels.INFO)
       restore_position()
       return
     end
@@ -406,10 +407,7 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
 
     local ok, char = pcall(vim.fn.getcharstr)
     if not ok then
-      vim.notify(
-        '[SearchReplaceAll] Aborted! Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count,
-        vim.log.levels.WARN
-      )
+      vim.notify('[SearchReplaceAll] Aborted! Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count, vim.log.levels.WARN)
       restore_position()
       return
     end
@@ -436,7 +434,6 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
 
       current_entry = current_entry + 1
       vim.schedule(step)
-
     elseif char == 'u' or char == 'U' then
       if #undo_stack == 0 then
         vim.api.nvim_echo({ { 'Nothing to undo.', 'WarningMsg' } }, false, {})
@@ -474,13 +471,11 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
         vim.notify('[SearchReplaceAll] Undid replacement at entry ' .. undo_entry_idx, vim.log.levels.INFO)
         vim.schedule(step)
       end
-
     elseif char == 'n' or char == 'N' then
       skipped_count = skipped_count + 1
       entry_states[current_entry] = 'skipped'
       current_entry = current_entry + 1
       vim.schedule(step)
-
     elseif char == 'j' or char == '\x0e' then
       -- j or Ctrl+n: browse to next visible (non-replaced) entry, wrapping around
       local next_entry = next_visible(current_entry + 1)
@@ -492,7 +487,6 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
       end
       show_entry(current_entry)
       vim.schedule(step)
-
     elseif char == 'k' or char == '\x10' then
       -- k or Ctrl+p: browse to previous visible (non-replaced) entry, wrapping around
       local prev_entry = prev_visible(current_entry - 1)
@@ -504,7 +498,6 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
       end
       show_entry(current_entry)
       vim.schedule(step)
-
     elseif char == 'a' or char == 'A' then
       for i = 1, total_count do
         if entry_states[i] == 'pending' then
@@ -522,13 +515,9 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
           end
         end
       end
-      vim.notify(
-        '[SearchReplaceAll] Done! Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count,
-        vim.log.levels.INFO
-      )
+      vim.notify('[SearchReplaceAll] Done! Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count, vim.log.levels.INFO)
       restore_position()
       return
-
     elseif char == 'q' or char == 'Q' or char == '\27' then
       local remaining = 0
       for _, s in ipairs(entry_states) do
@@ -537,13 +526,9 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hi
         end
       end
       skipped_count = skipped_count + remaining
-      vim.notify(
-        '[SearchReplaceAll] Stopped. Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count,
-        vim.log.levels.INFO
-      )
+      vim.notify('[SearchReplaceAll] Stopped. Replaced: ' .. replaced_count .. ', Skipped: ' .. skipped_count, vim.log.levels.INFO)
       restore_position()
       return
-
     else
       vim.api.nvim_echo({ { 'Invalid key. Press y/n/a/u/q or j/k to browse', 'WarningMsg' } }, false, {})
       vim.cmd 'redraw'
@@ -596,14 +581,6 @@ end, {
   desc = 'Search and replace across project using ripgrep + quickfix',
 })
 
--- Which-key groups
-require('which-key').add {
-  { mode = { 'n' }, { '<leader>sR', group = '[s]earch [R]eplace', hidden = false } },
-  { mode = { 'n' }, { '<leader>sRA', group = '[s]earch [R]eplace [A]ll', hidden = false } },
-  { mode = { 'n' }, { '<leader>sRAn', group = '[s]earch [R]eplace [A]ll [n]ormal', hidden = false } },
-  { mode = { 'n' }, { '<leader>sRAr', group = '[s]earch [R]eplace [A]ll [r]egex', hidden = false } },
-}
-
 -- Helper to run the interactive prompts (shared by all keymaps)
 local function search_replace_prompt(use_regex, include_hidden)
   local mode_label = use_regex and 'regex' or 'normal'
@@ -645,22 +622,28 @@ local function search_replace_prompt(use_regex, include_hidden)
   end)
 end
 
--- <leader>sRAnn — normal/literal search, no hidden files
-vim.keymap.set('n', '<leader>sRAnn', function()
-  search_replace_prompt(false, false)
-end, { desc = '[s]earch [R]eplace [A]ll [n]ormal [n]o-hidden' })
-
--- <leader>sRAnh — normal/literal search, include hidden files
-vim.keymap.set('n', '<leader>sRAnh', function()
+-- Which-key groups
+require('which-key').add {
+  { mode = { 'n' }, { '<leader>sR', group = '[s]earch [R]eplace', hidden = false } },
+  { mode = { 'n' }, { '<leader>sRA', group = '[s]earch [R]eplace [A]ll include hidden files', hidden = true } },
+  { mode = { 'n' }, { '<leader>sRa', group = '[s]earch [R]eplace [a]ll', hidden = false } },
+}
+-- <leader>sRAn — normal/literal search, include hidden files
+vim.keymap.set('n', '<leader>sRAn', function()
   search_replace_prompt(false, true)
-end, { desc = '[s]earch [R]eplace [A]ll [n]ormal [h]idden' })
+end, { desc = '[s]earch [R]eplace [A]ll include hidden [n]ormal pattern search (literal)' })
 
--- <leader>sRArn — regex search, no hidden files
-vim.keymap.set('n', '<leader>sRArn', function()
-  search_replace_prompt(true, false)
-end, { desc = '[s]earch [R]eplace [A]ll [r]egex [n]o-hidden' })
-
--- <leader>sRArh — regex search, include hidden files
-vim.keymap.set('n', '<leader>sRArh', function()
+-- <leader>sRAr — regex search, include hidden files
+vim.keymap.set('n', '<leader>sRAr', function()
   search_replace_prompt(true, true)
-end, { desc = '[s]earch [R]eplace [A]ll [r]egex [h]idden' })
+end, { desc = '[s]earch [R]eplace [A]ll include hidden [r]egex pattern search' })
+
+-- <leader>sRan — normal search, no hidden files
+vim.keymap.set('n', '<leader>sRan', function()
+  search_replace_prompt(true, true)
+end, { desc = '[s]earch [R]eplace [a]ll [n]ormal pattern search (literal)' })
+
+-- <leader>sRar — regex search, no hidden files
+vim.keymap.set('n', '<leader>sRar', function()
+  search_replace_prompt(true, true)
+end, { desc = '[s]earch [R]eplace [a]ll [r]egex pattern search' })
