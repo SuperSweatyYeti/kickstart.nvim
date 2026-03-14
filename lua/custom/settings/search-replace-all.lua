@@ -5,12 +5,15 @@
 -- Accepted replacements are removed from the quickfix list so only remaining/skipped items stay.
 --
 -- Usage:
---   :SearchReplaceAll <search> <replace> [true|false] [true|false]
---   <leader>sRAn  (interactive prompt - normal/literal search)
---   <leader>sRAr  (interactive prompt - regex search)
+--   :SearchReplaceAll <search> <replace> [true|false] [true|false] [true|false]
+--   <leader>sRAnn  (interactive prompt - normal/literal search, no hidden files)
+--   <leader>sRAnh  (interactive prompt - normal/literal search, include hidden files)
+--   <leader>sRArn  (interactive prompt - regex search, no hidden files)
+--   <leader>sRArh  (interactive prompt - regex search, include hidden files)
 --
 -- The third argument controls case sensitivity (defaults to true = case sensitive).
 -- The fourth argument controls regex mode (defaults to false = literal/normal).
+-- The fifth argument controls hidden files (defaults to false = no hidden files).
 -- The quickfix window is automatically closed afterwards, whether you finish or abort.
 -- Your original buffer and cursor position are restored when done.
 -- The current quickfix entry is highlighted as you step through each match.
@@ -21,8 +24,9 @@
 --   n = skip this match (move forward)
 --   a = replace all remaining
 --   q / Esc = quit
---   Ctrl+n = preview next match without deciding (skip forward)
---   Ctrl+p = preview previous match without deciding (go back)
+--   u = undo last accepted replacement
+--   j / Ctrl+n = preview next match without deciding (skip forward)
+--   k / Ctrl+p = preview previous match without deciding (go back)
 
 -- NOTE: nice aliases for quickfix do
 -- Aliases: :Qdo → :cdo, :Qfdo → :cfdo
@@ -144,8 +148,23 @@ local function remove_qf_entry(idx)
   end
 end
 
+-- Re-insert an entry into the quickfix list at the given index
+local function insert_qf_entry(idx, entry)
+  local qf_list = vim.fn.getqflist()
+  table.insert(qf_list, idx, {
+    filename = entry.filename,
+    lnum = entry.lnum,
+    col = entry.col,
+    text = entry.text,
+  })
+  vim.fn.setqflist({}, 'r', {
+    items = qf_list,
+    title = vim.fn.getqflist({ title = 0 }).title,
+  })
+end
+
 -- Main function
-function SearchReplaceAll(search, replace, case_sensitive, use_regex)
+function SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hidden)
   if not search or search == '' then
     vim.notify('[SearchReplaceAll] Search term cannot be empty', vim.log.levels.WARN)
     return
@@ -163,6 +182,10 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
     use_regex = false
   end
 
+  if include_hidden == nil then
+    include_hidden = false
+  end
+
   local original_buf = vim.api.nvim_get_current_buf()
   local original_cursor = vim.api.nvim_win_get_cursor(0)
 
@@ -174,6 +197,9 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
     rg_cmd = rg_cmd .. ' --ignore-case'
   else
     rg_cmd = rg_cmd .. ' --case-sensitive'
+  end
+  if include_hidden then
+    rg_cmd = rg_cmd .. ' --hidden'
   end
   rg_cmd = rg_cmd .. ' ' .. escape_shell_arg(search)
 
@@ -203,8 +229,9 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
   end
 
   local mode_label = use_regex and 'regex' or 'literal'
+  local hidden_label = include_hidden and ', +hidden' or ''
   vim.fn.setqflist({}, 'r', {
-    title = 'SearchReplaceAll (' .. mode_label .. '): ' .. search .. ' → ' .. replace,
+    title = 'SearchReplaceAll (' .. mode_label .. hidden_label .. '): ' .. search .. ' → ' .. replace,
     items = qf_entries,
   })
   vim.cmd 'copen'
@@ -252,6 +279,10 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
     entry_states[i] = 'pending'
   end
 
+  -- Undo stack: each entry records what we need to reverse a replacement
+  -- { entry_idx = <int>, bufnr = <int> }
+  local undo_stack = {}
+
   -- Current position in the ORIGINAL entries list (1..total_count)
   local current_entry = 1
 
@@ -265,6 +296,26 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
       end
     end
     return qf_idx
+  end
+
+  -- Find the next non-replaced entry at or after the given index. Returns nil if none.
+  local function next_visible(from)
+    for i = from, total_count do
+      if entry_states[i] ~= 'replaced' then
+        return i
+      end
+    end
+    return nil
+  end
+
+  -- Find the previous non-replaced entry before the given index. Returns nil if none.
+  local function prev_visible(from)
+    for i = from, 1, -1 do
+      if entry_states[i] ~= 'replaced' then
+        return i
+      end
+    end
+    return nil
   end
 
   -- Find the next pending entry at or after the given index. Returns nil if none.
@@ -309,15 +360,24 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
       end
     end
 
+    local state = entry_states[entry_idx]
+    local state_label = ''
+    if state == 'skipped' then
+      state_label = ' [skipped]'
+    end
+
+    local undo_label = #undo_stack > 0 and '(u)ndo ' or ''
     local prompt = string.format(
-      '[%d/%d] (%d pending) %s:%d  "%s" → "%s"  (y)es (n)o (a)ll (q)uit  C-n/C-p: cycle: ',
+      '[%d/%d] (%d pending) %s:%d%s  "%s" → "%s"  (y)es (n)o (a)ll %s(q)uit  j/k: browse: ',
       entry_idx,
       total_count,
       pending_count,
       short_file,
       entry.lnum,
+      state_label,
       search,
-      replace
+      replace,
+      undo_label
     )
 
     vim.api.nvim_echo({ { prompt, 'Question' } }, false, {})
@@ -356,15 +416,64 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
 
     -- Ctrl+n = \x0e, Ctrl+p = \x10
     if char == 'y' or char == 'Y' then
+      -- Get qf index BEFORE marking as replaced so the index is correct
+      local qf_idx = entry_to_qf_idx(current_entry)
+
+      -- Record the buffer for undo
+      local entry = qf_entries[current_entry]
+      local bufnr = vim.fn.bufnr(entry.filename)
+
       pcall(vim.cmd, 's/' .. sub_search .. '/' .. sub_replace .. '/g' .. case_flag)
       replaced_count = replaced_count + 1
       entry_states[current_entry] = 'replaced'
-      local qf_idx = entry_to_qf_idx(current_entry)
-      -- After marking as replaced, recalculate — the entry is still counted
-      -- in entry_to_qf_idx until we remove it, so get the index first
       remove_qf_entry(qf_idx)
+
+      -- Push onto undo stack
+      table.insert(undo_stack, {
+        entry_idx = current_entry,
+        bufnr = bufnr,
+      })
+
       current_entry = current_entry + 1
       vim.schedule(step)
+
+    elseif char == 'u' or char == 'U' then
+      if #undo_stack == 0 then
+        vim.api.nvim_echo({ { 'Nothing to undo.', 'WarningMsg' } }, false, {})
+        vim.cmd 'redraw'
+        vim.schedule(step)
+      else
+        local last = table.remove(undo_stack)
+        local undo_entry_idx = last.entry_idx
+        local undo_bufnr = last.bufnr
+
+        -- Undo the substitution in the target buffer
+        if undo_bufnr and vim.api.nvim_buf_is_valid(undo_bufnr) then
+          local current_win_buf = vim.api.nvim_win_get_buf(0)
+          if current_win_buf ~= undo_bufnr then
+            vim.api.nvim_set_current_buf(undo_bufnr)
+          end
+          pcall(vim.cmd, 'undo')
+          -- Switch back if we changed buffers
+          if current_win_buf ~= undo_bufnr then
+            vim.api.nvim_set_current_buf(current_win_buf)
+          end
+        end
+
+        -- Restore entry state to pending
+        entry_states[undo_entry_idx] = 'pending'
+        replaced_count = replaced_count - 1
+
+        -- Re-insert into quickfix list at the correct position
+        local qf_idx = entry_to_qf_idx(undo_entry_idx)
+        insert_qf_entry(qf_idx, qf_entries[undo_entry_idx])
+
+        -- Jump back to the undone entry
+        current_entry = undo_entry_idx
+
+        vim.notify('[SearchReplaceAll] Undid replacement at entry ' .. undo_entry_idx, vim.log.levels.INFO)
+        vim.schedule(step)
+      end
 
     elseif char == 'n' or char == 'N' then
       skipped_count = skipped_count + 1
@@ -372,31 +481,34 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
       current_entry = current_entry + 1
       vim.schedule(step)
 
-    elseif char == '\x0e' then
-      -- Ctrl+n: preview next pending entry (wrap around)
-      local next_entry = next_pending(current_entry + 1)
+    elseif char == 'j' or char == '\x0e' then
+      -- j or Ctrl+n: browse to next visible (non-replaced) entry, wrapping around
+      local next_entry = next_visible(current_entry + 1)
       if not next_entry then
-        next_entry = next_pending(1)
+        next_entry = next_visible(1)
       end
       if next_entry then
         current_entry = next_entry
       end
+      show_entry(current_entry)
       vim.schedule(step)
 
-    elseif char == '\x10' then
-      -- Ctrl+p: preview previous pending entry (wrap around)
-      local prev_entry = prev_pending(current_entry - 1)
+    elseif char == 'k' or char == '\x10' then
+      -- k or Ctrl+p: browse to previous visible (non-replaced) entry, wrapping around
+      local prev_entry = prev_visible(current_entry - 1)
       if not prev_entry then
-        prev_entry = prev_pending(total_count)
+        prev_entry = prev_visible(total_count)
       end
       if prev_entry then
         current_entry = prev_entry
       end
+      show_entry(current_entry)
       vim.schedule(step)
 
     elseif char == 'a' or char == 'A' then
       for i = 1, total_count do
         if entry_states[i] == 'pending' then
+          -- Get qf index BEFORE marking as replaced so the index is correct
           local qf_idx = entry_to_qf_idx(i)
           local current_qf_list = vim.fn.getqflist()
           if qf_idx >= 1 and qf_idx <= #current_qf_list then
@@ -433,7 +545,7 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
       return
 
     else
-      vim.api.nvim_echo({ { 'Invalid key. Press y/n/a/q or C-n/C-p to cycle', 'WarningMsg' } }, false, {})
+      vim.api.nvim_echo({ { 'Invalid key. Press y/n/a/u/q or j/k to browse', 'WarningMsg' } }, false, {})
       vim.cmd 'redraw'
       vim.schedule(step)
     end
@@ -457,13 +569,14 @@ function SearchReplaceAll(search, replace, case_sensitive, use_regex)
   end, 200)
 end
 
--- User command: :SearchReplaceAll <search> <replace> [case_sensitive] [use_regex]
+-- User command: :SearchReplaceAll <search> <replace> [case_sensitive] [use_regex] [include_hidden]
 vim.api.nvim_create_user_command('SearchReplaceAll', function(opts)
   local args = opts.fargs
   local search = args[1]
   local replace = args[2] or ''
   local case_sensitive = true
   local use_regex = false
+  local include_hidden = false
 
   if args[3] then
     case_sensitive = args[3] ~= 'false' and args[3] ~= '0' and args[3] ~= 'no'
@@ -473,26 +586,33 @@ vim.api.nvim_create_user_command('SearchReplaceAll', function(opts)
     use_regex = args[4] == 'true' or args[4] == '1' or args[4] == 'yes'
   end
 
-  SearchReplaceAll(search, replace, case_sensitive, use_regex)
+  if args[5] then
+    include_hidden = args[5] == 'true' or args[5] == '1' or args[5] == 'yes'
+  end
+
+  SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hidden)
 end, {
   nargs = '+',
   desc = 'Search and replace across project using ripgrep + quickfix',
 })
 
--- Which-key group
+-- Which-key groups
 require('which-key').add {
   { mode = { 'n' }, { '<leader>sR', group = '[s]earch [R]eplace', hidden = false } },
   { mode = { 'n' }, { '<leader>sRA', group = '[s]earch [R]eplace [A]ll', hidden = false } },
+  { mode = { 'n' }, { '<leader>sRAn', group = '[s]earch [R]eplace [A]ll [n]ormal', hidden = false } },
+  { mode = { 'n' }, { '<leader>sRAr', group = '[s]earch [R]eplace [A]ll [r]egex', hidden = false } },
 }
 
--- Helper to run the interactive prompts (shared by both keymaps)
-local function search_replace_prompt(use_regex)
+-- Helper to run the interactive prompts (shared by all keymaps)
+local function search_replace_prompt(use_regex, include_hidden)
   local mode_label = use_regex and 'regex' or 'normal'
-  vim.ui.input({ prompt = 'Search term (' .. mode_label .. '): ' }, function(search)
+  local hidden_label = include_hidden and ', +hidden' or ''
+  vim.ui.input({ prompt = 'Search term (' .. mode_label .. hidden_label .. '): ' }, function(search)
     if not search or search == '' then
       return
     end
-    vim.notify('[SearchReplaceAll]: Search Term (' .. mode_label .. '): ' .. search, vim.log.levels.INFO)
+    vim.notify('[SearchReplaceAll]: Search Term (' .. mode_label .. hidden_label .. '): ' .. search, vim.log.levels.INFO)
 
     vim.ui.input({ prompt = 'Replace with: ' }, function(replace)
       if replace == nil then
@@ -519,18 +639,28 @@ local function search_replace_prompt(use_regex)
           return
         end
 
-        SearchReplaceAll(search, replace, case_sensitive, use_regex)
+        SearchReplaceAll(search, replace, case_sensitive, use_regex, include_hidden)
       end)
     end)
   end)
 end
 
--- <leader>sRAn — normal/literal search and replace
-vim.keymap.set('n', '<leader>sRAn', function()
-  search_replace_prompt(false)
-end, { desc = '[s]earch [R]eplace [A]ll [n]ormal (literal)' })
+-- <leader>sRAnn — normal/literal search, no hidden files
+vim.keymap.set('n', '<leader>sRAnn', function()
+  search_replace_prompt(false, false)
+end, { desc = '[s]earch [R]eplace [A]ll [n]ormal [n]o-hidden' })
 
--- <leader>sRAr — regex search and replace
-vim.keymap.set('n', '<leader>sRAr', function()
-  search_replace_prompt(true)
-end, { desc = '[s]earch [R]eplace [A]ll [r]egex' })
+-- <leader>sRAnh — normal/literal search, include hidden files
+vim.keymap.set('n', '<leader>sRAnh', function()
+  search_replace_prompt(false, true)
+end, { desc = '[s]earch [R]eplace [A]ll [n]ormal [h]idden' })
+
+-- <leader>sRArn — regex search, no hidden files
+vim.keymap.set('n', '<leader>sRArn', function()
+  search_replace_prompt(true, false)
+end, { desc = '[s]earch [R]eplace [A]ll [r]egex [n]o-hidden' })
+
+-- <leader>sRArh — regex search, include hidden files
+vim.keymap.set('n', '<leader>sRArh', function()
+  search_replace_prompt(true, true)
+end, { desc = '[s]earch [R]eplace [A]ll [r]egex [h]idden' })
