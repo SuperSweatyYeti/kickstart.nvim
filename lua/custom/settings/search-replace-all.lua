@@ -625,8 +625,8 @@ end
 -- Which-key groups
 require('which-key').add {
   { mode = { 'n' }, { '<leader>sR', group = '[s]earch [R]eplace', hidden = false } },
-  { mode = { 'n' }, { '<leader>sRA', group = '[s]earch [R]eplace [A]ll include hidden files', hidden = true } },
-  { mode = { 'n' }, { '<leader>sRa', group = '[s]earch [R]eplace [a]ll', hidden = false } },
+  { mode = { 'n' }, { '<leader>sRA', group = '[s]earch [R]eplace [A]ll include hidden files', hidden = false } },
+  { mode = { 'n' }, { '<leader>sRa', group = '[s]earch [R]eplace [a]ll exclude hidden files', hidden = false } },
 }
 -- <leader>sRAn — normal/literal search, include hidden files
 vim.keymap.set('n', '<leader>sRAn', function()

@@ -32,7 +32,15 @@ return {
         -- see `:h neo-tree-custom-commands-global`
 
         use_default_mappings = false,
-        commands = {},
+        commands = {
+          set_root_and_cd = function(state)
+            local node = state.tree:get_node()
+            local path = node.type == 'directory' and node:get_id() or vim.fn.fnamemodify(node:get_id(), ':h')
+            state.path = path
+            require('neo-tree.sources.filesystem')._navigate_internal(state, path, nil, nil, false)
+            vim.cmd('cd ' .. vim.fn.fnameescape(path))
+          end,
+        },
         window = {
           position = 'left',
           width = '25%',
@@ -46,7 +54,7 @@ return {
             ['/'] = 'noop',
 
             ['u'] = 'navigate_up',
-            ['.'] = 'set_root',
+            ['.'] = 'set_root_and_cd',
             ['H'] = 'toggle_hidden',
             -- ['<C-h>'] = 'toggle_hidden',
             ['<space>'] = {
@@ -108,4 +116,3 @@ return {
     end,
   },
 }
-
