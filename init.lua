@@ -282,7 +282,7 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
--- NOTE: 
+-- NOTE:
 -- Highlight when yanking (copying) text
 --  Try it with `yap` in normal mode
 --  See `:help vim.highlight.on_yank()`
@@ -332,14 +332,14 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- Define the operatorfunc to yank + highlight + restore cursor
 _G.yank_and_restore_cursor = function(type)
   if type == 'char' then
-    vim.cmd('normal! `[v`]y')
+    vim.cmd 'normal! `[v`]y'
   elseif type == 'line' then
-    vim.cmd('normal! `[V`]y')
+    vim.cmd 'normal! `[V`]y'
   elseif type == 'block' then
-    vim.cmd('normal! `[\22`]y')  -- \22 is <C-v> for block
+    vim.cmd 'normal! `[\22`]y' -- \22 is <C-v> for block
   end
 
-  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+  vim.highlight.on_yank { higroup = 'IncSearch', timeout = 200 }
 
   vim.defer_fn(function()
     if _G._saved_cursor then
@@ -358,8 +358,8 @@ end, { expr = true, noremap = true })
 -- Visual mode 'y' remap to yank + restore cursor
 vim.keymap.set('x', 'y', function()
   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
-  vim.cmd('normal! y')
-  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
+  vim.cmd 'normal! y'
+  vim.highlight.on_yank { higroup = 'IncSearch', timeout = 200 }
   vim.defer_fn(function()
     pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
   end, 10)
@@ -367,9 +367,6 @@ end, { noremap = true, silent = true })
 
 -- Make 'yy' reuse the same yank logic via motion
 vim.keymap.set('n', 'yy', 'y_', { noremap = true, silent = true })
-
-
-
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -475,6 +472,9 @@ require('lazy').setup({
   { import = 'custom.plugins' },
   { import = 'custom.themes' },
 }, {
+  rocks = {
+    hererocks = true,
+  },
   ui = {
     -- If you have a Nerd Font, set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons otherwise define a unicode icons table
