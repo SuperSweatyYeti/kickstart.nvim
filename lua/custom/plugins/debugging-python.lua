@@ -1,3 +1,9 @@
+local enabled = false
+
+if not enabled then
+  return {}
+end
+
 return {
   'mfussenegger/nvim-dap-python',
   dependencies = { 'mfussenegger/nvim-dap' },
