@@ -40,8 +40,8 @@ return {
     vim.keymap.set({ 'n', 'v' }, '<A-k>', '<C-w>-', { noremap = true }),
     vim.keymap.set({ 'n', 'v' }, '<A-l>', '<C-w>>', { noremap = true }),
     -- Change tabs with hjkl
-    vim.keymap.set({ 'n', 'v' }, '<leader>Th', ':tabNext\n', {}),
-    vim.keymap.set({ 'n', 'v' }, '<leader>Tl', ':tabPrevious\n', {}),
+    vim.keymap.set({ 'n', 'v' }, '<leader>Th', '<Cmd>tabnext<CR>', {}),
+    vim.keymap.set({ 'n', 'v' }, '<leader>Tl', '<Cmd>tabprevious<CR>', {}),
     -- Map <leader>/ to search for the visual selection
     vim.api.nvim_set_keymap('v', '<leader>/', 'y/<C-r>"<CR>', { noremap = true, silent = true }),
 
