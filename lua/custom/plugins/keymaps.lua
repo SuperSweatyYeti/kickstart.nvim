@@ -2,7 +2,7 @@ return {
   {
     ------------------ Custom Keymaps ---------------------------------
     -- Quick exit without saving
-    vim.keymap.set({ 'n' }, '<leader>QQ', '<cmd>qa!<enter>', { desc = '[Q]uit quit without saving' }),
+    vim.keymap.set({ 'n' }, '<leader>QQ', '<cmd>qa!<enter>', { desc = '[Q]uit Quit without saving' }),
     -- Easier to change back to normal mode 'Double tap i'
     -- Insert mode escape
     vim.keymap.set('i', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape insert mode' }),

@@ -18,8 +18,13 @@ return {
     'folke/which-key.nvim',
     enabled = true,
     event = 'vimenter', -- sets the loading event to 'vimenter'
-    config = function() -- this is the function that runs, after loading
-      require('which-key').setup()
+    opts = {
+      layout = { align = 'center' },
+      ---@type false | "classic" | "modern" | "helix"
+      preset = "helix",
+    },
+    config = function(_,opts) -- this is the function that runs, after loading
+      require('which-key').setup(opts)
 
       -- document existing key chains
       require('which-key').add {
@@ -32,7 +37,7 @@ return {
         { mode = { 'n' }, { '<leader>d', group = '[d]ocument', hidden = false } },
         { mode = { 'n' }, { '<leader>l', group = '[l]azyGit', hidden = false } },
         { mode = { 'n' }, { '<leader>o', group = '[o]bsidian', hidden = false } },
-        { mode = { 'n' }, { '<leader>Q', group = '[Q]uit quit', hidden = false } },
+        { mode = { 'n' }, { '<leader>Q', group = '[Q]uit Quit', hidden = false } },
         { mode = { 'n' }, { '<leader>r', group = '[r]ename', hidden = false } },
         { mode = { 'n' }, { '<leader>s', group = '[s]earch', hidden = false } },
         { mode = { 'n' }, { '<leader>u', group = '[u]ndo', hidden = false } },
@@ -52,8 +57,5 @@ return {
         -- ['<leader>y'] = { name = '[y]ank', _ = 'which_key_ignore' },
       }
     end,
-    opts = {
-      layout = { align = 'center' },
-    },
   },
 }
