@@ -11,6 +11,13 @@ return {
         if is_os_windows() then
           return vim.fn.executable 'pwsh' == 1 and 'pwsh' or 'powershell'
         end
+        -- Linux/macOS: zsh → bash → sh
+        if vim.fn.executable 'zsh' == 1 then
+          return 'zsh'
+        elseif vim.fn.executable 'bash' == 1 then
+          return 'bash'
+        end
+        return 'sh'
       end,
 
       vim.keymap.set('t', 'JJ', [[<C-\><C-n>]]),
@@ -20,9 +27,7 @@ return {
     },
     config = function(_, opts)
       require('toggleterm').setup(opts)
-      if is_os_windows() then
-        shell = vim.fn.executable 'pwsh' == 1 and 'pwsh' or 'powershell'
-      end
+      
     end,
   },
 }

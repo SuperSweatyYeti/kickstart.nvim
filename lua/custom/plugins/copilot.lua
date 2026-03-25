@@ -7,7 +7,7 @@ return {
     enabled = true,
     cmd = 'Copilot',
     vim.keymap.set('n', '<leader>cps', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
-    vim.keymap.set('n', '<leader>cpt', '<cmd>Copilot toggle<cr>', { desc = 'Toggle Copilot status' }),
+    vim.keymap.set('n', '<leader>cpt', '<cmd>Copilot toggle<cr>', { desc = 'Toggle Copilot suggestions' }),
     vim.keymap.set('n', '<leader>cpx', '<cmd>Copilot disable<cr>', { desc = 'Disable Copilot' }),
     -- event = 'InsertEnter',
     config = function()
@@ -31,7 +31,7 @@ return {
           },
         },
         suggestion = {
-          enabled = false, -- Disabled because we are using `copilot-cmp` for completion
+          enabled = false, -- Disabled; copilot-cmp handles completions. Toggle Copilot on/off with <leader>cpt
           auto_trigger = false,
           hide_during_completion = true,
           debounce = 75,
@@ -91,6 +91,8 @@ return {
         },
         server_opts_overrides = {},
       }
+      -- Start with Copilot disabled; toggle on with <leader>cpt
+      vim.cmd 'Copilot disable'
     end,
     dependencies = {
       -- Plugin to have copilot sugestions play nice with nvim-cmp
