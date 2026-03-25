@@ -9,25 +9,31 @@ return {
     ---@module 'avante'
     ---@type avante.Config
     opts = {
-      -- add any opts here
-      -- this file can contain specific instructions for your project
+      -- Modes: "legacy", "agentic"
+      -- Switch to agentic to automatically apply changes without asking
+      mode = 'legacy',
+      -- Workflow
+      -- Ask AI for changes. Shift + A to apply all diffs. Select which diffs to keep
+      behaviour = {
+        auto_approve_tool_permissions = true, -- Skip tool permission prompts; diffs are reviewed manually
+        auto_apply_diff_after_generation = false, -- Show diffs in buffer for manual review
+      },
       instructions_file = 'avante.md',
-      -- for example
       provider = 'copilot',
       providers = {
-        claude = {
-          endpoint = 'https://api.anthropic.com',
-          model = 'claude-sonnet-4-20250514',
-          timeout = 30000, -- Timeout in milliseconds
+        copilot = {
+          endpoint = 'https://api.githubcopilot.com',
+          model = 'gpt-4o',
+          timeout = 30000,
           extra_request_body = {
             temperature = 0.75,
             max_tokens = 20480,
           },
         },
-        copilot = {
-          endpoint = 'https://api.githubcopilot.com',
-          model = 'gpt-4o',
-          timeout = 30000, -- Timeout in milliseconds
+        claude = {
+          endpoint = 'https://api.anthropic.com',
+          model = 'claude-sonnet-4-20250514',
+          timeout = 30000,
           extra_request_body = {
             temperature = 0.75,
             max_tokens = 20480,
@@ -36,7 +42,7 @@ return {
         moonshot = {
           endpoint = 'https://api.moonshot.ai/v1',
           model = 'kimi-k2-0711-preview',
-          timeout = 30000, -- Timeout in milliseconds
+          timeout = 30000,
           extra_request_body = {
             temperature = 0.75,
             max_tokens = 32768,
@@ -44,37 +50,49 @@ return {
         },
       },
     },
+
+    config = function(_, opts)
+      require('avante').setup(opts)
+
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'AvanteInput',
+        callback = function(ev)
+          local map_opts = { buffer = ev.buf, silent = true, noremap = true }
+
+          vim.keymap.set('i', '<C-h>', '<C-\\><C-n><C-w>h', map_opts)
+          vim.keymap.set('i', '<C-j>', '<C-\\><C-n><C-w>j', map_opts)
+          vim.keymap.set('i', '<C-k>', '<C-\\><C-n><C-w>k', map_opts)
+          vim.keymap.set('i', '<C-l>', '<C-\\><C-n><C-w>l', map_opts)
+        end,
+      })
+    end,
+
     dependencies = {
       'nvim-lua/plenary.nvim',
       'MunifTanjim/nui.nvim',
-      --- The below dependencies are optional,
-      'nvim-mini/mini.pick', -- for file_selector provider mini.pick
-      'nvim-telescope/telescope.nvim', -- for file_selector provider telescope
-      'hrsh7th/nvim-cmp', -- autocompletion for avante commands and mentions
-      'ibhagwan/fzf-lua', -- for file_selector provider fzf
-      'stevearc/dressing.nvim', -- for input provider dressing
-      'folke/snacks.nvim', -- for input provider snacks
-      'nvim-tree/nvim-web-devicons', -- or echasnovski/mini.icons
-      'zbirenbaum/copilot.lua', -- for providers='copilot'
+      'nvim-mini/mini.pick',
+      'nvim-telescope/telescope.nvim',
+      'hrsh7th/nvim-cmp',
+      'ibhagwan/fzf-lua',
+      'stevearc/dressing.nvim',
+      'folke/snacks.nvim',
+      'nvim-tree/nvim-web-devicons',
+      'zbirenbaum/copilot.lua',
       {
-        -- support for image pasting
         'HakonHarnes/img-clip.nvim',
         event = 'VeryLazy',
         opts = {
-          -- recommended settings
           default = {
             embed_image_as_base64 = false,
             prompt_for_file_name = false,
             drag_and_drop = {
               insert_mode = true,
             },
-            -- required for Windows users
             use_absolute_path = true,
           },
         },
       },
       {
-        -- Make sure to set this up properly if you have lazy=true
         'MeanderingProgrammer/render-markdown.nvim',
         opts = {
           file_types = { 'markdown', 'Avante' },
