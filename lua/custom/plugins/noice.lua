@@ -8,6 +8,12 @@ return {
   },
   config = function()
     vim.g.noice_enabled = true
+    -- Disable Noice on startup after a short delay windows only
+    if is_os_windows() then
+      vim.defer_fn(function()
+        vim.cmd 'NoiceDisable'
+      end, 100)
+    end
     local original_notify = nil
 
     require('noice').setup {
@@ -34,12 +40,7 @@ return {
       { mode = { 'n' }, { '<leader>n', group = '[n]oice plugin notifications', hidden = false } },
     }
 
-    vim.keymap.set(
-      'n',
-      '<leader>nc',
-      '<cmd>NoiceDismiss<enter>',
-      { desc = '[c]lear all [n]oice plugin notifications' }
-    )
+    vim.keymap.set('n', '<leader>nc', '<cmd>NoiceDismiss<enter>', { desc = '[c]lear all [n]oice plugin notifications' })
 
     vim.keymap.set('n', '<leader>nd', '<cmd>NoiceDisable<enter>', { desc = '[d]isable [n]oice notifications' })
 
@@ -62,5 +63,18 @@ return {
         vim.notify('Noice enabled', vim.log.levels.INFO)
       end
     end, { desc = '[t]oggle [n]oice notifications' })
+
+    -- Modify lualine to add macro status
+    local lualine_present, lualine = pcall(require, 'lualine')
+    if lualine_present then
+      local config = lualine.get_config()
+      table.insert(config.sections.lualine_x, 1, {
+        -- Show recording macro status
+        require('noice').api.statusline.mode.get,
+        cond = require('noice').api.statusline.mode.has,
+        color = { fg = '#ff9e64' },
+      })
+      lualine.setup(config)
+    end
   end,
 }
