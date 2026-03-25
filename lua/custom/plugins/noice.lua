@@ -11,7 +11,13 @@ return {
     -- Disable Noice on startup after a short delay windows only
     if is_os_windows() then
       vim.defer_fn(function()
+        vim.cmd 'NoiceDismiss'
+        require('notify').dismiss { silent = true, pending = true }
         vim.cmd 'NoiceDisable'
+        vim.g.noice_enabled = false
+        original_notify = vim.notify
+        vim.notify = function() end
+        print 'Noice disabled'
       end, 100)
     end
     local original_notify = nil
