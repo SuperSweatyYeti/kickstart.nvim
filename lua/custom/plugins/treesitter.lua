@@ -10,7 +10,7 @@ return {
 
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup {
-        ensure_installed = { 'bash', 'python', 'c', 'html', 'lua', 'markdown', 'yaml', 'vim', 'vimdoc' },
+        ensure_installed = { 'powershell', 'bash', 'python', 'c', 'html', 'lua', 'markdown', 'yaml', 'vim', 'vimdoc' },
         -- Additional to ensure installed: 'c', 'rust'
         -- Autoinstall languages that are not installed
         auto_install = true,
@@ -30,7 +30,7 @@ return {
         'nvim-treesitter/nvim-treesitter-context',
         config = function()
           require('treesitter-context').setup {
-            enable = true, -- Enable this plugin (Can be enabled/disabled later via commands)
+            enabled = true, -- Enable this plugin (Can be enabled/enabled later via commands)
             max_lines = 10, -- How many lines the window should span. Values <= 0 mean no limit.
             min_window_height = 0, -- Minimum editor window height to enable context. Values <= 0 mean no limit.
             line_numbers = true,

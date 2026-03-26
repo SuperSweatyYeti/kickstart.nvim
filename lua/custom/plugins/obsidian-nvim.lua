@@ -1,5 +1,6 @@
 return {
   'epwalsh/obsidian.nvim',
+  enabled = true,
   version = '*', -- recommended, use latest release instead of latest commit
   lazy = true,
   ft = 'markdown',
@@ -16,14 +17,14 @@ return {
     {
       'nvim-lua/plenary.nvim',
     },
-    {
-      'oflisback/obsidian-bridge.nvim',
-      event = {
-        'BufReadPre *.md',
-        'BufNewFile *.md',
-      },
-      lazy = true,
-    },
+    -- {
+    --   'oflisback/obsidian-bridge.nvim',
+    --   event = {
+    --     'BufReadPre *.md',
+    --     'BufNewFile *.md',
+    --   },
+    --   lazy = true,
+    -- },
   },
   opts = {
     disable_frontmatter = true,
