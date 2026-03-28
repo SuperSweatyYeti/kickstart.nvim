@@ -226,9 +226,15 @@ return {
           end,
         },
       }
+      -- NOTE: Overide mason config for powershell_es
+      -- Register powershell code blocks as ps1 files
+      -- .powershell will work as .ps1
+      vim.lsp.config('powershell_es', {
+        bundle_path = vim.fn.stdpath 'data' .. '/mason/packages/powershell-editor-services',
+        filetypes = { 'ps1', 'powershell' },
+        capabilities = capabilities,
+      })
+      vim.lsp.enable 'powershell_es'
     end,
   },
-
-
-
 }
