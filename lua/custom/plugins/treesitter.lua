@@ -134,6 +134,9 @@ return {
                 'switch',
                 'case',
               },
+              markdown = {
+                'fenced_code_block',
+              },
               powershell = {
                 'function_statement',
                 'if_statement',
