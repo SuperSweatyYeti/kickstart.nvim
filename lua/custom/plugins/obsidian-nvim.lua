@@ -1,71 +1,136 @@
 return {
   'epwalsh/obsidian.nvim',
   enabled = true,
-  version = '*', -- recommended, use latest release instead of latest commit
+  version = '*',
   lazy = true,
   ft = 'markdown',
-  -- Replace the above line with this if you only want to load obsidian.nvim for markdown files in your vault:
-  -- event = {
-  --   -- If you want to use the home shortcut '~' here you need to call 'vim.fn.expand'.
-  --   -- E.g. "BufReadPre " .. vim.fn.expand "~" .. "/my-vault/*.md"
-  --   -- refer to `:h file-pattern` for more examples
-  --   "BufReadPre path/to/my-vault/*.md",
-  --   "BufNewFile path/to/my-vault/*.md",
-  -- },
   dependencies = {
-    -- Required.
-    {
-      'nvim-lua/plenary.nvim',
-    },
-    -- {
-    --   'oflisback/obsidian-bridge.nvim',
-    --   event = {
-    --     'BufReadPre *.md',
-    --     'BufNewFile *.md',
-    --   },
-    --   lazy = true,
-    -- },
+    { 'nvim-lua/plenary.nvim' },
   },
-  opts = {
-    disable_frontmatter = true,
-    workspaces = {
+
+  opts = function()
+    local function is_dir(p)
+      if not p or p == '' then
+        return false
+      end
+      p = vim.fn.expand(p)
+      return vim.fn.isdirectory(p) == 1
+    end
+
+    ---Pick the first existing path from an OS-specific candidate table.
+    ---Return nil if none exist.
+    ---@param per_os { windows?: string[], darwin?: string[], linux?: string[] }
+    local function pick_path(per_os)
+      local list
+      if is_os_windows() then
+        list = per_os.windows or {}
+      elseif is_os_darwin() then
+        list = per_os.darwin or {}
+      else
+        list = per_os.linux or {}
+      end
+
+      for _, p in ipairs(list) do
+        if is_dir(p) then
+          return vim.fn.expand(p)
+        end
+      end
+
+      return nil
+    end
+
+    -- Define your vaults here.
+    -- Fill in paths for each OS. First existing wins. If none exist -> nil.
+    local vaults = {
       {
-        name = 'Obsidian Vault',
-        path = '~/Documents/Obsidian-Vaults/Obsidian Vault',
+        name = 'Obsidian Vault', -- Personal Vault
+        path = pick_path {
+          windows = {
+            -- "C:/Users/<you>/Documents/Obsidian-Vaults/Obsidian Vault",
+            '~/Documents/Obsidian Vaults/Obsidian Vault',
+          },
+          darwin = {
+            '~/Documents/Obsidian-Vaults/Obsidian Vault',
+            -- "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault",
+          },
+          linux = {
+            '~/Documents/Obsidian-Vaults/Obsidian Vault',
+          },
+        },
       },
-      -- {
-      --   name = "work",
-      --   path = "~/vaults/work",
-      -- },
-      -- your config here
-    },
-    obsidian_server_address = 'https://127.0.0.1:27124',
-    cert_path = '~/.ssl/obsidian.crt',
-    ui = {
-      enable = true, -- set to false to disable all additional syntax features
-      update_debounce = 200, -- update delay after a text change (in milliseconds)
-      max_file_length = 5000, -- disable UI features for files with more than this many lines
-      -- Define how various check-boxes are displayed
-      checkboxes = {
-        -- NOTE: the 'char' value has to be a single character, and the highlight groups are defined below.
-        --
-        -- NOTE: we only want to toggle between empty and 'x'
-        [' '] = { char = '󰄱', hl_group = 'ObsidianTodo' },
-        ['x'] = { char = '', hl_group = 'ObsidianDone' },
-        -- ['>'] = { char = '', hl_group = 'ObsidianRightArrow' },
-        -- ['~'] = { char = '󰰱', hl_group = 'ObsidianTilde' },
-        -- ['!'] = { char = '', hl_group = 'ObsidianImportant' },
-        -- Replace the above with this if you don't have a patched font:
-        -- [" "] = { char = "☐", hl_group = "ObsidianTodo" },
-        -- ["x"] = { char = "✔", hl_group = "ObsidianDone" },
-
-        -- You can also add more custom ones...
+      {
+        name = 'AACI',
+        path = pick_path {
+          windows = {
+            -- "C:/Users/<you>/Documents/Obsidian-Vaults/Obsidian Vault",
+            'D:\\Obsidian\\Vaults\\AACI\\AACI', -- AACI Laptop vault location
+            '~/Documents/Obsidian Vaults/AACI',
+          },
+          darwin = {
+            '~/Documents/Obsidian-Vaults/AACI',
+            -- "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault",
+          },
+          linux = {
+            '~/Documents/Obsidian-Vaults/AACI',
+          },
+        },
       },
-    },
+      {
+        name = 'Work',
+        path = pick_path {
+          windows = {
+            -- "C:/Users/<you>/Documents/vaults/work",
+          },
+          darwin = {
+            -- "~/vaults/work",
+          },
+          linux = {
+            -- "~/vaults/work",
+          },
+        },
+      },
+      {
+        name = 'Other',
+        path = pick_path {
+          windows = {
+            -- "C:/Users/<you>/Documents/vaults/personal",
+          },
+          darwin = {
+            -- "~/vaults/personal",
+          },
+          linux = {
+            -- "~/vaults/personal",
+          },
+        },
+      },
+    }
 
-    -- see below for full list of options 👇
-  },
-  -- Keymaps
+    -- Keep only vaults that were found on this machine.
+    local workspaces = {}
+    for _, v in ipairs(vaults) do
+      if v.path ~= nil then
+        table.insert(workspaces, { name = v.name, path = v.path })
+      end
+    end
+
+    return {
+      disable_frontmatter = true,
+      workspaces = workspaces, -- if none found, this will be {}
+      obsidian_server_address = 'https://127.0.0.1:27124',
+      cert_path = '~/.ssl/obsidian.crt',
+      ui = {
+        enable = true,
+        update_debounce = 200,
+        max_file_length = 5000,
+        checkboxes = {
+          [' '] = { char = '󰄱', hl_group = 'ObsidianTodo' },
+          ['x'] = { char = '', hl_group = 'ObsidianDone' },
+        },
+      },
+    }
+  end,
+
+  -- Keymaps (your existing style)
   vim.keymap.set('n', '<leader>obs', ':ObsidianSearch ', { desc = 'Obsidian Search' }),
   vim.keymap.set('n', '<leader>obpi', ':ObsidianPasteImg ', { desc = 'Obsidian Paste Image' }),
   vim.keymap.set('n', '<leader>obl', '<cmd>ObsidianLinks<cr>', { desc = 'Obsidian Links List' }),
