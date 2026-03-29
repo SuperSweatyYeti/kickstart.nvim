@@ -68,6 +68,30 @@ return {
     (script_block) @context.end) @context
 ]]
       )
+      -- NOTE: Add default filetype to 'txt' for codeblock fences in markdown files when no language is specified.
+      -- Related to FeMaco plugin
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'markdown',
+        once = true,
+        callback = function()
+          vim.treesitter.query.set(
+            'markdown',
+            'injections',
+            [[
+(fenced_code_block
+  (info_string
+    (language) @injection.language)
+  (code_fence_content) @injection.content)
+
+(fenced_code_block
+  (fenced_code_block_delimiter)
+  (block_continuation)
+  (code_fence_content) @injection.content
+  (#set! injection.language "text"))
+      ]]
+          )
+        end,
+      })
     end,
     dependencies = {
       {

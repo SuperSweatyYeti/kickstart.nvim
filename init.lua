@@ -89,6 +89,8 @@ P.S. You can delete this when you're done too. It's your config now! :)
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
+-- Set conceal level which lets certain plugins render/transform text
+vim.opt.conceallevel = 2
 
 -- NOTE: these options might be viable in versions
 -- of neovim 0.11+ possbily soon ??
