@@ -3,23 +3,24 @@ return {
   opts = {
     file_types = { 'markdown', 'Avante' },
     language_map = {
-      -- NOTE: Add config to have markdown code block reconize code blocks for powershell
-      -- ```powershell
-      -- Get-Funciton
-      -- ```
-      --
-      -- Config to add code block code recognition
-      -- Here
       powershell = 'ps1',
+    },
+    on = {
+      render = function(ctx)
+        -- Restore bold/italic highlights when rendering is on
+        vim.api.nvim_set_hl(ctx.buf, '@markup.strong.markdown_inline', { fg = '#e5c07b', bold = true })
+        vim.api.nvim_set_hl(ctx.buf, '@markup.italic.markdown_inline', { fg = '#c678dd', italic = true })
+      end,
+      clear = function(ctx)
+        -- Remove bold/italic highlights when rendering is off
+        vim.api.nvim_set_hl(ctx.buf, '@markup.strong.markdown_inline', {})
+        vim.api.nvim_set_hl(ctx.buf, '@markup.italic.markdown_inline', {})
+      end,
     },
   },
   ft = { 'markdown', 'Avante' },
-  -- Config to add code block code recognition
-  -- Here
-  config = function()
+  config = function(_, opts)
     require('nvim-web-devicons').set_icon {
-      -- Config to add code block code recognition
-      -- Here
       ps1 = {
         icon = '󰨊',
         color = '#4273ca',
@@ -27,10 +28,10 @@ return {
       },
     }
     require('nvim-web-devicons').set_icon_by_filetype {
-      -- Config to add code block code recognition
-      -- Here
       powershell = 'ps1',
     }
+
+    require('render-markdown').setup(opts)
 
     -- Keymaps
     vim.keymap.set('n', '<leader>mr', '<cmd>RenderMarkdown toggle<CR>', { desc = '[m]arkdown [r]ender toggle', noremap = true, silent = true })
@@ -39,3 +40,4 @@ return {
     }
   end,
 }
+
