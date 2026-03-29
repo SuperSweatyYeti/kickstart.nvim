@@ -33,11 +33,21 @@ return {
       vim.cmd.hi 'Comment gui=none'
     end,
   },
-
-  -- Neodark Colorscheme
+  -- Other colorschemes
   {
-
     'VDuchauffour/neodark.nvim',
+    lazy = true,
+  },
+  {
+    'sainnhe/gruvbox-material',
+    lazy = true,
+  },
+  {
+    'rebelot/kanagawa.nvim',
+    lazy = true,
+  },
+  {
+    'rose-pine/neovim',
     lazy = true,
   },
 }
