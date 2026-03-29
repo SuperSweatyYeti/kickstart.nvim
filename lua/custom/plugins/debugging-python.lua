@@ -9,7 +9,7 @@ return {
   dependencies = { 'mfussenegger/nvim-dap' },
   config = function()
     -- Config for Linux
-    if string.lower(vim.g.OSName) == 'linux' then
+    if is_os_linux() then
       local python = vim.fn.expand '~/.local/share/nvim/mason/packages/debugpy/venv/bin/python'
       require('dap-python').setup(python)
 
