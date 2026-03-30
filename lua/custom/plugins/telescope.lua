@@ -97,7 +97,13 @@ return {
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[s]earch [r]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[s]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
-
+      -- Search For Directories only
+      vim.keymap.set('n', '<leader>sD', function()
+        require('telescope.builtin').find_files {
+          prompt_title = 'Find Directories',
+          find_command = { 'fd', '--type', 'd' },
+        }
+      end, { desc = '[s]earch [D]irectories' })
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to telescope to change theme, layout, etc.
