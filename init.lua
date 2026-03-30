@@ -250,7 +250,7 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 -- Easier to close buffer
 vim.keymap.set('n', '<leader>C', '<cmd>q<CR>', { desc = '[C]lose Buffer' })
 -- Easier to delete buffer
-vim.keymap.set('n', '<leader>bd', '<cmd>q<CR>', { desc = '[d]elete buffer' })
+vim.keymap.set('n', '<leader>bw', '<cmd>q<CR>', { desc = '[d]elete buffer' })
 -- Step back and forth through buffer history
 vim.keymap.set('n', '<leader>bn', '<cmd>bNext<CR>', { desc = '[n]ext buffer' })
 vim.keymap.set('n', '<leader>bp', '<cmd>bprevious<CR>', { desc = '[p]revious buffer' })
