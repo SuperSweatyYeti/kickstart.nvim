@@ -10,6 +10,8 @@ return {
     vim.keymap.set('v', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual mode' }),
     -- Visual block (x) mode escape
     vim.keymap.set('x', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
+    -- Command (c) mode escape
+    vim.keymap.set('c', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape Command mode' }),
     -- ONLY EVER Paste last Yank
     vim.keymap.set({ 'n', 'v' }, 'p', '"0p', { noremap = true, silent = true, desc = 'Paste last yank' }),
     -- Normal mode 'x': delete char into register 0 'last yank'
