@@ -46,6 +46,17 @@ return {
       local dap = require 'dap'
       local dapui = require 'dapui'
 
+      -- Clear Virutal Text on close/stop
+      local dap = require 'dap'
+      dap.listeners.before.event_terminated['clear-virtual-text'] = function()
+        require('nvim-dap-virtual-text.virtual_text').clear_virtual_text()
+        require('nvim-dap-virtual-text.virtual_text').clear_last_frames()
+      end
+      dap.listeners.before.disconnect['clear-virtual-text'] = function()
+        require('nvim-dap-virtual-text.virtual_text').clear_virtual_text()
+        require('nvim-dap-virtual-text.virtual_text').clear_last_frames()
+      end
+
       require('dapui').setup()
 
       dap.listeners.before.attach.dapui_config = function()
@@ -75,7 +86,10 @@ return {
       -- Change DapStopped sign when stopped on a breakpoint
       dap.listeners.after.event_stopped['custom_stopped_on_bp'] = function(_, body)
         if body and body.reason == 'breakpoint' then
-          vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedOnBreakpointColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
+          vim.fn.sign_define(
+            'DapStopped',
+            { text = '', texthl = 'DapStoppedOnBreakpointColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' }
+          )
         else
           vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
         end
