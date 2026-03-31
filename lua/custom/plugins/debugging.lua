@@ -165,6 +165,25 @@ return {
         end,
         desc = 'Terminate',
       },
+      -- Go to the stopped line
+      {
+        '<leader>dg',
+        function()
+          local session = require('dap').session()
+          if not session then
+            vim.notify('No active DAP session', vim.log.levels.WARN)
+            return
+          end
+          local frame = session.current_frame
+          if not frame or not frame.source or not frame.source.path then
+            vim.notify('No current frame', vim.log.levels.WARN)
+            return
+          end
+          vim.cmd('edit ' .. vim.fn.fnameescape(frame.source.path))
+          vim.api.nvim_win_set_cursor(0, { frame.line, (frame.column or 1) - 1 })
+        end,
+        desc = 'Go to Stopped Line',
+      },
     },
   },
 }
