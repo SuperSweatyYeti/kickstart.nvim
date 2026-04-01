@@ -49,7 +49,7 @@ do
   end
 
   vim.keymap.set("n", "<Leader>yh", "<cmd>YankyRingHistory<CR>", { silent = true, desc = "Yanky history" })
-  vim.keymap.set({ "n", "x" }, "<Leader>p", "<cmd>YankyRingHistory<CR>", { silent = true, desc = "Yanky history" })
+  vim.keymap.set({ "x" }, "<Leader>p", "<cmd>YankyRingHistory<CR>", { silent = true, desc = "Yanky history" })
   vim.keymap.set("n", "<c-n>", "<Plug>(YankyCycleForward)", {})
   vim.keymap.set("n", "<c-p>", "<Plug>(YankyCycleBackward)", {})
 end

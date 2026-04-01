@@ -43,6 +43,7 @@ return {
         { mode = { 'n' }, { '<leader>u', group = '[u]ndo', hidden = false } },
         { mode = { 'n' }, { '<leader>w', group = '[w]orkspace', hidden = false } },
         { mode = { 'n' }, { '<leader>y', group = '[y]ank', hidden = false } },
+        { mode = { 'n' }, { '<leader>T', group = '[T]abs', hidden = false } },
         { mode = { 'n', 'x' }, { '<leader>o', group = '[o]opencode', hidden = false } },
         -- OLD Spec
         -- ['<leader>c'] = { name = '[c]ode', _ = 'which_key_ignore' },
