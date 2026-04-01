@@ -55,7 +55,7 @@ return {
                 end
 
                 if not copilot_client.get() then
-                  return ' '
+                  return ' '
                 end
 
                 local ok2, copilot_status = pcall(require, 'copilot.status')
