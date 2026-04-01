@@ -256,6 +256,12 @@ return {
           powershell = {
             codeFormatting = {
               Preset = 'OTBS',
+              UseCorrectCasing = true,
+              WhitespaceAroundOperator = true,
+              WhitespaceAfterSeparator = true,
+              AddWhitespaceAroundPipe = true,
+              AlignPropertyValuePairs = true,
+              PipelineIndentationStyle = 'IncreaseIndentationForFirstPipeline',
             },
           },
         },
