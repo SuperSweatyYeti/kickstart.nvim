@@ -44,11 +44,28 @@ return {
             require('powershell').toggle_debug_term()
           end, { buffer = args.buf, desc = 'PowerShell: Toggle Debug Terminal' })
 
-          -- Override continue for ps1 to setup layout first
+          local ps_layout_initialized = false
+
+          -- Override continue for ps1 to setup layout on first run
           vim.keymap.set('n', '<leader>dc', function()
-            dapui.setup { layouts = ps_layout }
+            if not ps_layout_initialized then
+              dapui.setup { layouts = ps_layout }
+              ps_layout_initialized = true
+            end
             dap.continue()
           end, { buffer = true, desc = 'Continue (PS)' })
+
+          -- Reset the flag when the session ends
+          local function reset_layout(session)
+            if session.config and session.config.type == 'ps1' then
+              ps_layout_initialized = false
+              dapui.setup()
+            end
+          end
+
+          dap.listeners.after.event_terminated.powershell_layout = reset_layout
+          dap.listeners.after.event_exited.powershell_layout = reset_layout
+          dap.listeners.after.disconnect.powershell_layout = reset_layout
         end,
       })
 
@@ -62,7 +79,6 @@ return {
             if vim.bo[buf].buftype == 'terminal' then
               local name = vim.api.nvim_buf_get_name(buf)
               if name:lower():find('pwsh') or name:lower():find('powershell') then
-                -- Check if this terminal is actually visible in a window
                 already_open = true
                 break
               end
@@ -81,17 +97,6 @@ return {
           end
         end
       end
-
-      -- Restore default layout when PS session ends
-      local function restore_layout(session)
-        if session.config and session.config.type == 'ps1' then
-          dapui.setup()
-        end
-      end
-
-      dap.listeners.after.event_terminated.powershell_layout = restore_layout
-      dap.listeners.after.event_exited.powershell_layout = restore_layout
-      dap.listeners.after.disconnect.powershell_layout = restore_layout
     end,
   },
 }
