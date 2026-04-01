@@ -1,5 +1,5 @@
 -- Keymap to visually select everything in the current buffer
-vim.keymap.set('n', '<leader>va', 'ggVG', { noremap = true, desc = '[v]isually select [a]ll text from current buffer' })
+vim.keymap.set('n', '<leader>vaa', 'ggVG', { noremap = true, desc = '[v]isually select [a]ll text from current buffer' })
 -- Keymap to delete everything in the current buffer
 vim.keymap.set('n', '<leader>vad', 'ggVGd', { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
 -- Keymap to yank everything in the current buffer
@@ -15,6 +15,7 @@ vim.keymap.set('n', '<leader>vad', 'ggVGd', { noremap = true, desc = '[v]isually
 -- Add which-key-group
 require('which-key').add {
   { mode = { 'n' }, { '<leader>v', group = '[v]isual selection', hidden = false } },
+  { mode = { 'n' }, { '<leader>va', group = '[v]isually select [a]ll', hidden = false } },
 }
 vim.keymap.set('n', '<leader>vay', function()
   vim.cmd('%y')

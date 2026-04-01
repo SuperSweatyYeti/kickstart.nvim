@@ -21,7 +21,7 @@ return {
     opts = {
       layout = { align = 'center' },
       ---@type false | "classic" | "modern" | "helix"
-      preset = "helix",
+      preset = "modern",
     },
     config = function(_,opts) -- this is the function that runs, after loading
       require('which-key').setup(opts)
