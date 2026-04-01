@@ -135,6 +135,13 @@ return {
         end,
         desc = 'Toggle Breakpoint',
       },
+            {
+        '<leader>dbl',
+        function()
+          require('dap').list_breakpoints(true)
+        end,
+        desc = 'List Breakpoints',
+      },
       {
         '<leader>dbc',
         ':lua require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))<enter>',
