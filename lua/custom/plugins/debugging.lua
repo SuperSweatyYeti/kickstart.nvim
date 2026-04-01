@@ -46,6 +46,35 @@ return {
       local dap = require 'dap'
       local dapui = require 'dapui'
 
+      -- Change cursor behavior with dap and dapui
+      -- Stepping does not grab the cursor from other buffers/panes and make the cursor move to stopped line
+      -- UNLESS we are already in the actual source code buffer
+      --
+      -- Write directly into the existing fallback table, bypassing the
+      -- __newindex metamethod which would wipe it out.
+      local fallback = rawget(dap.defaults, 'fallback')
+      fallback.switchbuf = function(bufnr, line, column)
+        local cur_win = vim.api.nvim_get_current_win()
+        local cur_buf = vim.api.nvim_get_current_buf()
+
+        if cur_buf == bufnr then
+          local saved_scrolloff = vim.wo[cur_win].scrolloff
+          vim.wo[cur_win].scrolloff = math.floor(vim.api.nvim_win_get_height(cur_win) / 4)
+          pcall(vim.api.nvim_win_set_cursor, cur_win, { line, (column or 1) - 1 })
+          vim.wo[cur_win].scrolloff = saved_scrolloff
+        else
+          for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+            if vim.api.nvim_win_get_buf(win) == bufnr then
+              local saved_scrolloff = vim.wo[win].scrolloff
+              vim.wo[win].scrolloff = math.floor(vim.api.nvim_win_get_height(win) / 4)
+              pcall(vim.api.nvim_win_set_cursor, win, { line, 0 })
+              vim.wo[win].scrolloff = saved_scrolloff
+              break
+            end
+          end
+        end
+      end
+
       -- Clear Virutal Text on close/stop
       local dap = require 'dap'
       dap.listeners.before.event_terminated['clear-virtual-text'] = function()
