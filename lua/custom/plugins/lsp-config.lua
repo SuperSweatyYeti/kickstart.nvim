@@ -251,6 +251,14 @@ return {
         bundle_path = vim.fn.stdpath 'data' .. '/mason/packages/powershell-editor-services',
         filetypes = { 'ps1', 'powershell' },
         capabilities = capabilities,
+        -- Override code formatter default setting
+        settings = {
+          powershell = {
+            codeFormatting = {
+              Preset = 'OTBS',
+            },
+          },
+        },
       })
       vim.lsp.enable 'powershell_es'
     end,
