@@ -6,15 +6,43 @@ return {
     'zbirenbaum/copilot.lua',
     enabled = true,
     cmd = 'Copilot',
-    vim.keymap.set('n', '<leader>cps', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
-    vim.keymap.set('n', '<leader>cpt', '<cmd>Copilot toggle<cr>', { desc = 'Toggle Copilot suggestions' }),
-    vim.keymap.set('n', '<leader>cpx', '<cmd>Copilot disable<cr>', { desc = 'Disable Copilot' }),
     -- event = 'InsertEnter',
     config = function()
       require('copilot').setup {
         -- Disable the default keymap to accept suggestions
         vim.keymap.set('i', '<Tab>', '<Tab>'),
-        vim.keymap.set('n', '<leader>cp', '<cmd>Copilot<cr>', { desc = 'Start Copilot' }),
+        require('which-key').add {
+          { mode = { 'n' }, { '<leader>cpS', group = '[c]o[p]ilot [S]uggestions', hidden = false } },
+        },
+        vim.keymap.set('n', '<leader>cps', '<cmd>Copilot<cr><cmd>Copilot enable<cr>', { desc = 'Start Copilot' }),
+        vim.keymap.set('n', '<leader>cpx', '<cmd>Copilot disable<cr>', { desc = 'Disable Copilot' }),
+        vim.keymap.set('n', '<leader>cpSt', function()
+          local cmp = require 'cmp'
+          local config = cmp.get_config()
+          local sources = config.sources or {}
+
+          -- Check if copilot source is currently active
+          local has_copilot = false
+          local filtered = {}
+          for _, source in ipairs(sources) do
+            if source.name == 'copilot' then
+              has_copilot = true
+            else
+              table.insert(filtered, source)
+            end
+          end
+
+          if has_copilot then
+            -- Remove copilot source
+            cmp.setup { sources = filtered }
+            vim.notify('Copilot completions OFF', vim.log.levels.INFO)
+          else
+            -- Add copilot source back (high priority, at the top)
+            table.insert(filtered, 1, { name = 'copilot', group_index = 1 })
+            cmp.setup { sources = filtered }
+            vim.notify('Copilot completions ON', vim.log.levels.INFO)
+          end
+        end, { desc = 'Toggle Copilot completions' }),
         panel = {
           enabled = false,
           auto_refresh = false,
@@ -91,31 +119,43 @@ return {
         },
         server_opts_overrides = {},
       }
-      -- Start with Copilot disabled; toggle on with <leader>cpt
+      -- Start with Copilot disabled; start with <leader>cps
       vim.cmd 'Copilot disable'
+      -- Remove copilot from completion sources on startup so it doesn't waste tokens
+      vim.schedule(function()
+        local cmp = require 'cmp'
+        local config = cmp.get_config()
+        local filtered = {}
+        for _, source in ipairs(config.sources or {}) do
+          if source.name ~= 'copilot' then
+            table.insert(filtered, source)
+          end
+        end
+        cmp.setup { sources = filtered }
+      end)
     end,
     dependencies = {
       -- Plugin to have copilot sugestions play nice with nvim-cmp
       {
         'zbirenbaum/copilot-cmp',
-        -- enable = true,
+        enable = true,
         config = function()
           require('copilot_cmp').setup()
         end,
       },
-      -- Additon to lualine to show copilot status
-      {
-        'AndreM222/copilot-lualine',
-        -- enable = true,
-        -- Edit lualine setup to include copilot in the statusline
-        config = function()
-          -- Ensure lualine is loaded before setting up
-          local statusline = require 'lualine'
-          if not statusline then
-            return
-          end
-        end,
-      },
+      -- -- Additon to lualine to show copilot status
+      -- {
+      --   'AndreM222/copilot-lualine',
+      --   -- enable = true,
+      --   -- Edit lualine setup to include copilot in the statusline
+      --   config = function()
+      --     -- Ensure lualine is loaded before setting up
+      --     local statusline = require 'lualine'
+      --     if not statusline then
+      --       return
+      --     end
+      --   end,
+      -- },
       {
         'CopilotC-Nvim/CopilotChat.nvim',
         -- enable = true,

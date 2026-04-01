@@ -38,10 +38,63 @@ return {
         },
         sections = {
           lualine_a = { 'mode' },
-          lualine_b = { 'branch', 'diff',  }, -- 'diagnostics'
+          lualine_b = { 'branch', 'diff' }, -- 'diagnostics'
           lualine_c = { 'filename' },
           lualine_x = {
-            'copilot',
+            -- 'copilot',
+            -- Copilot / AI status
+            {
+              function()
+                local ok, copilot_client = pcall(require, 'copilot.client')
+                if not ok then
+                  return ' '
+                end
+
+                if copilot_client.is_disabled() then
+                  return ' '
+                end
+
+                if not copilot_client.get() then
+                  return ' '
+                end
+
+                local ok2, copilot_status = pcall(require, 'copilot.status')
+                if not ok2 then
+                  return ''
+                end
+
+                local status = copilot_status.data and copilot_status.data.status or ''
+                local icons = {
+                  ['']   = ' ' ,
+                  Normal = ' ', -- ready
+                  InProgress = '  ', -- working / thinking
+                  Warning = ' ', -- warning / degraded
+                  Offline = ' ', -- offline / disabled
+                  Unknown = ' ',
+                }
+
+                return icons[status] or icons.Unknown
+              end,
+              -- -- Optional function to set colors
+              -- color = function()
+              --   local ok, copilot_api = pcall(require, 'copilot.api')
+              --   if not ok then
+              --     return {}
+              --   end
+              --
+              --   local status = copilot_api.status.data and copilot_api.status.data.status or 'Normal'
+              --
+              --   local colors = {
+              --     Normal = { fg = '#6CC644' }, -- green
+              --     InProgress = { fg = '#E5C07B' }, -- yellow
+              --     Warning = { fg = '#E06C75' }, -- red
+              --     Offline = { fg = '#5C6370' }, -- grey
+              --     Unknown = { fg = '#5C6370' },
+              --   }
+              --
+              --   return colors[status] or colors.Unknown
+              -- end,
+            },
             {
               function()
                 return preserve_yank_status()
