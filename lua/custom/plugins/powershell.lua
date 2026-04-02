@@ -1,3 +1,4 @@
+
 return {
   {
     'TheLeoP/powershell.nvim',
@@ -11,7 +12,82 @@ return {
       bundle_path = vim.fn.stdpath 'data' .. '/mason/packages/powershell-editor-services',
     },
     config = function(_, opts)
-      require('powershell').setup(opts)
+      -- Function to dynamically select PowerShell version
+      local powershell_versions = {
+        ['5.1'] = 'C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe',
+        ['7+'] = 'pwsh.exe',
+      }
+
+      local current_version = '7+' -- Default to PowerShell 7+
+
+      local function select_powershell_version(version)
+        if powershell_versions[version] then
+          current_version = version
+          require('powershell').setup {
+            executable = powershell_versions[version],
+            bundle_path = opts.bundle_path,
+          }
+          print('Switched to PowerShell ' .. version)
+        else
+          print('Invalid PowerShell version: ' .. version)
+        end
+      end
+
+      -- Default setup with PowerShell 7+
+      require('powershell').setup {
+        executable = powershell_versions[current_version],
+        bundle_path = opts.bundle_path,
+      }
+
+      -- Telescope integration to choose PowerShell version
+      local function telescope_choose_powershell()
+        local choices = {}
+        if vim.fn.executable(powershell_versions['5.1']) == 1 then
+          table.insert(choices, { name = 'PowerShell 5.1', version = '5.1' })
+        end
+        if vim.fn.executable(powershell_versions['7+']) == 1 then
+          table.insert(choices, { name = 'PowerShell 7+', version = '7+' })
+        end
+
+        require('telescope.pickers')
+          .new({}, {
+            prompt_title = 'Choose PowerShell Version',
+            finder = require('telescope.finders').new_table {
+              results = choices,
+              entry_maker = function(entry)
+                local display_name = entry.name
+                if entry.version == current_version then
+                  display_name = '• ' .. display_name -- Add bullet for the active version
+                end
+                return {
+                  value = entry.version,
+                  display = display_name,
+                  ordinal = entry.name,
+                }
+              end,
+            },
+            sorter = require('telescope.config').values.generic_sorter {},
+            layout_config = {
+              prompt_position = 'top', -- Move input field to the top
+              height = 10,             -- Adjust the height of the picker
+              width = 50,              -- Adjust the width of the picker
+            },
+            attach_mappings = function(_, map)
+              map('i', '<CR>', function(prompt_bufnr)
+                local selection = require('telescope.actions.state').get_selected_entry()
+                require('telescope.actions').close(prompt_bufnr)
+                if selection then
+                  select_powershell_version(selection.value)
+                end
+              end)
+              return true
+            end,
+          })
+          :find()
+      end
+
+      -- Keymap to invoke the Telescope picker
+      vim.keymap.set('n', '<leader>ps', telescope_choose_powershell, { desc = 'Choose PowerShell Version' })
 
       local dap = require 'dap'
       local dapui = require 'dapui'
@@ -36,34 +112,6 @@ return {
           size = 6,
         },
       }
-
-      -- -- Prevent DAP from moving cursor on step/continue for ps1 sessions
-      -- -- If cursor is in the same buffer, let DAP move it normally.
-      -- -- If cursor is in a different buffer (e.g. repl, dapui), don't move it.
-      -- dap.defaults.ps1.switchbuf = function(bufnr, line, column)
-      --   local cur_win = vim.api.nvim_get_current_win()
-      --   local cur_buf = vim.api.nvim_get_current_buf()
-      --
-      --   if cur_buf == bufnr then
-      --     -- Same buffer — move cursor to stopped line, scrolloff keeps it
-      --     -- within the middle ~50% of the window (natural scroll feel)
-      --     local saved_scrolloff = vim.wo[cur_win].scrolloff
-      --     vim.wo[cur_win].scrolloff = math.floor(vim.api.nvim_win_get_height(cur_win) / 4)
-      --     pcall(vim.api.nvim_win_set_cursor, cur_win, { line, (column or 1) - 1 })
-      --     vim.wo[cur_win].scrolloff = saved_scrolloff
-      --   else
-      --     -- Different buffer — scroll the stopped line into view without moving cursor
-      --     for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-      --       if vim.api.nvim_win_get_buf(win) == bufnr then
-      --         local saved_scrolloff = vim.wo[win].scrolloff
-      --         vim.wo[win].scrolloff = math.floor(vim.api.nvim_win_get_height(win) / 4)
-      --         pcall(vim.api.nvim_win_set_cursor, win, { line, 0 })
-      --         vim.wo[win].scrolloff = saved_scrolloff
-      --         break
-      --       end
-      --     end
-      --   end
-      -- end
 
       vim.api.nvim_create_autocmd('FileType', {
         pattern = 'ps1',
