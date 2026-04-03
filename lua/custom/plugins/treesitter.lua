@@ -7,7 +7,7 @@ return {
 
     config = function()
       -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-
+      require('nvim-treesitter.install').compilers = { 'zig' }
       ---@diagnostic disable-next-line: missing-fields
       require('nvim-treesitter.configs').setup {
         ensure_installed = { 'powershell', 'bash', 'python', 'c', 'html', 'lua', 'markdown', 'yaml', 'vim', 'vimdoc' },
