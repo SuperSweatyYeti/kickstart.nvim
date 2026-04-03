@@ -27,7 +27,7 @@ vim.api.nvim_create_user_command('WrapModeMoveToggle', function()
     vim.keymap.set({'n','v','x'}, '<End>', '<End>', { noremap = true })
     vim.g.wrap_mode_move = false
   end
-end, { desc = 'Toggle Up/Down movement to visual line instead of actual line' })
+end, { desc = 'Toggle Up/Down and end_of_line movement to visual line instead of actual line' })
 
 -- Prepend wrap mode indicator to lualine section Y
 local lualine = require('lualine')
