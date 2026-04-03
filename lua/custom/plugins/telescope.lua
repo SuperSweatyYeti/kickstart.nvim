@@ -98,11 +98,118 @@ return {
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[s]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
       -- Search For Directories only
+      -- Custom stuff to add folder icons and previewer
       vim.keymap.set('n', '<leader>sD', function()
-        require('telescope.builtin').find_files {
-          prompt_title = 'Find Directories',
-          find_command = { 'fd', '--type', 'd' },
+        local entry_display = require 'telescope.pickers.entry_display'
+        local pickers = require 'telescope.pickers'
+        local finders = require 'telescope.finders'
+        local previewers = require 'telescope.previewers'
+        local from_entry = require 'telescope.from_entry'
+        local conf = require('telescope.config').values
+        local utils = require 'telescope.utils'
+        local Path = require 'plenary.path'
+
+        local cwd = vim.uv.cwd()
+
+        local displayer = entry_display.create {
+          separator = ' ',
+          items = {
+            { width = 2 },
+            { remaining = true },
+          },
         }
+
+        local lookup_keys = {
+          ordinal = 1,
+          value = 1,
+          filename = 1,
+          cwd = 2,
+        }
+
+        local mt_dir_entry = {}
+        mt_dir_entry.cwd = cwd
+
+        mt_dir_entry.display = function(entry)
+          local text = utils.transform_path({}, entry.value)
+          return displayer {
+            { '', 'Directory' },
+            { text, 'TelescopeResultsNormal' },
+          }
+        end
+
+        mt_dir_entry.__index = function(t, k)
+          local raw = rawget(mt_dir_entry, k)
+          if raw then
+            return raw
+          end
+
+          if k == 'path' then
+            local retpath = Path:new({ t.cwd, t.value }):absolute()
+            if not vim.uv.fs_access(retpath, 'R') then
+              retpath = t.value
+            end
+            return retpath
+          end
+
+          return rawget(t, rawget(lookup_keys, k))
+        end
+
+        local dir_previewer = previewers.new_buffer_previewer {
+          title = 'Directory Preview',
+          define_preview = function(self, entry)
+            local p = from_entry.path(entry, true, false)
+            if p == nil or p == '' then
+              return
+            end
+
+            local expanded = utils.path_expand(p)
+            require('plenary.scandir').scan_dir_async(expanded, {
+              hidden = true,
+              depth = 1,
+              add_dirs = true,
+              on_exit = vim.schedule_wrap(function(results)
+                if not vim.api.nvim_buf_is_valid(self.state.bufnr) then
+                  return
+                end
+
+                local lines = {}
+                local hl_lines = {}
+                for _, item in ipairs(results) do
+                  local name = vim.fn.fnamemodify(item, ':t')
+                  local stat = vim.uv.fs_stat(item)
+                  if stat and stat.type == 'directory' then
+                    table.insert(lines, ' ' .. name)
+                    table.insert(hl_lines, 'Directory')
+                  else
+                    table.insert(lines, '  ' .. name)
+                    table.insert(hl_lines, 'TelescopePreviewNormal')
+                  end
+                end
+
+                vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
+
+                local ns = vim.api.nvim_create_namespace 'dir_preview'
+                for i, hl_group in ipairs(hl_lines) do
+                  -- highlight the icon
+                  vim.hl.range(self.state.bufnr, ns, hl_group, { i - 1, 0 }, { i - 1, #lines[i] })
+                end
+              end),
+            })
+          end,
+        }
+
+        pickers
+          .new({}, {
+            prompt_title = 'Find Directories',
+            finder = finders.new_oneshot_job({ 'fd', '--type', 'd' }, {
+              entry_maker = function(line)
+                return setmetatable({ line, cwd }, mt_dir_entry)
+              end,
+            }),
+            previewer = dir_previewer,
+            sorter = conf.generic_sorter {},
+          })
+          :find()
       end, { desc = '[s]earch [D]irectories' })
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
