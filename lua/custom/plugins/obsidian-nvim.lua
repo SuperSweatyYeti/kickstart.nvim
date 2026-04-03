@@ -119,7 +119,8 @@ return {
       obsidian_server_address = 'https://127.0.0.1:27124',
       cert_path = '~/.ssl/obsidian.crt',
       ui = {
-        enable = true,
+        enable = false, -- disable to get rid of conceallevel warning
+        -- We are using a different Plugin for markdown rendering anyways
         update_debounce = 200,
         max_file_length = 5000,
         checkboxes = {
