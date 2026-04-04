@@ -56,92 +56,79 @@ end
 
 ------------------------------------------------------------
 -- 3) Preserve last yank for p/P, but keep deletes accessible in register "1
+--
+--    Approach: save unnamed register before the operation, let Vim do the
+--    native d/c/x/s (which writes to unnamed), then move that into reg 1
+--    and restore the original unnamed register. This way Vim handles all
+--    cursor positioning, modes, linewise/charwise/blockwise, counts, and
+--    motions natively — zero edge cases.
 ------------------------------------------------------------
 do
-  -- Normal mode: route destructive operators to register 1.
-  vim.keymap.set("n", "d", '"1d', { noremap = true, silent = true, desc = "Delete -> reg 1 (preserve yank)" })
-  vim.keymap.set("n", "c", '"1c', { noremap = true, silent = true, desc = "Change -> reg 1 (preserve yank)" })
-  vim.keymap.set("n", "x", '"1x', { noremap = true, silent = true, desc = "x -> reg 1 (preserve yank)" })
-  vim.keymap.set("n", "s", '"1s', { noremap = true, silent = true, desc = "s -> reg 1 (preserve yank)" })
+  --- Perform a destructive operator natively, then move the result from
+  --- the unnamed register into register 1 and restore the previous unnamed.
+  ---@param keys string  the raw key(s) to feed, e.g. "d", "c", "x", "s"
+  local function op_to_reg1(keys)
+    -- Snapshot what's currently in the unnamed register
+    local prev_contents = vim.fn.getreg('"')
+    local prev_type = vim.fn.getregtype('"')
+
+    -- Build the feedkeys string: use the unnamed register (default behavior)
+    -- so Vim does everything natively, then our autocmd on TextYankPost
+    -- or an operatorfunc-end callback fixes the registers.
+    --
+    -- We can't do this synchronously because the operator hasn't happened yet
+    -- when this function runs. Instead we use feedkeys + a one-shot CursorMoved
+    -- (or TextChanged) autocmd to do the register swap after Vim finishes.
+
+    local group = vim.api.nvim_create_augroup("_yank_preserve_swap", { clear = true })
+
+    -- Use TextChanged — fires once after the buffer is modified by the operator
+    vim.api.nvim_create_autocmd({ "TextChanged", "InsertEnter" }, {
+      group = group,
+      once = true,
+      callback = function()
+        -- The operator just ran. The deleted/changed text is now in unnamed.
+        local deleted_contents = vim.fn.getreg('"')
+        local deleted_type = vim.fn.getregtype('"')
+
+        -- Move it to register 1
+        vim.fn.setreg("1", deleted_contents, deleted_type)
+
+        -- Restore the previous unnamed register (the last yank)
+        vim.fn.setreg('"', prev_contents, prev_type)
+
+        vim.api.nvim_del_augroup_by_id(group)
+      end,
+    })
+
+    -- Feed the keys normally — Vim handles everything
+    vim.api.nvim_feedkeys(keys, "n", false)
+  end
+
+  -- Normal mode
+  vim.keymap.set("n", "d", function() op_to_reg1("d") end,
+    { noremap = true, silent = true, desc = "Delete -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "dd", function() op_to_reg1("dd") end,
+    { noremap = true, silent = true, desc = "Delete line -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "D", function() op_to_reg1("D") end,
+    { noremap = true, silent = true, desc = "Delete to EOL -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "c", function() op_to_reg1("c") end,
+    { noremap = true, silent = true, desc = "Change -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "cc", function() op_to_reg1("cc") end,
+    { noremap = true, silent = true, desc = "Change line -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "C", function() op_to_reg1("C") end,
+    { noremap = true, silent = true, desc = "Change to EOL -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "x", function() op_to_reg1("x") end,
+    { noremap = true, silent = true, desc = "x -> reg 1 (preserve yank)" })
+  vim.keymap.set("n", "s", function() op_to_reg1("s") end,
+    { noremap = true, silent = true, desc = "s -> reg 1 (preserve yank)" })
+
+  -- Visual mode: reselect then operate so Vim handles all visual sub-modes
+  vim.keymap.set("x", "d", function() op_to_reg1("d") end,
+    { noremap = true, silent = true, desc = "V delete -> reg 1 (preserve yank)" })
+  vim.keymap.set("x", "c", function() op_to_reg1("c") end,
+    { noremap = true, silent = true, desc = "V change -> reg 1 (preserve yank)" })
 
   -- Visual paste: don't overwrite last yank with replaced text
   vim.keymap.set("x", "p", '"_dP', { noremap = true, silent = true, desc = "Visual paste (preserve yank)" })
-
-  local function normalize_visual_points()
-    local vpos = vim.fn.getpos("v")
-    local cpos = vim.fn.getpos(".")
-    local srow, scol = vpos[2], vpos[3]
-    local erow, ecol = cpos[2], cpos[3]
-
-    if (erow < srow) or (erow == srow and ecol < scol) then
-      srow, erow = erow, srow
-      scol, ecol = ecol, scol
-    end
-
-    -- convert to 0-indexed
-    return (srow - 1), (scol - 1), (erow - 1), (ecol - 1)
-  end
-
-  local function clamp_col(buf, row0, col0)
-    local line = vim.api.nvim_buf_get_lines(buf, row0, row0 + 1, true)[1] or ""
-    local maxc = #line
-    if col0 < 0 then
-      return 0
-    end
-    if col0 > maxc then
-      return maxc
-    end
-    return col0
-  end
-
-  local function visual_delete_or_change(op) -- op = "d" or "c"
-    return function()
-      local mode = vim.fn.visualmode() -- 'v', 'V', or CTRL-V
-      if mode == "\022" then
-        vim.notify("[yank-settings] Visual block mode not supported by this mapping yet", vim.log.levels.WARN)
-        return
-      end
-
-      local buf = 0
-      local srow, scol, erow, ecol = normalize_visual_points()
-
-      if mode == "V" then
-        -- Linewise: store selected lines into reg 1, then delete via set_lines (safe)
-        local lines = vim.api.nvim_buf_get_lines(buf, srow, erow + 1, true)
-        vim.fn.setreg("1", table.concat(lines, "\n") .. "\n", "V") -- linewise register
-
-        vim.api.nvim_buf_set_lines(buf, srow, erow + 1, true, {})
-
-        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-        if op == "c" then
-          vim.api.nvim_win_set_cursor(0, { srow + 1, 0 })
-          vim.api.nvim_feedkeys("i", "n", false)
-        end
-        return
-      end
-
-      -- Characterwise: clamp columns to line bounds
-      scol = clamp_col(buf, srow, scol)
-      ecol = clamp_col(buf, erow, ecol)
-
-      -- In charwise visual, the end is inclusive; API expects end-exclusive
-      local end_excl = clamp_col(buf, erow, ecol + 1)
-
-      -- Get selected text, store in reg 1
-      local text = vim.api.nvim_buf_get_text(buf, srow, scol, erow, end_excl, {})
-      vim.fn.setreg("1", table.concat(text, "\n"), "v")
-
-      -- Delete selection without touching unnamed/clipboard
-      vim.api.nvim_buf_set_text(buf, srow, scol, erow, end_excl, { "" })
-
-      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-      if op == "c" then
-        vim.api.nvim_win_set_cursor(0, { srow + 1, scol })
-        vim.api.nvim_feedkeys("i", "n", false)
-      end
-    end
-  end
-
-  vim.keymap.set("x", "d", visual_delete_or_change("d"), { noremap = true, silent = true, desc = "V delete -> reg 1 (preserve yank)" })
-  vim.keymap.set("x", "c", visual_delete_or_change("c"), { noremap = true, silent = true, desc = "V change -> reg 1 (preserve yank)" })
 end
