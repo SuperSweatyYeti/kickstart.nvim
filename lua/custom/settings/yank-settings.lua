@@ -79,13 +79,18 @@ end
 ------------------------------------------------------------
 do
   ---@param keys string  the raw key(s) to feed, e.g. "d", "c", "x", "s"
-  local function op_to_reg1(keys)
+    local function op_to_reg1(keys)
     local prev_contents = vim.fn.getreg '"'
     local prev_type = vim.fn.getregtype '"'
-    local prev_plus = vim.fn.getreg '+'
-    local prev_plus_type = vim.fn.getregtype '+'
-    local prev_star = vim.fn.getreg '*'
-    local prev_star_type = vim.fn.getregtype '*'
+
+    local has_clipboard = vim.fn.has 'clipboard' == 1
+    local prev_plus, prev_plus_type, prev_star, prev_star_type
+    if has_clipboard then
+      prev_plus = vim.fn.getreg '+'
+      prev_plus_type = vim.fn.getregtype '+'
+      prev_star = vim.fn.getreg '*'
+      prev_star_type = vim.fn.getregtype '*'
+    end
 
     local group = vim.api.nvim_create_augroup('_yank_preserve_swap', { clear = true })
 
@@ -98,9 +103,11 @@ do
 
         vim.fn.setreg('1', deleted_contents, deleted_type)
         vim.fn.setreg('"', prev_contents, prev_type)
-        -- Restore system clipboard registers to what they were BEFORE the delete
-        vim.fn.setreg('+', prev_plus, prev_plus_type)
-        vim.fn.setreg('*', prev_star, prev_star_type)
+
+        if has_clipboard then
+          vim.fn.setreg('+', prev_plus, prev_plus_type)
+          vim.fn.setreg('*', prev_star, prev_star_type)
+        end
 
         vim.api.nvim_del_augroup_by_id(group)
       end,
