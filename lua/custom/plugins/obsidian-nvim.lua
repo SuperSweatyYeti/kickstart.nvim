@@ -17,8 +17,6 @@ return {
       return vim.fn.isdirectory(p) == 1
     end
 
-    ---Pick the first existing path from an OS-specific candidate table.
-    ---Return nil if none exist.
     ---@param per_os { windows?: string[], darwin?: string[], linux?: string[] }
     local function pick_path(per_os)
       local list
@@ -39,19 +37,15 @@ return {
       return nil
     end
 
-    -- Define your vaults here.
-    -- Fill in paths for each OS. First existing wins. If none exist -> nil.
     local vaults = {
       {
-        name = 'Obsidian Vault', -- Personal Vault
+        name = 'Obsidian Vault',
         path = pick_path {
           windows = {
-            -- "C:/Users/<you>/Documents/Obsidian-Vaults/Obsidian Vault",
             '~/Documents/Obsidian Vaults/Obsidian Vault',
           },
           darwin = {
             '~/Documents/Obsidian-Vaults/Obsidian Vault',
-            -- "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault",
           },
           linux = {
             '~/Documents/Obsidian-Vaults/Obsidian Vault',
@@ -62,13 +56,11 @@ return {
         name = 'AACI',
         path = pick_path {
           windows = {
-            -- "C:/Users/<you>/Documents/Obsidian-Vaults/Obsidian Vault",
-            'D:\\Obsidian\\Vaults\\AACI\\AACI', -- AACI Laptop vault location
+            'D:\\Obsidian\\Vaults\\AACI\\AACI',
             '~/Documents/Obsidian Vaults/AACI',
           },
           darwin = {
             '~/Documents/Obsidian-Vaults/AACI',
-            -- "~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault",
           },
           linux = {
             '~/Documents/Obsidian-Vaults/AACI',
@@ -78,34 +70,21 @@ return {
       {
         name = 'Work',
         path = pick_path {
-          windows = {
-            -- "C:/Users/<you>/Documents/vaults/work",
-          },
-          darwin = {
-            -- "~/vaults/work",
-          },
-          linux = {
-            -- "~/vaults/work",
-          },
+          windows = {},
+          darwin = {},
+          linux = {},
         },
       },
       {
         name = 'Other',
         path = pick_path {
-          windows = {
-            -- "C:/Users/<you>/Documents/vaults/personal",
-          },
-          darwin = {
-            -- "~/vaults/personal",
-          },
-          linux = {
-            -- "~/vaults/personal",
-          },
+          windows = {},
+          darwin = {},
+          linux = {},
         },
       },
     }
 
-    -- Keep only vaults that were found on this machine.
     local workspaces = {}
     for _, v in ipairs(vaults) do
       if v.path ~= nil then
@@ -115,23 +94,87 @@ return {
 
     return {
       disable_frontmatter = true,
-      workspaces = workspaces, -- if none found, this will be {}
+      workspaces = workspaces,
       obsidian_server_address = 'https://127.0.0.1:27124',
       cert_path = '~/.ssl/obsidian.crt',
       ui = {
-        enable = false, -- disable to get rid of conceallevel warning
-        -- We are using a different Plugin for markdown rendering anyways
+        enable = false,
         update_debounce = 200,
         max_file_length = 5000,
         checkboxes = {
           [' '] = { char = '󰄱', hl_group = 'ObsidianTodo' },
-          ['x'] = { char = '', hl_group = 'ObsidianDone' },
+          ['x'] = { char = '', hl_group = 'ObsidianDone' },
         },
       },
     }
   end,
 
-  -- Keymaps (your existing style)
+  config = function(_, opts)
+    require('obsidian').setup(opts)
+
+    -- Month names for folder: "1-January", "2-February", etc.
+    local month_names = {
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    }
+
+    --- Get the vault root for the current workspace.
+    --- Falls back to cwd if obsidian.nvim client isn't available.
+    local function get_vault_root()
+      local ok, client = pcall(function()
+        return require('obsidian').get_client()
+      end)
+      if ok and client and client.dir then
+        return tostring(client.dir)
+      end
+      return vim.fn.getcwd()
+    end
+
+    --- Build the daily note path and open/create it.
+    --- Pattern: Daily-Notes/YYYY/M-MonthName/M-D-YYYY.md
+    local function open_daily_note()
+      local now = os.date('*t')
+      local year = tostring(now.year)
+      local month_num = now.month
+      local day_num = now.day
+
+      -- "1-January", "12-December"
+      local month_folder = month_num .. '-' .. month_names[month_num]
+
+      -- "1-5-2026.md"
+      local filename = month_num .. '-' .. day_num .. '-' .. year .. '.md'
+
+      local vault_root = get_vault_root()
+      local dir = vault_root .. '/Daily Notes/' .. year .. '/' .. month_folder
+      local filepath = dir .. '/' .. filename
+
+      -- Create directories if they don't exist
+      vim.fn.mkdir(dir, 'p')
+
+      -- Open the file (creates it if new)
+      vim.cmd('edit ' .. vim.fn.fnameescape(filepath))
+
+      -- If the file is brand new (empty buffer), insert a template
+      if vim.api.nvim_buf_line_count(0) <= 1 and vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] == '' then
+        local header = '# ' .. month_names[month_num] .. ' ' .. day_num .. ', ' .. year
+        vim.api.nvim_buf_set_lines(0, 0, -1, false, {
+          -- header, -- optional Header
+          '',
+          '',
+        })
+        -- Place cursor on the second line at the end
+        vim.api.nvim_win_set_cursor(0, { 2, 0 })
+      end
+    end
+
+    vim.api.nvim_create_user_command('ObsidianDailyNote', open_daily_note, {
+      desc = 'Open or create today\'s daily note (Daily Notes/YYYY/M-Month/M-D-YYYY.md)',
+    })
+
+    vim.keymap.set('n', '<leader>obd', '<cmd>ObsidianDailyNote<cr>', { desc = 'Obsidian Daily Note' })
+  end,
+
+  -- Keymaps
   vim.keymap.set('n', '<leader>obs', ':ObsidianSearch ', { desc = 'Obsidian Search' }),
   vim.keymap.set('n', '<leader>obpi', ':ObsidianPasteImg ', { desc = 'Obsidian Paste Image' }),
   vim.keymap.set('n', '<leader>obl', '<cmd>ObsidianLinks<cr>', { desc = 'Obsidian Links List' }),
