@@ -114,8 +114,18 @@ return {
 
     -- Month names for folder: "1-January", "2-February", etc.
     local month_names = {
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     }
 
     --- Get the vault root for the current workspace.
@@ -133,20 +143,27 @@ return {
     --- Build the daily note path and open/create it.
     --- Pattern: Daily-Notes/YYYY/M-MonthName/M-D-YYYY.md
     local function open_daily_note()
-      local now = os.date('*t')
+      local now = os.date '*t'
       local year = tostring(now.year)
       local month_num = now.month
       local day_num = now.day
 
-      -- "1-January", "12-December"
       local month_folder = month_num .. '-' .. month_names[month_num]
-
-      -- "1-5-2026.md"
       local filename = month_num .. '-' .. day_num .. '-' .. year .. '.md'
 
       local vault_root = get_vault_root()
       local dir = vault_root .. '/Daily Notes/' .. year .. '/' .. month_folder
       local filepath = dir .. '/' .. filename
+
+      -- Normalize for comparison
+      local target = vim.fs.normalize(filepath)
+      local current = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+
+      -- Already viewing this file — just notify, don't re-open
+      if current == target then
+        vim.notify("Already in today's daily note", vim.log.levels.INFO)
+        return
+      end
 
       -- Create directories if they don't exist
       vim.fn.mkdir(dir, 'p')
@@ -162,13 +179,12 @@ return {
           '',
           '',
         })
-        -- Place cursor on the second line at the end
         vim.api.nvim_win_set_cursor(0, { 2, 0 })
       end
     end
 
     vim.api.nvim_create_user_command('ObsidianDailyNote', open_daily_note, {
-      desc = 'Open or create today\'s daily note (Daily Notes/YYYY/M-Month/M-D-YYYY.md)',
+      desc = "Open or create today's daily note (Daily Notes/YYYY/M-Month/M-D-YYYY.md)",
     })
 
     vim.keymap.set('n', '<leader>obd', '<cmd>ObsidianDailyNote<cr>', { desc = 'Obsidian Daily Note' })
