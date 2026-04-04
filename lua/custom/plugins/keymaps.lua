@@ -61,5 +61,7 @@ return {
     vim.keymap.set('n', 'gO', "<Cmd>call append(line('.') - 1, repeat([''], v:count1))<CR>k", { desc = 'Append Line Before' }),
     -- after
     vim.keymap.set('n', 'go', "<Cmd>call append(line('.'), repeat([''], v:count1))<CR>j", { desc = 'Append Line After' }),
+    -- Print filepath for current buffer
+    vim.keymap.set('n', '<leader>pwb', ":echo expand('%:p')<CR>", { desc = '[p]rint [w]orking [b]uffer filepath' }),
   },
 }
