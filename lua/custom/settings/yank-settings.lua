@@ -1,4 +1,3 @@
--- lua/custom/settings/yank-settings.lua
 --
 -- OSC52 yank-only + Yanky setup + preserve-yank delete behavior
 --
@@ -49,17 +48,32 @@ end
 do
   local ok_yanky, yanky = pcall(require, 'yanky')
   if ok_yanky then
-    yanky.setup {
-      registers = { '"', '0', '1', '+', '*' },
-    }
+    yanky.setup {}
   end
 
-  vim.keymap.set('n', '<Leader>yh', '<cmd>YankyRingHistory<CR>', { silent = true, desc = 'Yanky history' })
-  vim.keymap.set({ 'x' }, '<Leader>p', '<cmd>YankyRingHistory<CR>', { silent = true, desc = 'Yanky history' })
+  local picker_opts = {
+    prompt_title = 'Ring History',
+    sorting_strategy = 'ascending',
+    layout_strategy = 'vertical',
+    layout_config = {
+      prompt_position = 'top',
+      preview_cutoff = 1,
+      preview_height = 0.4,
+      mirror = true,
+    },
+  }
+
+  vim.keymap.set('n', '<Leader>yh', function()
+    require('telescope').extensions.yank_history.yank_history(picker_opts)
+  end, { silent = true, desc = 'Yanky history' })
+
+  vim.keymap.set({ 'x' }, '<Leader>p', function()
+    require('telescope').extensions.yank_history.yank_history(picker_opts)
+  end, { silent = true, desc = 'Yanky history' })
+
   vim.keymap.set('n', '<c-n>', '<Plug>(YankyCycleForward)', {})
   vim.keymap.set('n', '<c-p>', '<Plug>(YankyCycleBackward)', {})
 end
-
 ------------------------------------------------------------
 -- 3) Preserve last yank for p/P, but keep deletes accessible in register "1
 ------------------------------------------------------------
@@ -68,6 +82,10 @@ do
   local function op_to_reg1(keys)
     local prev_contents = vim.fn.getreg '"'
     local prev_type = vim.fn.getregtype '"'
+    local prev_plus = vim.fn.getreg '+'
+    local prev_plus_type = vim.fn.getregtype '+'
+    local prev_star = vim.fn.getreg '*'
+    local prev_star_type = vim.fn.getregtype '*'
 
     local group = vim.api.nvim_create_augroup('_yank_preserve_swap', { clear = true })
 
@@ -80,6 +98,9 @@ do
 
         vim.fn.setreg('1', deleted_contents, deleted_type)
         vim.fn.setreg('"', prev_contents, prev_type)
+        -- Restore system clipboard registers to what they were BEFORE the delete
+        vim.fn.setreg('+', prev_plus, prev_plus_type)
+        vim.fn.setreg('*', prev_star, prev_star_type)
 
         vim.api.nvim_del_augroup_by_id(group)
       end,
