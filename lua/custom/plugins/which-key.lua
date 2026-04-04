@@ -29,7 +29,7 @@ return {
       -- document existing key chains
       require('which-key').add {
         { mode = { 'n' }, { '<leader>S', group = '[S]plits', hidden = false } },
-        { mode = { 'n', 'v' }, { '<leader>R', group = 'Snip[R]un', hidden = false } },
+        { mode = { 'n', 'x' }, { '<leader>R', group = 'Snip[R]un', hidden = false } },
         --{ mode = {'n'}, { '<leader>R', group = 'Snip [R]un', hidden = false }, }, { mode = {'n'}, { '<leader>T', group = '[T]abs', hidden = false }, },
         { mode = { 'n' }, { '<leader>l', group = '[l]sp', hidden = false } },
         { mode = { 'n' }, { '<leader>b', group = '[b]uffers', hidden = false } },
@@ -39,7 +39,8 @@ return {
         { mode = { 'n' }, { '<leader>o', group = '[o]bsidian', hidden = false } },
         { mode = { 'n' }, { '<leader>Q', group = '[Q]uit Quit', hidden = false } },
         { mode = { 'n' }, { '<leader>r', group = '[r]ename', hidden = false } },
-        { mode = { 'n' }, { '<leader>s', group = '[s]earch', hidden = false } },
+        { mode = { 'n',}, { '<leader>s', group = '[s]earch or [c]cratch', hidden = false } },
+        { mode = { 'x',}, { '<leader>s', group = '[s]cratch pad', hidden = false } },
         { mode = { 'n' }, { '<leader>u', group = '[u]ndo', hidden = false } },
         { mode = { 'n' }, { '<leader>w', group = '[w]orkspace', hidden = false } },
         { mode = { 'n' }, { '<leader>y', group = '[y]ank', hidden = false } },

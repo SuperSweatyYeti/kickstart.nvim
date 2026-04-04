@@ -37,7 +37,35 @@ return {
           },
         },
         sections = {
-          lualine_a = { 'mode' },
+          -- lualine_a = { 'mode' },
+          lualine_a = {
+            {
+              'mode',
+              fmt = function(str)
+                local mode_map = {
+                  ['NORMAL'] = 'N',
+                  ['INSERT'] = 'I',
+                  ['VISUAL'] = 'V',
+                  ['V-LINE'] = 'VL',
+                  ['V-BLOCK'] = 'VB',
+                  ['COMMAND'] = 'C',
+                  ['REPLACE'] = 'R',
+                  ['V-REPLACE'] = 'VR',
+                  ['EX'] = 'EX',
+                  ['SELECT'] = 'S',
+                  ['S-LINE'] = 'SL',
+                  ['S-BLOCK'] = 'SB',
+                  ['TERMINAL'] = 'T',
+                  ['O-PENDING'] = 'OP',
+                  ['MORE'] = 'M',
+                  ['CONFIRM'] = 'CF',
+                  ['SHELL'] = 'SH',
+                }
+                return mode_map[str] or str
+              end,
+              color = { gui = 'bold' },
+            },
+          },
           lualine_b = { 'branch', 'diff' }, -- 'diagnostics'
           lualine_c = { 'filename' },
           lualine_x = {
@@ -65,7 +93,7 @@ return {
 
                 local status = copilot_status.data and copilot_status.data.status or ''
                 local icons = {
-                  ['']   = ' ' ,
+                  [''] = ' ',
                   Normal = ' ', -- ready
                   InProgress = '  ', -- working / thinking
                   Warning = ' ', -- warning / degraded
