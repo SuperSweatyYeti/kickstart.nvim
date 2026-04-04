@@ -22,6 +22,19 @@ do
   if in_ssh then
     vim.opt.clipboard = ''
 
+    -- Prevent hangs when terminal loses focus during clipboard operations
+    vim.g.clipboard = {
+      name = 'OSC 52',
+      copy = {
+        ['+'] = require('vim.ui.clipboard.osc52').copy '+',
+        ['*'] = require('vim.ui.clipboard.osc52').copy '*',
+      },
+      paste = {
+        ['+'] = function() return nil end,
+        ['*'] = function() return nil end,
+      },
+    }
+
     local ok_osc, osc52 = pcall(require, 'osc52')
     if ok_osc then
       osc52.setup {
@@ -41,7 +54,6 @@ do
     end
   end
 end
-
 ------------------------------------------------------------
 -- 2) Yanky: setup + history keymaps
 ------------------------------------------------------------
