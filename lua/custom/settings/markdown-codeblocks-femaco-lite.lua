@@ -15,24 +15,43 @@ function M.edit_code_block()
     return
   end
 
-  -- Find language and content nodes
+  -- Find the fence delimiters and content
   local lang, content_node
+  local open_fence_row, close_fence_row
+
   for child in node:iter_children() do
-    if child:type() == 'info_string' then
+    local ctype = child:type()
+    if ctype == 'info_string' then
       for sub in child:iter_children() do
         if sub:type() == 'language' then
           lang = vim.treesitter.get_node_text(sub, 0)
         end
       end
-    elseif child:type() == 'code_fence_content' then
+    elseif ctype == 'code_fence_content' then
       content_node = child
+    elseif ctype == 'fenced_code_block_delimiter' then
+      local row = child:range()
+      if not open_fence_row then
+        open_fence_row = row
+      else
+        close_fence_row = row
+      end
     end
   end
 
-  if not content_node then return end
+  if not content_node then
+    return
+  end
+  if not open_fence_row or not close_fence_row then
+    return
+  end
 
-  local sr, sc, er, ec = content_node:range()
-  local lines = vim.api.nvim_buf_get_text(0, sr, sc, er, ec, {})
+  -- Content lives on lines between the opening fence and closing fence
+  -- (open_fence_row + 1) through (close_fence_row - 1) inclusive
+  local content_start_row = open_fence_row + 1
+  local content_end_row = close_fence_row -- exclusive for nvim_buf_set_lines
+
+  local lines = vim.api.nvim_buf_get_lines(0, content_start_row, content_end_row, false)
   local source_buf = vim.api.nvim_get_current_buf()
 
   -- Map language names to file extensions for the temp file
@@ -59,7 +78,15 @@ function M.edit_code_block()
   local ext = ext_map[ft] or ft
   local tmpfile = vim.fn.tempname() .. '.' .. ext
 
-  -- Create float (same dimensions as old FeMaco config: 80% x 75%)
+  -- Only write back if user explicitly saved
+  local has_saved = false
+
+  -- Track the content line range in the source buffer
+  -- These get updated after each write-back so added/removed lines are handled
+  local src_content_start = content_start_row
+  local src_content_end = content_end_row
+
+  -- Create float
   local width = math.floor(vim.o.columns * 0.80)
   local height = math.floor(vim.o.lines * 0.75)
   local buf = vim.api.nvim_create_buf(false, false)
@@ -73,39 +100,39 @@ function M.edit_code_block()
     border = 'rounded',
     title = ' ' .. ft .. ' ',
     title_pos = 'center',
-    zindex = 10, -- below treesitter-context's default of 20, so context renders on top
+    zindex = 10,
   })
 
-  -- Set the buffer to a temp file so LSP attaches
   vim.cmd('file ' .. vim.fn.fnameescape(tmpfile))
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].filetype = ft
   vim.bo[buf].bufhidden = 'wipe'
 
-  -- Remove 'minimal' style restrictions so treesitter-context can render properly
   vim.wo[win].number = true
   vim.wo[win].relativenumber = true
   vim.wo[win].signcolumn = 'yes'
 
-  -- Start treesitter for highlighting + context
   pcall(vim.treesitter.start)
-
-  -- Write the temp file so LSP sees it
-  vim.cmd('silent! write!')
-
-  -- Trigger FileType so treesitter-context attaches to this buffer
+  vim.cmd 'silent! write!'
   vim.cmd('doautocmd FileType ' .. ft)
 
-  -- Write back to source on save
+  --- Replace the content lines between the fences in the source buffer
+  local function write_back()
+    if not vim.api.nvim_buf_is_valid(source_buf) then
+      return
+    end
+    local new_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    -- Replace the entire content region (line-wise, between the fences)
+    vim.api.nvim_buf_set_lines(source_buf, src_content_start, src_content_end, false, new_lines)
+    -- Update the end boundary to account for added/removed lines
+    src_content_end = src_content_start + #new_lines
+    has_saved = true
+  end
+
+  -- :w writes back to source immediately
   vim.api.nvim_create_autocmd('BufWritePost', {
     buffer = buf,
-    callback = function()
-      local new_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-      vim.api.nvim_buf_set_text(source_buf, sr, sc, er, ec, new_lines)
-      -- Update the range end for subsequent saves
-      er = sr + #new_lines
-      ec = 0
-    end,
+    callback = write_back,
   })
 
   -- Clean up on close
@@ -113,23 +140,27 @@ function M.edit_code_block()
     buffer = buf,
     once = true,
     callback = function()
-      -- Write back final state
-      if vim.api.nvim_buf_is_valid(buf) then
-        local new_lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-        vim.api.nvim_buf_set_text(source_buf, sr, sc, er, ec, new_lines)
+      -- Write back final state only if user saved at least once
+      if has_saved and vim.api.nvim_buf_is_valid(buf) then
+        write_back()
       end
-      -- Clean up temp file
       vim.fn.delete(tmpfile)
     end,
   })
 
-  -- Close with q
+  -- q = close and discard
   vim.keymap.set('n', 'q', function()
+    has_saved = false
     vim.api.nvim_win_close(win, true)
-  end, { buffer = buf })
+  end, { buffer = buf, desc = 'Close code block editor (discard changes)' })
+
+  -- <leader>cb = save and close
+  vim.keymap.set('n', '<leader>cb', function()
+    vim.cmd 'silent! write!'
+    vim.api.nvim_win_close(win, true)
+  end, { buffer = buf, desc = 'Save code block and close' })
 end
 
--- Keymap (same as old FeMaco binding)
 vim.keymap.set('n', '<leader>cb', function()
   M.edit_code_block()
 end, { noremap = true, silent = true, desc = '[c]ode [b]lock markdown open in window' })
