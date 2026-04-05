@@ -290,6 +290,30 @@ return {
         }
       end
 
+      -- Remove keymap for filepath only need folderpath
+      -- When inside nvim-tree: remove file path keymaps (no file buffer active),
+      -- keep only folder keymaps. Restore file keymaps on leave.
+      vim.api.nvim_create_autocmd('BufEnter', {
+        buffer = bufnr,
+        callback = function()
+          pcall(vim.keymap.del, 'n', '<leader>pwbfo')
+          pcall(vim.keymap.del, 'n', '<leader>pwbfc')
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('BufLeave', {
+        buffer = bufnr,
+        callback = function()
+          vim.keymap.set('n', '<leader>pwbfo', function()
+            print(vim.fn.expand '%:p')
+          end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' })
+
+          vim.keymap.set('n', '<leader>pwbfc', function()
+            vim.fn.setreg('+', vim.fn.expand '%:p')
+          end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' })
+        end,
+      })
+
       require('which-key').add {
         { mode = { 'n' }, { '<leader>f', group = '[f]ile explorer tree', hidden = false } },
       }
@@ -305,6 +329,29 @@ return {
         end
       end, opts 'Set root & cd')
 
+      -- When inside nvim-tree: remove file path keymaps (no file buffer active),
+      -- keep only folder keymaps. Restore file keymaps on leave.
+      vim.api.nvim_create_autocmd('BufEnter', {
+        buffer = bufnr,
+        callback = function()
+          pcall(vim.keymap.del, 'n', '<leader>pwbfo')
+          pcall(vim.keymap.del, 'n', '<leader>pwbfc')
+        end,
+      })
+
+      vim.api.nvim_create_autocmd('BufLeave', {
+        buffer = bufnr,
+        callback = function()
+          vim.keymap.set('n', '<leader>pwbfo', function()
+            print(vim.fn.expand '%:p')
+          end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' })
+
+          vim.keymap.set('n', '<leader>pwbfc', function()
+            vim.fn.setreg('+', vim.fn.expand '%:p')
+          end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' })
+        end,
+      })
+
       vim.keymap.set('n', '-', api.tree.change_root_to_parent, opts 'Up')
       vim.keymap.set('n', 'u', api.tree.change_root_to_parent, opts 'Up')
 
@@ -315,12 +362,11 @@ return {
       vim.keymap.set('n', 's', api.node.open.horizontal, opts 'Open: Horizontal Split')
 
       vim.keymap.set('n', '?', api.tree.toggle_help, opts 'Help')
-      
+    
       -- Collapse all folders with "C"
       vim.keymap.set('n', 'C', api.tree.collapse_all, opts 'Collapse All Folders')
       vim.keymap.set('n', 'R', api.tree.reload, opts 'Refresh')
       vim.keymap.set('n', 'm', api.fs.rename, opts 'Rename')
-
       -- Telescope pickers that reveal back in tree
       vim.keymap.set('n', '<leader>sD', telescope_find_dirs, { buffer = bufnr, desc = '[s]earch [D]irectories (reveal in tree)' })
       vim.keymap.set('n', '<leader>sf', telescope_find_files_reveal, { buffer = bufnr, desc = '[s]earch [f]iles (reveal in tree)' })
