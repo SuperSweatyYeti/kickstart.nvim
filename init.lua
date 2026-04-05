@@ -382,6 +382,9 @@ end, { noremap = true, silent = true })
 -- Make 'yy' reuse the same yank logic via motion
 vim.keymap.set('n', 'yy', 'y_', { noremap = true, silent = true })
 
+-- NOTE: Dynamic plugin enablement based on internet access.
+-- Some Plugins will throw annoying errors if there is no internet availability
+-- e.g. copilot any plugin that uses AI.
 -- Async internet check: tries each IP in order, stops on first success
 -- Usage: pass the result of this to any plugin's `enabled` field
 -- e.g. enabled = _G.internet_check.is_available
