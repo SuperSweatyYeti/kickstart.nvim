@@ -109,7 +109,7 @@ return {
       vim.cmd 'hi DapStoppedLineBgColor guibg=#57551e'
       vim.cmd 'hi DapStoppedOnBreakpointColor guifg=#ec5d00'
       vim.fn.sign_define('DapBreakpointCondition', { text = '', texthl = 'DapBreakpointConditionColor' })
-      vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
+      vim.fn.sign_define('DapBreakpoint', { text = '', texthl = 'DapBreakpointColor', linehl = '', numhl = '' })
       vim.fn.sign_define('DapStopped', { text = '', texthl = 'DapStoppedColor', linehl = 'DapStoppedLineBgColor', numhl = 'DapBreakpointColor' })
 
       -- Change DapStopped sign when stopped on a breakpoint

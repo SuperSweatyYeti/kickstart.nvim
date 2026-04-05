@@ -57,7 +57,7 @@ return {
               entry_maker = function(entry)
                 local display_name = entry.name
                 if entry.version == current_version then
-                  display_name = '• ' .. display_name -- Add bullet for the active version
+                  display_name = ' ' .. display_name -- Add bullet for the active version
                 end
                 return {
                   value = entry.version,
