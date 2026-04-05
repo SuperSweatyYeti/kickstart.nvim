@@ -108,6 +108,8 @@ return {
         local conf = require('telescope.config').values
         local utils = require 'telescope.utils'
         local Path = require 'plenary.path'
+        local actions = require 'telescope.actions'
+        local action_state = require 'telescope.actions.state'
 
         local cwd = vim.uv.cwd()
 
@@ -190,7 +192,6 @@ return {
 
                 local ns = vim.api.nvim_create_namespace 'dir_preview'
                 for i, hl_group in ipairs(hl_lines) do
-                  -- highlight the icon
                   vim.hl.range(self.state.bufnr, ns, hl_group, { i - 1, 0 }, { i - 1, #lines[i] })
                 end
               end),
@@ -208,6 +209,25 @@ return {
             }),
             previewer = dir_previewer,
             sorter = conf.generic_sorter {},
+            attach_mappings = function(prompt_bufnr)
+              actions.select_default:replace(function()
+                actions.close(prompt_bufnr)
+
+                local entry = action_state.get_selected_entry()
+                local dir = Path:new({ cwd, entry.value }):absolute()
+
+                -- change neovim's cwd
+                vim.cmd('cd ' .. vim.fn.fnameescape(dir))
+
+                -- update nvim-tree root only if it's open
+                local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
+                if ok and nvim_tree_api.tree.is_visible() then
+                  nvim_tree_api.tree.change_root(dir)
+                end
+              end)
+
+              return true
+            end,
           })
           :find()
       end, { desc = '[s]earch [D]irectories' })

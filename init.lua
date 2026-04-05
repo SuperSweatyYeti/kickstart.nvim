@@ -514,9 +514,20 @@ require('lazy').setup({
         topdelete = { text = '‾' },
         changedelete = { text = '~' },
       },
+      on_attach = function(bufnr)
+        local gitsigns = require 'gitsigns'
+
+        require('which-key').add {
+          { mode = { 'n' }, { '<leader>g', group = '[g]it', hidden = false } },
+          { mode = { 'n' }, { '<leader>gr', group = '[g]it [r]eset hunk', hidden = false } },
+        }
+        vim.keymap.set('n', '<leader>grh', gitsigns.reset_hunk, { buffer = bufnr, desc = 'Git [R]eset hunk' })
+        vim.keymap.set('v', '<leader>grh', function()
+          gitsigns.reset_hunk { vim.fn.line '.', vim.fn.line 'v' }
+        end, { buffer = bufnr, desc = 'Git [R]eset selected hunk' })
+      end,
     },
   },
-
   -- NOTE: Plugins can also be configured to run lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
