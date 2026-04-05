@@ -112,6 +112,14 @@ return {
           ['x'] = { char = '', hl_group = 'ObsidianDone' },
         },
       },
+      mappings = {
+        ['<CR>'] = {
+          action = function()
+            return require('obsidian.util').smart_action()
+          end,
+          opts = { noremap = false, expr = true, buffer = true, desc = 'Obsidian smart action' },
+        },
+      },
     }
   end,
 
