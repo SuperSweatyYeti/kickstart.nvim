@@ -9,10 +9,10 @@ return {
       'MunifTanjim/nui.nvim',
       -- "3rd/image.nvim", -- Optional image support in preview window: See `# Preview Mode` for more information
     },
-    opts = {
-      -- See top of file need to disable netrw
-      vim.keymap.set('n', '<leader>f', '<cmd>Neotree toggle<cr>', { desc = 'Neotree toggle' }),
-      vim.keymap.set('n', '<leader>f<leader>', '<cmd>Neotree toggle<cr>', { desc = 'Neotree toggle' }),
+    opts = {},
+    keys = {
+      { '<leader>f', '<cmd>Neotree toggle<cr>', desc = 'Neotree toggle' },
+      { '<leader>f<leader>', '<cmd>Neotree toggle<cr>', desc = 'Neotree toggle' },
     },
     config = function()
       require('neo-tree').setup {

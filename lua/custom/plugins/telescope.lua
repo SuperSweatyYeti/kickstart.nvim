@@ -216,14 +216,10 @@ return {
                 local entry = action_state.get_selected_entry()
                 local dir = Path:new({ cwd, entry.value }):absolute()
 
-                -- open nvim-tree if not visible, then reveal and focus the folder
+                -- open nvim-tree with the selected folder as root
                 local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
                 if ok then
-                  if not nvim_tree_api.tree.is_visible() then
-                    nvim_tree_api.tree.open()
-                  end
-                  -- reveal the folder in the tree and place the cursor on it
-                  nvim_tree_api.tree.find_file { buf = dir, open = true, focus = true }
+                  nvim_tree_api.tree.open { path = dir }
                 end
               end)
 
