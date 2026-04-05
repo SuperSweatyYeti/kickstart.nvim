@@ -157,6 +157,11 @@ function is_os_darwin()
   end
 end
 
+-- Disable focus tracking ( In linux neovim tries to re-grab window focus )
+if is_os_linux then
+  vim.opt.eventignore:append("FocusLost")
+end
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
