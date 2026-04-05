@@ -47,7 +47,10 @@ return {
         { mode = { 'n' }, { '<leader>T', group = '[T]abs', hidden = false } },
         { mode = { 'n', 'x' }, { '<leader>o', group = '[o]opencode', hidden = false } },
         { mode = { 'n' }, { '<leader>p', group = '[p]rint', hidden = false } },
-        { mode = { 'n' }, { '<leader>pw', group = '[p]rint [w]orking buffer filepath', hidden = false } },
+        { mode = { 'n' }, { '<leader>pw', group = '[p]rint [w]orking', hidden = false } },
+        { mode = { 'n' }, { '<leader>pwb', group = '[p]rint [w]orking [b]uffer', hidden = false } },
+        { mode = { 'n' }, { '<leader>pwbf', group = '[p]rint [w]orking [b]uffer [f]ilepath', hidden = false } },
+        { mode = { 'n' }, { '<leader>pwbF', group = '[p]rint [w]orking [b]uffer [F]olderpath', hidden = false } },
         -- OLD Spec
         -- ['<leader>c'] = { name = '[c]ode', _ = 'which_key_ignore' },
         -- ['<leader>d'] = { name = '[d]ocument', _ = 'which_key_ignore' },
