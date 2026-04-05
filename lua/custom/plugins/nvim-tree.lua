@@ -244,6 +244,10 @@ return {
     -- ─────────────────────────────────────────────────────────
     -- Keymaps (inside the tree buffer)
     -- ─────────────────────────────────────────────────────────
+
+    require('which-key').add {
+      { mode = { 'n' }, { '<leader>f', group = '[f]ile explorer tree', hidden = false } },
+    }
     local function on_attach(bufnr)
       local api = require 'nvim-tree.api'
 

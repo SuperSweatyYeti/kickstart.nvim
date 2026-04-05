@@ -1,3 +1,4 @@
+vim.g.obsidian_debug = false
 return {
   'epwalsh/obsidian.nvim',
   enabled = true,
@@ -150,7 +151,9 @@ return {
     local all_vault_names = { 'Obsidian Vault', 'AACI', 'Work', 'Other' }
     for _, name in ipairs(all_vault_names) do
       if not resolved_names[name] then
-        vim.notify("Obsidian.nvim: Path not resolved for vault '" .. name .. "'", vim.log.levels.DEBUG)
+        if vim.g.obsidian_debug then
+          vim.notify("Obsidian.nvim: Path not resolved for vault '" .. name .. "'", vim.log.levels.DEBUG)
+        end
       end
     end
 
