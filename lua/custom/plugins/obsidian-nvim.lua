@@ -4,6 +4,10 @@ return {
   version = '*',
   lazy = true,
   ft = 'markdown',
+  event = {
+    -- Load on VimEnter if cwd is inside a vault directory
+    'VimEnter',
+  },
   dependencies = {
     { 'nvim-lua/plenary.nvim' },
   },
@@ -112,6 +116,22 @@ return {
   end,
 
   config = function(_, opts)
+    -- Only fully initialize if cwd is inside a vault, or a markdown file triggered load
+    local cwd = vim.fs.normalize(vim.fn.getcwd())
+    local in_vault = false
+    for _, ws in ipairs(opts.workspaces) do
+      local vault_path = vim.fs.normalize(ws.path)
+      if cwd == vault_path or cwd:sub(1, #vault_path + 1) == vault_path .. '/' then
+        in_vault = true
+        break
+      end
+    end
+
+    -- If loaded via VimEnter but not in a vault, bail out silently
+    if not in_vault and vim.bo.filetype ~= 'markdown' then
+      return
+    end
+
     require('obsidian').setup(opts)
 
     -- Notify about unresolved vaults here, safely outside autocommand context
