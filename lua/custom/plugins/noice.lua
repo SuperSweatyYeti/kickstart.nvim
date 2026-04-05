@@ -24,7 +24,7 @@ return {
 
     require('noice').setup {
       notify = {
-        enabled = false,
+        enabled = true,
       },
       lsp = {
         override = {
@@ -39,6 +39,15 @@ return {
         long_message_to_split = true,
         inc_rename = false,
         lsp_doc_border = true,
+      },
+      routes = {
+        {
+          filter = {
+            event = 'notify',
+            find = 'Path not resolved for vault',
+          },
+          opts = { skip = true },
+        },
       },
     }
 

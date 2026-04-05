@@ -14,7 +14,7 @@ return {
         return false
       end
       p = vim.fn.expand(p)
-      return vim.fn.isdirectory(p) == 1
+      return vim.fn.isdirectory(vim.fn.expand(p)) == 1
     end
 
     ---@param per_os { windows?: string[], darwin?: string[], linux?: string[] }
@@ -90,6 +90,8 @@ return {
       if v.path ~= nil then
         table.insert(workspaces, { name = v.name, path = v.path })
       end
+      -- NOTE: Unresolved vault notifications moved to config() to avoid
+      -- triggering inside neo-tree/telescope buffer autocommands
     end
 
     return {
@@ -111,6 +113,18 @@ return {
 
   config = function(_, opts)
     require('obsidian').setup(opts)
+
+    -- Notify about unresolved vaults here, safely outside autocommand context
+    local resolved_names = {}
+    for _, ws in ipairs(opts.workspaces) do
+      resolved_names[ws.name] = true
+    end
+    local all_vault_names = { 'Obsidian Vault', 'AACI', 'Work', 'Other' }
+    for _, name in ipairs(all_vault_names) do
+      if not resolved_names[name] then
+        vim.notify("Obsidian.nvim: Path not resolved for vault '" .. name .. "'", vim.log.levels.DEBUG)
+      end
+    end
 
     -- Month names for folder: "1-January", "2-February", etc.
     local month_names = {
@@ -173,7 +187,6 @@ return {
 
       -- If the file is brand new (empty buffer), insert a template
       if vim.api.nvim_buf_line_count(0) <= 1 and vim.api.nvim_buf_get_lines(0, 0, 1, false)[1] == '' then
-        local header = '# ' .. month_names[month_num] .. ' ' .. day_num .. ', ' .. year
         vim.api.nvim_buf_set_lines(0, 0, -1, false, {
           -- header, -- optional Header
           '',
@@ -186,14 +199,17 @@ return {
     vim.api.nvim_create_user_command('ObsidianDailyNote', open_daily_note, {
       desc = "Open or create today's daily note (Daily Notes/YYYY/M-Month/M-D-YYYY.md)",
     })
-
+    require('which-key').add {
+      { mode = { 'n' }, { '<leader>o', group = '[o]opencode/[o]bsidian', hidden = false } },
+      { mode = { 'n' }, { '<leader>ob', group = '[o][b]sidian', hidden = false } },
+    }
+    -- Daily Note Keymap
     vim.keymap.set('n', '<leader>obd', '<cmd>ObsidianDailyNote<cr>', { desc = 'Obsidian Daily Note' })
+    -- Other Keymaps
+    vim.keymap.set('n', '<leader>obs', ':ObsidianSearch ', { desc = 'Obsidian Search' })
+    vim.keymap.set('n', '<leader>obpi', ':ObsidianPasteImg ', { desc = 'Obsidian Paste Image' })
+    vim.keymap.set('n', '<leader>obl', '<cmd>ObsidianLinks<cr>', { desc = 'Obsidian Links List' })
+    vim.keymap.set('n', '<leader>obT', '<cmd>ObsidianTags<cr>', { desc = 'Obsidian Tags List' })
+    vim.keymap.set('n', '<leader>obt', '<cmd>ObsidianToggleCheckbox<cr>', { desc = 'Obsidian Toggle Checkbox' })
   end,
-
-  -- Keymaps
-  vim.keymap.set('n', '<leader>obs', ':ObsidianSearch ', { desc = 'Obsidian Search' }),
-  vim.keymap.set('n', '<leader>obpi', ':ObsidianPasteImg ', { desc = 'Obsidian Paste Image' }),
-  vim.keymap.set('n', '<leader>obl', '<cmd>ObsidianLinks<cr>', { desc = 'Obsidian Links List' }),
-  vim.keymap.set('n', '<leader>obT', '<cmd>ObsidianTags<cr>', { desc = 'Obsidian Tags List' }),
-  vim.keymap.set('n', '<leader>obt', '<cmd>ObsidianToggleCheckbox<cr>', { desc = 'Obsidian Toggle Checkbox' }),
 }
