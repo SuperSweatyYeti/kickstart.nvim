@@ -216,13 +216,14 @@ return {
                 local entry = action_state.get_selected_entry()
                 local dir = Path:new({ cwd, entry.value }):absolute()
 
-                -- change neovim's cwd
-                vim.cmd('cd ' .. vim.fn.fnameescape(dir))
-
-                -- update nvim-tree root only if it's open
+                -- open nvim-tree if not visible, then reveal and focus the folder
                 local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
-                if ok and nvim_tree_api.tree.is_visible() then
-                  nvim_tree_api.tree.change_root(dir)
+                if ok then
+                  if not nvim_tree_api.tree.is_visible() then
+                    nvim_tree_api.tree.open()
+                  end
+                  -- reveal the folder in the tree and place the cursor on it
+                  nvim_tree_api.tree.find_file { buf = dir, open = true, focus = true }
                 end
               end)
 
