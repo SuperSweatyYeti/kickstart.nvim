@@ -95,6 +95,7 @@ return {
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedIcon', { fg = '#ff9e64' })
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedHL', { fg = '#ff9e64' })
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedFolderIcon', { fg = '#7aa2f7' })
+    
 
     -- ─────────────────────────────────────────────────────────
     -- Helpers: telescope pickers that reveal in tree
@@ -249,6 +250,34 @@ return {
       { mode = { 'n' }, { '<leader>f', group = '[f]ile explorer tree', hidden = false } },
     }
     local function on_attach(bufnr)
+      -- Sticky root folder: show current root in winbar so it's always visible
+      -- Only targets windows displaying the nvim-tree buffer
+      local function update_winbar()
+        local tree_api = require 'nvim-tree.api'
+        local root = tree_api.tree.get_nodes()
+        if root and root.absolute_path then
+          local root_name = vim.fn.fnamemodify(root.absolute_path, ':~')
+          local winbar_str = '%#NvimTreeWinbar#  ' .. root_name .. '%*'
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            if vim.api.nvim_win_get_buf(win) == bufnr then
+              vim.api.nvim_set_option_value('winbar', winbar_str, { win = win })
+            end
+          end
+        end
+      end
+
+      update_winbar()
+
+      vim.api.nvim_create_autocmd({ 'BufEnter', 'DirChanged' }, {
+        buffer = bufnr,
+        callback = update_winbar,
+      })
+
+      -- Also update winbar after root changes via nvim-tree events
+      nvim_tree_api.events.subscribe(nvim_tree_api.events.Event.TreeRendered, function()
+        update_winbar()
+      end)
+
       local api = require 'nvim-tree.api'
 
       local function opts(desc)
@@ -286,6 +315,9 @@ return {
       vim.keymap.set('n', 's', api.node.open.horizontal, opts 'Open: Horizontal Split')
 
       vim.keymap.set('n', '?', api.tree.toggle_help, opts 'Help')
+      
+      -- Collapse all folders with "C"
+      vim.keymap.set('n', 'C', api.tree.collapse_all, opts 'Collapse All Folders')
       vim.keymap.set('n', 'R', api.tree.reload, opts 'Refresh')
       vim.keymap.set('n', 'm', api.fs.rename, opts 'Rename')
 
@@ -312,6 +344,7 @@ return {
       },
 
       renderer = {
+        root_folder_label = false,
         indent_width = 2,
         highlight_opened_files = 'name',
         highlight_git = 'name',
@@ -373,6 +406,10 @@ return {
         dotfiles = false,
       },
     }
+
+    -- Inherit folder color for the sticky winbar root label
+    local folder_hl = vim.api.nvim_get_hl(0, { name = 'NvimTreeFolderName', link = false })
+    vim.api.nvim_set_hl(0, 'NvimTreeWinbar', vim.tbl_extend('force', folder_hl, { bold = true }))
 
     -- ─────────────────────────────────────────────────────────
     -- Global keymaps (outside the tree buffer)
