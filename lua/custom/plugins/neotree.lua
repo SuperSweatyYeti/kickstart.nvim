@@ -57,10 +57,10 @@ return {
             ['.'] = 'set_root_and_cd',
             ['H'] = 'toggle_hidden',
             -- ['<C-h>'] = 'toggle_hidden',
-            ['<space>'] = {
-              'toggle_node',
-              nowait = false, -- disable `nowait` if you have existing combos starting with this char that you want to use
-            },
+            -- ['<space>'] = {
+            --   'toggle_node',
+            --   nowait = false, -- disable `nowait` if you have existing combos starting with this char that you want to use
+            -- },
             ['P'] = { 'toggle_preview', config = { use_float = true, use_image_nvim = true } },
             -- Read `# Preview Mode` for more information
             ['l'] = 'focus_preview',
