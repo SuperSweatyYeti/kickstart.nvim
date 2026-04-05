@@ -409,7 +409,7 @@ return {
 
     -- Inherit folder color for the sticky winbar root label
     local folder_hl = vim.api.nvim_get_hl(0, { name = 'NvimTreeFolderName', link = false })
-    vim.api.nvim_set_hl(0, 'NvimTreeWinbar', vim.tbl_extend('force', folder_hl, { bold = true }))
+    vim.api.nvim_set_hl(0, 'NvimTreeWinbar', vim.tbl_extend('force', folder_hl, { bold = true, italic = true }))
 
     -- ─────────────────────────────────────────────────────────
     -- Global keymaps (outside the tree buffer)
