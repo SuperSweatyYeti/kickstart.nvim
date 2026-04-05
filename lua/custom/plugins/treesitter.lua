@@ -87,6 +87,10 @@ return {
             zindex = 20,
             on_attach = nil,
           })
+
+          vim.keymap.set('n', '<leader>cu', function()
+            require('treesitter-context').go_to_context(vim.v.count1)
+          end, { desc = '[c]ontext [u]p' })
         end,
       },
       {
