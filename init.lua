@@ -261,7 +261,7 @@ vim.keymap.set('n', '<leader>bR', '<cmd>bufdo e<CR>', { desc = '[r]efresh ALL Bu
 -- Easier to delete buffer
 -- Actually sends buffer wipeout command
 vim.keymap.set('n', '<leader>bd', '<cmd>bw<CR>', { desc = '[d]elete buffer' })
-vim.keymap.set('n', '<leader>bdF', '<cmd>bw<CR>', { desc = '[d]elete buffer [F]orce' })
+vim.keymap.set('n', '<leader>bdF', '<cmd>bw!<CR>', { desc = '[d]elete buffer [F]orce' })
 -- Step back and forth through buffer history
 vim.keymap.set('n', '<leader>bn', '<cmd>bNext<CR>', { desc = '[n]ext buffer' })
 vim.keymap.set('n', '<leader>bp', '<cmd>bprevious<CR>', { desc = '[p]revious buffer' })
