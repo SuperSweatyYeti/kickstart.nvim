@@ -252,25 +252,6 @@ end
 vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
--- Easier to close buffer
-vim.keymap.set('n', '<leader>C', '<cmd>q<CR>', { desc = '[C]lose Buffer' })
--- Easier to refresh current buffer
-vim.keymap.set('n', '<leader>br', '<cmd>e!<CR>', { desc = '[r]efresh Buffer discard buffer changes' })
--- Easier to refresh current ALL buffers
-vim.keymap.set('n', '<leader>bR', '<cmd>bufdo e<CR>', { desc = '[r]efresh ALL Buffers check for file updates' })
--- Easier to delete buffer
--- Actually sends buffer wipeout command
-vim.keymap.set('n', '<leader>bd', '<cmd>bw<CR>', { desc = '[d]elete buffer' })
-vim.keymap.set('n', '<leader>bdF', '<cmd>bw!<CR>', { desc = '[d]elete buffer [F]orce' })
--- Step back and forth through buffer history
-vim.keymap.set('n', '<leader>bn', '<cmd>bNext<CR>', { desc = '[n]ext buffer' })
-vim.keymap.set('n', '<leader>bp', '<cmd>bprevious<CR>', { desc = '[p]revious buffer' })
--- Diagnostic keymaps
-vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [d]iagnostic message' })
-vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [d]iagnostic message' })
-vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [e]rror messages' })
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [q]uickfix list' })
-
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
 -- is not what someone will guess without a bit more experience.
