@@ -159,7 +159,7 @@ end
 
 -- Disable focus tracking ( In linux neovim tries to re-grab window focus )
 if is_os_linux then
-  vim.opt.eventignore:append("FocusLost")
+  vim.opt.eventignore:append 'FocusLost'
 end
 
 -- [[ Setting options ]]
@@ -381,6 +381,67 @@ end, { noremap = true, silent = true })
 
 -- Make 'yy' reuse the same yank logic via motion
 vim.keymap.set('n', 'yy', 'y_', { noremap = true, silent = true })
+
+-- Async internet check: tries each IP in order, stops on first success
+-- Usage: pass the result of this to any plugin's `enabled` field
+-- e.g. enabled = _G.internet_check.is_available
+_G.internet_check = (function()
+  local state = { available = true } -- optimistic default
+
+  local function ping(ip, on_done)
+    local stdout = vim.uv.new_pipe()
+    local stderr = vim.uv.new_pipe()
+    local handle
+    handle = vim.uv.spawn('ping', {
+      args = { '-c', '2', '-W', '2', ip },
+      stdio = { nil, stdout, stderr },
+    }, function(code)
+      stdout:close()
+      stderr:close()
+      handle:close()
+      on_done(code == 0)
+    end)
+  end
+
+  -- Ordered list of IPs to try — edit to add/remove/reorder
+  local dns_hosts = {
+    '1.1.1.1', -- Cloudflare
+    '8.8.8.8', -- Google
+    '9.9.9.9', -- Quad9
+  }
+
+  -- Recursively try each IP in order, stop on first success
+  local function try_hosts(hosts, index, on_done)
+    if index > #hosts then
+      on_done(false)
+      return
+    end
+    ping(hosts[index], function(ok)
+      if ok then
+        on_done(true)
+      else
+        try_hosts(hosts, index + 1, on_done)
+      end
+    end)
+  end
+
+  -- Fire immediately at startup in the background
+  try_hosts(dns_hosts, 1, function(ok)
+    state.available = ok
+    if not ok then
+      vim.schedule(function()
+        vim.notify('No internet — network-dependent plugins disabled', vim.log.levels.WARN)
+      end)
+    end
+  end)
+
+  return {
+    -- Pass this function reference directly to `enabled =` in any plugin spec
+    is_available = function()
+      return state.available
+    end,
+  }
+end)()
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info

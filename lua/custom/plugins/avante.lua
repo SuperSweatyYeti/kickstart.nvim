@@ -1,6 +1,7 @@
 return {
   {
     'yetone/avante.nvim',
+    enabled = _G.internet_check.is_available, -- Disable if no internet (see init.lua)
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
     -- ⚠️ must add this setting! ! !
     build = is_os_windows() and 'powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false' or 'make',

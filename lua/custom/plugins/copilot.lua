@@ -4,7 +4,7 @@ return {
   {
     -- Requires nodejs to be installed
     'zbirenbaum/copilot.lua',
-    enabled = true,
+    enabled = _G.internet_check.is_available, -- Disable if no internet (see init.lua)
     cmd = 'Copilot',
     -- event = 'InsertEnter',
     config = function()
