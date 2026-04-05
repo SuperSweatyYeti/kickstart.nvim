@@ -62,9 +62,20 @@ return {
     -- after
     vim.keymap.set('n', 'go', "<Cmd>call append(line('.'), repeat([''], v:count1))<CR>j", { desc = 'Append Line After' }),
     -- Print filepath for current buffer
-    vim.keymap.set('n', '<leader>pwbfo', ":echo expand('%:p')<CR>", { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' }),
-    vim.keymap.set('n', '<leader>pwbfc', ":let @+ = expand('%:p')<CR>", { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' }),
-    vim.keymap.set('n', '<leader>pwbFo', ":echo expand('%:p:h')<CR>", { desc = '[p]rint [w]orking [b]uffer [F]older [o]utput' }),
-    vim.keymap.set('n', '<leader>pwbFc', ":let @+ = expand('%:p:h')<CR>", { desc = '[p]rint [w]orking [b]uffer [F]older to [c]lipboard' }),
+    vim.keymap.set('n', '<leader>pwbfo', function()
+      print(vim.fn.expand '%:p')
+    end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' }),
+
+    vim.keymap.set('n', '<leader>pwbfc', function()
+      vim.fn.setreg('+', vim.fn.expand '%:p')
+    end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' }),
+
+    vim.keymap.set('n', '<leader>pwbFo', function()
+      print(vim.fn.expand '%:p:h')
+    end, { desc = '[p]rint [w]orking [b]uffer [F]older [o]utput' }),
+
+    vim.keymap.set('n', '<leader>pwbFc', function()
+      vim.fn.setreg('+', vim.fn.expand '%:p:h')
+    end, { desc = '[p]rint [w]orking [b]uffer [F]older to [c]lipboard' }),
   },
 }
