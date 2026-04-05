@@ -9,6 +9,49 @@ return {
     vim.g.loaded_netrwPlugin = 1
 
     -- ─────────────────────────────────────────────────────────
+    -- Custom Modified Decorator
+    -- [+] on modified files, … on folders with modified children
+    -- ─────────────────────────────────────────────────────────
+      local nvim_tree_api = require 'nvim-tree.api'
+      local buffers = require 'nvim-tree.buffers'
+
+      ---@class (exact) ModifiedChildDecorator: nvim_tree.api.Decorator
+      ---@field private file_icon nvim_tree.api.highlighted_string
+      ---@field private folder_icon nvim_tree.api.highlighted_string
+      local ModifiedChildDecorator = nvim_tree_api.Decorator:extend()
+
+      function ModifiedChildDecorator:new()
+        self.enabled         = true
+        self.highlight_range = 'none'
+        self.icon_placement  = 'right_align'
+
+        self.file_icon = {
+          str = '●',
+          hl  = { 'NvimTreeModifiedIcon' },
+        }
+
+        self.folder_icon = {
+          str = '…',
+          hl  = { 'NvimTreeModifiedFolderIcon' },
+        }
+      end
+
+      ---@param node nvim_tree.api.Node
+      ---@return nvim_tree.api.highlighted_string[]? icons
+      function ModifiedChildDecorator:icons(node)
+        -- use _modified directly — the public api.Node doesn't have :as() so
+        -- we can't call buffers.is_modified(node) which needs an internal Node
+        if not buffers._modified[node.absolute_path] then
+          return nil
+        end
+
+        if node.type == 'directory' then
+          return { self.folder_icon }
+        else
+          return { self.file_icon }
+        end
+      end
+    -- ─────────────────────────────────────────────────────────
     -- Git signs & colors — edit these to your liking
     -- ─────────────────────────────────────────────────────────
     local git_icons = {
@@ -21,18 +64,16 @@ return {
       ignored   = '',
     }
 
-    -- Icon highlight groups (the glyph itself)
     local git_icon_colors = {
-      NvimTreeGitDirtyIcon   = { fg = '#e0af68' }, -- unstaged   → yellow
-      NvimTreeGitStagedIcon  = { fg = '#9ece6a' }, -- staged     → green
-      NvimTreeGitNewIcon     = { fg = '#7dcfff' }, -- untracked  → blue
-      NvimTreeGitRenamedIcon = { fg = '#bb9af7' }, -- renamed    → purple
-      NvimTreeGitDeletedIcon = { fg = '#f7768e' }, -- deleted    → red
-      NvimTreeGitMergeIcon   = { fg = '#f7768e' }, -- unmerged   → red
-      NvimTreeGitIgnoredIcon = { fg = '#545c7e' }, -- ignored    → muted
+      NvimTreeGitDirtyIcon   = { fg = '#e0af68' },
+      NvimTreeGitStagedIcon  = { fg = '#9ece6a' },
+      NvimTreeGitNewIcon     = { fg = '#7dcfff' },
+      NvimTreeGitRenamedIcon = { fg = '#bb9af7' },
+      NvimTreeGitDeletedIcon = { fg = '#f7768e' },
+      NvimTreeGitMergeIcon   = { fg = '#f7768e' },
+      NvimTreeGitIgnoredIcon = { fg = '#545c7e' },
     }
 
-    -- File name highlight groups (the filename text)
     local git_name_colors = {
       NvimTreeGitDirtyHL   = { fg = '#e0af68' },
       NvimTreeGitStagedHL  = { fg = '#9ece6a' },
@@ -43,8 +84,7 @@ return {
       NvimTreeGitIgnoredHL = { fg = '#545c7e', italic = true },
     }
 
-    -- Active/opened file — edit sign color here
-    local opened_file_color = '#ff9e64' -- orange
+    local opened_file_color = '#ff9e64'
 
     for group, hl in pairs(git_icon_colors) do
       vim.api.nvim_set_hl(0, group, hl)
@@ -52,14 +92,14 @@ return {
     for group, hl in pairs(git_name_colors) do
       vim.api.nvim_set_hl(0, group, hl)
     end
-    vim.api.nvim_set_hl(0, 'NvimTreeOpenedFile', { fg = opened_file_color, bold = true })
-    -- Modified icon color
-    vim.api.nvim_set_hl(0, 'NvimTreeModifiedIcon', { fg = '#ff9e64' }) -- the ● glyph
-    vim.api.nvim_set_hl(0, 'NvimTreeModifiedHL',   { fg = '#ff9e64' }) -- the filename text
+    vim.api.nvim_set_hl(0, 'NvimTreeOpenedFile',        { fg = opened_file_color, bold = true })
+    vim.api.nvim_set_hl(0, 'NvimTreeModifiedIcon',      { fg = '#ff9e64' }) -- ● on files
+    vim.api.nvim_set_hl(0, 'NvimTreeModifiedHL',        { fg = '#ff9e64' }) -- filename text
+    vim.api.nvim_set_hl(0, 'NvimTreeModifiedFolderIcon',{ fg = '#7aa2f7' }) -- … on folders
 
     -- ─────────────────────────────────────────────────────────
     -- Keymaps (inside the tree buffer)
-    -- ─────────────────────────────────────────────────────────
+    -- ────────────────────────────────────────────────────────
     local function on_attach(bufnr)
       local api = require('nvim-tree.api')
 
@@ -73,10 +113,8 @@ return {
         }
       end
 
-      -- Load all defaults first, then override/add
       api.map.on_attach.default(bufnr)
 
-      -- "." → set as new root AND cd into it
       vim.keymap.set('n', '.', function()
         local node = api.tree.get_node_under_cursor()
         if node then
@@ -98,14 +136,13 @@ return {
 
       vim.keymap.set('n', '?', api.tree.toggle_help, opts('Help'))
       vim.keymap.set('n', 'R', api.tree.reload,      opts('Refresh'))
-      -- Move (rename)
-      vim.keymap.set('n', 'm', api.fs.rename, opts('Rename'))
+      vim.keymap.set('n', 'm', api.fs.rename,        opts('Rename'))
     end
 
     -- ─────────────────────────────────────────────────────────
     -- Setup
     -- ─────────────────────────────────────────────────────────
-    require('nvim-tree').setup({
+    require('nvim-tree').setup {
       on_attach = on_attach,
 
       live_filter = {
@@ -121,8 +158,14 @@ return {
 
       renderer = {
         indent_width = 2,
-        highlight_opened_files = 'name', -- 'icon', 'name', or 'all'
+        highlight_opened_files = 'name',
         highlight_git = 'name',
+
+        decorators = {
+          'Git', 'Open', 'Hidden',
+          ModifiedChildDecorator, -- replaces built-in "Modified"
+          'Bookmark', 'Diagnostics', 'Copied', 'Cut',
+        },
 
         indent_markers = {
           enable = true,
@@ -144,7 +187,7 @@ return {
             file         = true,
             folder       = true,
             folder_arrow = false,
-            modified     = true,
+            modified     = false, -- handled by our custom decorator
           },
           glyphs = {
             modified = '[+]',
@@ -152,9 +195,13 @@ return {
           },
         },
       },
+
       modified = {
         enable = true,
+        show_on_dirs = true,      -- needed so buffers.is_modified works on dirs
+        show_on_open_dirs = true,
       },
+
       git = {
         enable            = true,
         ignore            = false,
@@ -165,10 +212,12 @@ return {
       filters = {
         dotfiles = false,
       },
-    })
+    }
 
+    -- ─────────────────────────────────────────────────────────
     -- Global keymaps (outside the tree buffer)
-    vim.keymap.set('n', '<leader>fe',  '<cmd>NvimTreeToggle<CR>',  { desc = 'Toggle file explorer' })
+    -- ─────────────────────────────────────────────────────────
+    vim.keymap.set('n', '<leader>fe', '<cmd>NvimTreeToggle<CR>',  { desc = 'Toggle file explorer' })
     vim.keymap.set('n', '<leader>ef', '<cmd>NvimTreeFocus<CR>',   { desc = 'Focus file explorer' })
     vim.keymap.set('n', '<leader>er', '<cmd>NvimTreeRefresh<CR>', { desc = 'Refresh file explorer' })
   end,
