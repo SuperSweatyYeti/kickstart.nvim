@@ -1,5 +1,6 @@
 return {
   'nvim-tree/nvim-tree.lua',
+  enabled = true,
   dependencies = {
     'nvim-tree/nvim-web-devicons',
   },
@@ -146,7 +147,7 @@ return {
             modified     = true,
           },
           glyphs = {
-            modified = '●', -- ← correct level: glyphs, not glyphs.git
+            modified = '[+]',
             git = git_icons,
           },
         },
