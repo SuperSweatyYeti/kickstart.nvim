@@ -28,13 +28,25 @@ return {
         -- javascript = { { "prettierd", "prettier" } },
         --
       },
+      formatters = {
+        stylua = {
+          prepend_args = {
+            '--call-parentheses',
+            'Always',
+            '--indent-type',
+            'Spaces',
+            '--indent-width',
+            '2',
+          },
+        },
+      },
     },
     keys = {
       {
         -- Customize or remove this keymap to your liking
         '<leader>ff',
         function()
-          require('conform').format { async = true, lsp_fallback = true }
+          require('conform').format({ async = true, lsp_fallback = true })
         end,
         mode = 'n',
         desc = 'Format buffer',
