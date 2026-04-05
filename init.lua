@@ -388,7 +388,7 @@ vim.keymap.set('n', 'yy', 'y_', { noremap = true, silent = true })
 _G.internet_check = (function()
   local state = { available = true } -- optimistic default
 
-  local function ping(ip, on_done)
+  local function ping_unix(ip, on_done)
     local stdout = vim.uv.new_pipe()
     local stderr = vim.uv.new_pipe()
     local handle
@@ -402,6 +402,23 @@ _G.internet_check = (function()
       on_done(code == 0)
     end)
   end
+
+  local function ping_windows(ip, on_done)
+    local stdout = vim.uv.new_pipe()
+    local stderr = vim.uv.new_pipe()
+    local handle
+    handle = vim.uv.spawn('ping', {
+      args = { '-n', '2', '-w', '2000', ip },
+      stdio = { nil, stdout, stderr },
+    }, function(code)
+      stdout:close()
+      stderr:close()
+      handle:close()
+      on_done(code == 0)
+    end)
+  end
+
+  local ping = is_os_windows() and ping_windows or ping_unix
 
   -- Ordered list of IPs to try — edit to add/remove/reorder
   local dns_hosts = {
