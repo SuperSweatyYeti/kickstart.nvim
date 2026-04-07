@@ -7,26 +7,28 @@
 vim.g.wrap_mode_move = false
 vim.api.nvim_create_user_command('WrapModeMoveToggle', function()
   if vim.g.wrap_mode_move == false then
-    vim.keymap.set({'n','v','x'}, 'j', 'gj', { noremap = true })
-    vim.keymap.set({'n','v','x'}, 'k', 'gk', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '0', 'g0', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<S-h>', 'g<Home>', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '$', 'g$', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<S-l>', 'g<End>', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<Home>', 'g<Home>', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<End>', 'g<End>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, 'j', 'gj', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, 'k', 'gk', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '0', 'g0', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<S-h>', 'g<Home>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '$', 'g$', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<S-l>', 'g<End>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<Home>', 'g<Home>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<End>', 'g<End>', { noremap = true })
     vim.g.wrap_mode_move = true
   elseif vim.g.wrap_mode_move == true then
-    vim.keymap.set({'n','v','x'}, 'j', 'j', { noremap = true })
-    vim.keymap.set({'n','v','x'}, 'k', 'k', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '0', '0', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<S-h>', '<Home>', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '$', '$', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<S-l>', '<End>', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<Home>', '<Home>', { noremap = true })
-    vim.keymap.set({'n','v','x'}, '<End>', '<End>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, 'j', 'j', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, 'k', 'k', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '0', '0', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<S-h>', '<Home>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '$', '$', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<S-l>', '<End>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<Home>', '<Home>', { noremap = true })
+    vim.keymap.set({ 'n', 'v', 'x' }, '<End>', '<End>', { noremap = true })
     vim.g.wrap_mode_move = false
   end
+  -- Refresh lualine immediately so the wrap icon updates
+  require('lualine').refresh()
 end, { desc = 'Toggle Up/Down and end_of_line movement to visual line instead of actual line' })
 
 -- Prepend wrap mode indicator to lualine section Y
@@ -43,8 +45,8 @@ table.insert(lualine_config.sections.lualine_y, 1, {
 lualine.setup(lualine_config)
 
 -- Add which key group
-require('which-key').add {
+require('which-key').add({
   { mode = { 'n' }, { '<leader>w', group = '[w]rap', hidden = false } },
-}
+})
 -- Add keymap
 vim.keymap.set('n', '<leader>wt', '<CMD>WrapModeMoveToggle<CR>', { noremap = true, desc = '[w]rap mode move [t]oggle' })

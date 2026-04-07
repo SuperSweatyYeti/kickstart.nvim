@@ -9,8 +9,8 @@ return {
       -- Define the statusline function for showing our custom yank behavior toggle
       -- defined in lua/settings/yank-config.lua
 
-      -- Update lualine on mode change
-      vim.api.nvim_create_autocmd('ModeChanged', {
+      -- Update lualine on mode change and macro recording
+      vim.api.nvim_create_autocmd({ 'ModeChanged', 'RecordingEnter', 'RecordingLeave' }, {
         callback = function()
           require('lualine').refresh()
         end,
