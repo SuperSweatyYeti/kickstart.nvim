@@ -9,6 +9,13 @@ return {
       -- Define the statusline function for showing our custom yank behavior toggle
       -- defined in lua/settings/yank-config.lua
 
+      -- Update lualine on mode change
+      vim.api.nvim_create_autocmd('ModeChanged', {
+        callback = function()
+          require('lualine').refresh()
+        end,
+      })
+
       function preserve_yank_status()
         if vim.g.preserve_yank_enabled == true then
           return '📋' -- Display the clipboard icon when enabled
@@ -17,7 +24,7 @@ return {
         end
       end
 
-      require('lualine').setup {
+      require('lualine').setup({
         options = {
           icons_enabled = true,
           theme = 'auto',
@@ -147,7 +154,7 @@ return {
         winbar = {},
         inactive_winbar = {},
         extensions = {},
-      }
+      })
     end,
   },
 }
