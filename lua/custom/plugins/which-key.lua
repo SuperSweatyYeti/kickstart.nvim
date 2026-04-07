@@ -37,7 +37,7 @@ return {
         { mode = { 'n' }, { '<leader>d', group = '[d]ocument', hidden = false } },
         { mode = { 'n' }, { '<leader>l', group = '[l]azyGit', hidden = false } },
         { mode = { 'n' }, { '<leader>Q', group = '[Q]uit Quit', hidden = false } },
-        { mode = { 'n' }, { '<leader>r', group = '[r]ename', hidden = false } },
+        { mode = { 'n' }, { '<leader>r', group = '[r]ename/[r]ender', hidden = false } },
         { mode = { 'n',}, { '<leader>s', group = '[s]earch or [c]cratch', hidden = false } },
         { mode = { 'x',}, { '<leader>s', group = '[s]cratch pad', hidden = false } },
         { mode = { 'n' }, { '<leader>u', group = '[u]ndo', hidden = false } },

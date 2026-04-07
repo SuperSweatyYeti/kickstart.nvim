@@ -45,7 +45,7 @@ return {
     require('render-markdown').setup(opts)
 
     -- Keymaps
-    vim.keymap.set('n', '<leader>mr', '<cmd>RenderMarkdown toggle<CR>', { desc = '[m]arkdown [r]ender toggle', noremap = true, silent = true })
+    vim.keymap.set('n', '<leader>rm', '<cmd>RenderMarkdown toggle<CR>', { desc = '[r]ender [m]arkdown toggle', noremap = true, silent = true })
     vim.keymap.set('n', '<leader>mc', function()
       local line = vim.api.nvim_get_current_line()
       local new_line
