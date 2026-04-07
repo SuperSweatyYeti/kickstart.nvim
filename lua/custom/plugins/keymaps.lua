@@ -16,11 +16,11 @@ return {
     vim.keymap.set({ 'n', 'v' }, 'p', '"0p', { noremap = true, silent = true, desc = 'Paste last yank' }),
     -- Normal mode 'x': delete char into register 0 'last yank'
     vim.keymap.set('n', 'x', function()
-      vim.cmd 'normal! "0x'
+      vim.cmd('normal! "0x')
     end, { noremap = true, silent = true }),
     -- Visual mode 'x': delete selection into register 0 'last yank'
     vim.keymap.set('x', 'x', function()
-      vim.cmd 'normal! "0d'
+      vim.cmd('normal! "0d')
     end, { noremap = true, silent = true }),
 
     vim.keymap.set('x', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' }),
@@ -63,20 +63,27 @@ return {
     vim.keymap.set('n', 'go', "<Cmd>call append(line('.'), repeat([''], v:count1))<CR>j", { desc = 'Append Line After' }),
     -- Print filepath for current buffer
     vim.keymap.set('n', '<leader>pwbfo', function()
-      print(vim.fn.expand '%:p')
+      print(vim.fn.expand('%:p'))
     end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' }),
 
     vim.keymap.set('n', '<leader>pwbfc', function()
-      vim.fn.setreg('+', vim.fn.expand '%:p')
+      vim.fn.setreg('+', vim.fn.expand('%:p'))
     end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' }),
 
     vim.keymap.set('n', '<leader>pwbFo', function()
-      print(vim.fn.expand '%:p:h')
+      print(vim.fn.expand('%:p:h'))
     end, { desc = '[p]rint [w]orking [b]uffer [F]older [o]utput' }),
 
     vim.keymap.set('n', '<leader>pwbFc', function()
-      vim.fn.setreg('+', vim.fn.expand '%:p:h')
+      vim.fn.setreg('+', vim.fn.expand('%:p:h'))
     end, { desc = '[p]rint [w]orking [b]uffer [F]older to [c]lipboard' }),
+    -- =======================================
+    -- Rendering
+    -- =======================================
+    -- Render whitespace
+    vim.keymap.set('n', '<leader>rw', function()
+      vim.opt.list = not vim.opt.list:get()
+    end, { desc = 'Toggle whitespace + EOL markers' }),
     -- =======================================
     -- Buffer Actions
     -- =======================================
