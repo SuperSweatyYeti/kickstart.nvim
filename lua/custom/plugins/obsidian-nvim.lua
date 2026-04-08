@@ -45,7 +45,7 @@ return {
     local vaults = {
       {
         name = 'Obsidian Vault',
-        path = pick_path {
+        path = pick_path({
           windows = {
             '~/Documents/Obsidian Vaults/Obsidian Vault',
           },
@@ -55,11 +55,11 @@ return {
           linux = {
             '~/Documents/Obsidian-Vaults/Obsidian Vault',
           },
-        },
+        }),
       },
       {
         name = 'AACI',
-        path = pick_path {
+        path = pick_path({
           windows = {
             'D:\\Obsidian\\Vaults\\AACI\\AACI',
             '~/Documents/Obsidian Vaults/AACI',
@@ -70,23 +70,23 @@ return {
           linux = {
             '~/Documents/Obsidian-Vaults/AACI',
           },
-        },
+        }),
       },
       {
         name = 'Work',
-        path = pick_path {
+        path = pick_path({
           windows = {},
           darwin = {},
           linux = {},
-        },
+        }),
       },
       {
         name = 'Other',
-        path = pick_path {
+        path = pick_path({
           windows = {},
           darwin = {},
           linux = {},
-        },
+        }),
       },
     }
 
@@ -188,7 +188,7 @@ return {
     --- Build the daily note path and open/create it.
     --- Pattern: Daily-Notes/YYYY/M-MonthName/M-D-YYYY.md
     local function open_daily_note()
-      local now = os.date '*t'
+      local now = os.date('*t')
       local year = tostring(now.year)
       local month_num = now.month
       local day_num = now.day
@@ -230,10 +230,10 @@ return {
     vim.api.nvim_create_user_command('ObsidianDailyNote', open_daily_note, {
       desc = "Open or create today's daily note (Daily Notes/YYYY/M-Month/M-D-YYYY.md)",
     })
-    require('which-key').add {
+    require('which-key').add({
       { mode = { 'n' }, { '<leader>o', group = '[o]opencode/[o]bsidian', hidden = false } },
       { mode = { 'n' }, { '<leader>ob', group = '[o][b]sidian', hidden = false } },
-    }
+    })
     -- Daily Note Keymap
     vim.keymap.set('n', '<leader>obd', '<cmd>ObsidianDailyNote<cr>', { desc = 'Obsidian Daily Note' })
     -- Other Keymaps

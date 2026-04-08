@@ -12,8 +12,8 @@ return {
     -- Custom Modified Decorator
     -- [+] on modified files, … on folders with modified children
     -- ─────────────────────────────────────────────────────────
-    local nvim_tree_api = require 'nvim-tree.api'
-    local buffers = require 'nvim-tree.buffers'
+    local nvim_tree_api = require('nvim-tree.api')
+    local buffers = require('nvim-tree.buffers')
 
     ---@class (exact) ModifiedChildDecorator: nvim_tree.api.Decorator
     ---@field private file_icon nvim_tree.api.highlighted_string
@@ -95,7 +95,6 @@ return {
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedIcon', { fg = '#ff9e64' })
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedHL', { fg = '#ff9e64' })
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedFolderIcon', { fg = '#7aa2f7' })
-    
 
     -- ─────────────────────────────────────────────────────────
     -- Helpers: telescope pickers that reveal in tree
@@ -103,23 +102,23 @@ return {
 
     -- Find directories → expand to folder in tree, cursor on it
     local function telescope_find_dirs()
-      local entry_display = require 'telescope.pickers.entry_display'
-      local pickers = require 'telescope.pickers'
-      local finders = require 'telescope.finders'
-      local previewers = require 'telescope.previewers'
-      local from_entry = require 'telescope.from_entry'
+      local entry_display = require('telescope.pickers.entry_display')
+      local pickers = require('telescope.pickers')
+      local finders = require('telescope.finders')
+      local previewers = require('telescope.previewers')
+      local from_entry = require('telescope.from_entry')
       local conf = require('telescope.config').values
-      local utils = require 'telescope.utils'
-      local Path = require 'plenary.path'
-      local actions = require 'telescope.actions'
-      local action_state = require 'telescope.actions.state'
+      local utils = require('telescope.utils')
+      local Path = require('plenary.path')
+      local actions = require('telescope.actions')
+      local action_state = require('telescope.actions.state')
 
       local cwd = vim.uv.cwd()
 
-      local displayer = entry_display.create {
+      local displayer = entry_display.create({
         separator = ' ',
         items = { { width = 2 }, { remaining = true } },
-      }
+      })
 
       local lookup_keys = { ordinal = 1, value = 1, filename = 1, cwd = 2 }
 
@@ -128,10 +127,10 @@ return {
 
       mt_dir_entry.display = function(entry)
         local text = utils.transform_path({}, entry.value)
-        return displayer {
+        return displayer({
           { '', 'Directory' },
           { text, 'TelescopeResultsNormal' },
-        }
+        })
       end
 
       mt_dir_entry.__index = function(t, k)
@@ -149,7 +148,7 @@ return {
         return rawget(t, rawget(lookup_keys, k))
       end
 
-      local dir_previewer = previewers.new_buffer_previewer {
+      local dir_previewer = previewers.new_buffer_previewer({
         title = 'Directory Preview',
         define_preview = function(self, entry)
           local p = from_entry.path(entry, true, false)
@@ -178,14 +177,14 @@ return {
                 end
               end
               vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
-              local ns = vim.api.nvim_create_namespace 'dir_preview'
+              local ns = vim.api.nvim_create_namespace('dir_preview')
               for i, hl_group in ipairs(hl_lines) do
                 vim.hl.range(self.state.bufnr, ns, hl_group, { i - 1, 0 }, { i - 1, #lines[i] })
               end
             end),
           })
         end,
-      }
+      })
 
       pickers
         .new({}, {
@@ -196,7 +195,7 @@ return {
             end,
           }),
           previewer = dir_previewer,
-          sorter = conf.generic_sorter {},
+          sorter = conf.generic_sorter({}),
           attach_mappings = function(prompt_bufnr)
             actions.select_default:replace(function()
               actions.close(prompt_bufnr)
@@ -207,7 +206,7 @@ return {
               if not nvim_tree_api.tree.is_visible() then
                 nvim_tree_api.tree.open()
               end
-              nvim_tree_api.tree.find_file { buf = dir, open = true, focus = true }
+              nvim_tree_api.tree.find_file({ buf = dir, open = true, focus = true })
             end)
             return true
           end,
@@ -217,11 +216,11 @@ return {
 
     -- Find files → expand folders in tree and put cursor on the file
     local function telescope_find_files_reveal()
-      local builtin = require 'telescope.builtin'
-      local actions = require 'telescope.actions'
-      local action_state = require 'telescope.actions.state'
+      local builtin = require('telescope.builtin')
+      local actions = require('telescope.actions')
+      local action_state = require('telescope.actions.state')
 
-      builtin.find_files {
+      builtin.find_files({
         attach_mappings = function(prompt_bufnr)
           actions.select_default:replace(function()
             actions.close(prompt_bufnr)
@@ -236,24 +235,24 @@ return {
             end
 
             -- reveal in tree, expand folders, put cursor on file
-            nvim_tree_api.tree.find_file { buf = filepath, open = true, focus = true }
+            nvim_tree_api.tree.find_file({ buf = filepath, open = true, focus = true })
           end)
           return true
         end,
-      }
+      })
     end
     -- ─────────────────────────────────────────────────────────
     -- Keymaps (inside the tree buffer)
     -- ─────────────────────────────────────────────────────────
 
-    require('which-key').add {
+    require('which-key').add({
       { mode = { 'n' }, { '<leader>f', group = '[f]ile explorer tree', hidden = false } },
-    }
+    })
     local function on_attach(bufnr)
       -- Sticky root folder: show current root in winbar so it's always visible
       -- Only targets windows displaying the nvim-tree buffer
       local function update_winbar()
-        local tree_api = require 'nvim-tree.api'
+        local tree_api = require('nvim-tree.api')
         local root = tree_api.tree.get_nodes()
         if root and root.absolute_path then
           local root_name = vim.fn.fnamemodify(root.absolute_path, ':~')
@@ -278,7 +277,7 @@ return {
         update_winbar()
       end)
 
-      local api = require 'nvim-tree.api'
+      local api = require('nvim-tree.api')
 
       local function opts(desc)
         return {
@@ -305,18 +304,18 @@ return {
         buffer = bufnr,
         callback = function()
           vim.keymap.set('n', '<leader>pwbfo', function()
-            print(vim.fn.expand '%:p')
+            print(vim.fn.expand('%:p'))
           end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' })
 
           vim.keymap.set('n', '<leader>pwbfc', function()
-            vim.fn.setreg('+', vim.fn.expand '%:p')
+            vim.fn.setreg('+', vim.fn.expand('%:p'))
           end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' })
         end,
       })
 
-      require('which-key').add {
+      require('which-key').add({
         { mode = { 'n' }, { '<leader>f', group = '[f]ile explorer tree', hidden = false } },
-      }
+      })
 
       api.map.on_attach.default(bufnr)
 
@@ -327,7 +326,39 @@ return {
           api.tree.change_root(path)
           vim.cmd('cd ' .. vim.fn.fnameescape(path))
         end
-      end, opts 'Set root & cd')
+      end, opts('Set root & cd'))
+
+      -- Move cursor up to nearest Parent Folder
+      vim.keymap.set('n', 'P', function()
+        local node = api.tree.get_node_under_cursor()
+        if node and node.parent then
+          api.tree.find_file({ buf = node.parent.absolute_path, open = true, focus = true })
+        end
+      end, opts('Go to parent folder'))
+
+      -- Remove default keymap of 'e' to edit filename
+      vim.keymap.del('n', 'e', { buffer = bufnr })
+      -- Move cursor down to nearest expanded sub-folder
+      vim.keymap.set('n', 'p', function()
+        local node = api.tree.get_node_under_cursor()
+        if not node then
+          return
+        end
+
+        local start_line = vim.api.nvim_win_get_cursor(0)[1]
+        local line_count = vim.api.nvim_buf_line_count(0)
+
+        for i = start_line + 1, line_count do
+          vim.api.nvim_win_set_cursor(0, { i, 0 })
+          local next_node = api.tree.get_node_under_cursor()
+          if next_node and next_node.type == 'directory' and next_node.open then
+            return
+          end
+        end
+
+        -- No expanded directory found below, go back
+        vim.api.nvim_win_set_cursor(0, { start_line, 0 })
+      end, opts('Go to next expanded folder below'))
 
       -- When inside nvim-tree: remove file path keymaps (no file buffer active),
       -- keep only folder keymaps. Restore file keymaps on leave.
@@ -343,39 +374,44 @@ return {
         buffer = bufnr,
         callback = function()
           vim.keymap.set('n', '<leader>pwbfo', function()
-            print(vim.fn.expand '%:p')
+            print(vim.fn.expand('%:p'))
           end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath [o]utput' })
 
           vim.keymap.set('n', '<leader>pwbfc', function()
-            vim.fn.setreg('+', vim.fn.expand '%:p')
+            vim.fn.setreg('+', vim.fn.expand('%:p'))
           end, { desc = '[p]rint [w]orking [b]uffer [f]ilepath to [c]lipboard' })
         end,
       })
 
-      vim.keymap.set('n', '-', api.tree.change_root_to_parent, opts 'Up')
-      vim.keymap.set('n', 'u', api.tree.change_root_to_parent, opts 'Up')
+      vim.keymap.set('n', '-', api.tree.change_root_to_parent, opts('Up'))
+      vim.keymap.set('n', 'u', api.tree.change_root_to_parent, opts('Up'))
 
-      vim.keymap.set('n', 'f', api.filter.live.start, opts 'Live Filter: Start')
-      vim.keymap.set('n', 'F', api.filter.live.clear, opts 'Live Filter: Clear')
+      vim.keymap.set('n', 'f', api.filter.live.start, opts('Live Filter: Start'))
+      vim.keymap.set('n', 'F', api.filter.live.clear, opts('Live Filter: Clear'))
 
-      vim.keymap.set('n', 'v', api.node.open.vertical, opts 'Open: Vertical Split')
-      vim.keymap.set('n', 's', api.node.open.horizontal, opts 'Open: Horizontal Split')
+      vim.keymap.set('n', 'v', api.node.open.vertical, opts('Open: Vertical Split'))
+      vim.keymap.set('n', 's', api.node.open.horizontal, opts('Open: Horizontal Split'))
 
-      vim.keymap.set('n', '?', api.tree.toggle_help, opts 'Help')
-    
+      vim.keymap.set('n', '?', api.tree.toggle_help, opts('Help'))
+
       -- Collapse all folders with "C"
-      vim.keymap.set('n', 'C', api.tree.collapse_all, opts 'Collapse All Folders')
-      vim.keymap.set('n', 'R', api.tree.reload, opts 'Refresh')
-      vim.keymap.set('n', 'm', api.fs.rename, opts 'Rename')
+      vim.keymap.set('n', 'C', api.tree.collapse_all, opts('Collapse All Folders'))
+      vim.keymap.set('n', 'R', api.tree.reload, opts('Refresh'))
+      vim.keymap.set('n', 'm', api.fs.rename, opts('Rename'))
       -- Telescope pickers that reveal back in tree
       vim.keymap.set('n', '<leader>sD', telescope_find_dirs, { buffer = bufnr, desc = '[s]earch [D]irectories (reveal in tree)' })
       vim.keymap.set('n', '<leader>sf', telescope_find_files_reveal, { buffer = bufnr, desc = '[s]earch [f]iles (reveal in tree)' })
     end
 
+    -- Other Keymaps even without attach
+    vim.keymap.set('n', '<leader>fF', function()
+      require('nvim-tree.api').tree.find_file({ open = true, focus = true })
+    end, { desc = 'Find File in NvimTree' })
+
     -- ─────────────────────────────────────────────────────────
     -- Setup
     -- ─────────────────────────────────────────────────────────
-    require('nvim-tree').setup {
+    require('nvim-tree').setup({
       on_attach = on_attach,
 
       live_filter = {
@@ -451,7 +487,7 @@ return {
       filters = {
         dotfiles = false,
       },
-    }
+    })
 
     -- Inherit folder color for the sticky winbar root label
     local folder_hl = vim.api.nvim_get_hl(0, { name = 'NvimTreeFolderName', link = false })
