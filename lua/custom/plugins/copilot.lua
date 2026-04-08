@@ -158,7 +158,7 @@ return {
       -- },
       {
         'CopilotC-Nvim/CopilotChat.nvim',
-        -- enable = true,
+        enabled = false,
         -- Variable
         dependencies = {
           -- { 'github/copilot.vim' }, -- or zbirenbaum/copilot.lua
