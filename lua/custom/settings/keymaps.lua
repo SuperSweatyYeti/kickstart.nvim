@@ -82,24 +82,79 @@ end, { desc = '[p]rint [w]orking [b]uffer [F]older to [c]lipboard' })
 vim.keymap.set('n', '<leader>rw', function()
   vim.opt.list = not vim.opt.list:get()
 end, { desc = 'Toggle whitespace + EOL markers' })
+-- Filetypes to keep when wiping buffers
+
 -- =======================================
 -- Buffer Actions
 -- =======================================
+
+local function refresh_nvim_tree()
+  local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
+  if ok then
+    nvim_tree_api.tree.reload()
+  end
+end
+
 -- Easier to close buffer
-vim.keymap.set('n', '<leader>C', '<cmd>q<CR>', { desc = '[C]lose Buffer' })
+vim.keymap.set('n', '<leader>C', function()
+  vim.cmd('q')
+  refresh_nvim_tree()
+end, { desc = '[C]lose Buffer' })
+
 -- Easier to refresh current buffer
-vim.keymap.set('n', '<leader>br', '<cmd>e!<CR>', { desc = '[r]efresh Buffer discard buffer changes' })
--- Easier to refresh current ALL buffers
-vim.keymap.set('n', '<leader>bR', '<cmd>bufdo e<CR>', { desc = '[r]efresh ALL Buffers check for file updates' })
+vim.keymap.set('n', '<leader>br', function()
+  vim.cmd('e!')
+  refresh_nvim_tree()
+end, { desc = '[r]efresh Buffer discard buffer changes' })
+
+-- Easier to refresh ALL buffers
+vim.keymap.set('n', '<leader>bR', function()
+  vim.cmd('bufdo e')
+  refresh_nvim_tree()
+end, { desc = '[r]efresh ALL Buffers check for file updates' })
+
 -- Easier to delete buffer
--- Actually sends buffer wipeout command
-vim.keymap.set('n', '<leader>bd', '<cmd>bw<CR>', { desc = '[d]elete buffer' })
-vim.keymap.set('n', '<leader>bD', '<cmd>bw!<CR>', { desc = '[D]elete buffer [F]orce' })
+vim.keymap.set('n', '<leader>bd', function()
+  vim.cmd('bw')
+  refresh_nvim_tree()
+end, { desc = '[d]elete buffer' })
+
+vim.keymap.set('n', '<leader>bD', function()
+  vim.cmd('bw!')
+  refresh_nvim_tree()
+end, { desc = '[D]elete buffer [F]orce' })
+
 -- Filetypes to keep when wiping buffers
-_G.buffer_close_all_keymap_ignored_filetypes = {
+local buffer_close_all_keymap_ignored_filetypes = {
   'NvimTree',
   'toggleterm',
   'copilot-chat',
+  'Avante',
+  'AvanteSelectedFiles',
+  'AvanteInput',
+}
+
+vim.keymap.set('n', '<leader>bca', function()
+  local current = vim.api.nvim_get_current_buf()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if buf ~= current and vim.api.nvim_buf_is_loaded(buf) then
+      local bt = vim.bo[buf].buftype
+      local ft = vim.bo[buf].filetype
+      if bt == '' and not vim.tbl_contains(buffer_close_all_keymap_ignored_filetypes, ft) then
+        vim.cmd('bw! ' .. buf)
+      end
+    end
+  end
+  refresh_nvim_tree()
+end, { desc = 'Wipeout all other file buffers' })
+
+local buffer_close_all_keymap_ignored_filetypes = {
+  'NvimTree',
+  'toggleterm',
+  'copilot-chat',
+  'Avante',
+  'AvanteSelectedFiles',
+  'AvanteInput',
 }
 vim.keymap.set('n', '<leader>bca', function()
   local current = vim.api.nvim_get_current_buf()
@@ -107,10 +162,15 @@ vim.keymap.set('n', '<leader>bca', function()
     if buf ~= current and vim.api.nvim_buf_is_loaded(buf) then
       local bt = vim.bo[buf].buftype
       local ft = vim.bo[buf].filetype
-      if bt == '' and not vim.tbl_contains(_G.buffer_close_all_keymap_ignored_filetypes, ft) then
+      if bt == '' and not vim.tbl_contains(buffer_close_all_keymap_ignored_filetypes, ft) then
         vim.cmd('bw! ' .. buf)
       end
     end
+  end
+
+  local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
+  if ok then
+    nvim_tree_api.tree.reload()
   end
 end, { desc = 'Wipeout all other file buffers' })
 -- Step back and forth through buffer history
@@ -121,4 +181,3 @@ vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [d]
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next [d]iagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [e]rror messages' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [q]uickfix list' })
-
