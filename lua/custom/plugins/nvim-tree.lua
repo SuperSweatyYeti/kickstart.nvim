@@ -51,6 +51,56 @@ return {
     end
 
     -- ─────────────────────────────────────────────────────────
+    -- Custom Opened/Visible Buffer Decorator
+    -- Bold white for opened buffers, bold orange for the visible one
+    -- Replaces the built-in 'Open' decorator
+    -- ─────────────────────────────────────────────────────────
+
+    ---@class (exact) OpenedBufferDecorator: nvim_tree.api.Decorator
+    local OpenedBufferDecorator = nvim_tree_api.Decorator:extend()
+
+    vim.g.nvim_tree_visible_file = nil
+
+    function OpenedBufferDecorator:new()
+      self.enabled = true
+      self.highlight_range = 'name'
+      self.icon_placement = 'none'
+    end
+
+    ---@param node nvim_tree.api.Node
+    ---@return string? highlight_group
+    function OpenedBufferDecorator:highlight_group(node)
+      if node.type == 'directory' then
+        return nil
+      end
+
+      local visible = vim.g.nvim_tree_visible_file
+      if visible and vim.fs.normalize(node.absolute_path) == visible then
+        return 'NvimTreeVisibleFile'
+      end
+
+      -- Check if this file has a loaded buffer
+      if vim.fn.bufloaded(node.absolute_path) > 0 then
+        return 'NvimTreeOpenedFile'
+      end
+
+      return nil
+    end
+
+    -- Update the visible file tracker whenever you enter a buffer
+    vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
+      callback = function()
+        local bufname = vim.api.nvim_buf_get_name(0)
+        if bufname ~= '' and vim.bo.buftype == '' then
+          vim.g.nvim_tree_visible_file = vim.fs.normalize(bufname)
+          if nvim_tree_api.tree.is_visible() then
+            nvim_tree_api.tree.reload()
+          end
+        end
+      end,
+    })
+
+    -- ─────────────────────────────────────────────────────────
     -- Git signs & colors — edit these to your liking
     -- ─────────────────────────────────────────────────────────
     local git_icons = {
@@ -91,7 +141,11 @@ return {
     for group, hl in pairs(git_name_colors) do
       vim.api.nvim_set_hl(0, group, hl)
     end
-    vim.api.nvim_set_hl(0, 'NvimTreeOpenedFile', { fg = opened_file_color, bold = true })
+    -- Opened files (any buffer that's loaded) → bold bright white
+    vim.api.nvim_set_hl(0, 'NvimTreeOpenedFile', { fg = '#ffffff', bold = true })
+    -- Visible/active buffer → orange
+    vim.api.nvim_set_hl(0, 'NvimTreeVisibleFile', { fg = opened_file_color, bold = true })
+
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedIcon', { fg = '#ff9e64' })
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedHL', { fg = '#ff9e64' })
     vim.api.nvim_set_hl(0, 'NvimTreeModifiedFolderIcon', { fg = '#7aa2f7' })
@@ -338,6 +392,7 @@ return {
 
       -- Remove default keymap of 'e' to edit filename
       vim.keymap.del('n', 'e', { buffer = bufnr })
+
       -- Move cursor down to nearest expanded sub-folder
       vim.keymap.set('n', 'p', function()
         local node = api.tree.get_node_under_cursor()
@@ -428,12 +483,12 @@ return {
       renderer = {
         root_folder_label = false,
         indent_width = 2,
-        highlight_opened_files = 'name',
+        highlight_opened_files = 'none',
         highlight_git = 'name',
 
         decorators = {
           'Git',
-          'Open',
+          OpenedBufferDecorator,
           'Hidden',
           ModifiedChildDecorator,
           'Bookmark',
