@@ -159,7 +159,12 @@ end
 
 -- Disable focus tracking ( In linux neovim tries to re-grab window focus )
 if is_os_linux then
-  vim.opt.eventignore:append 'FocusLost'
+  vim.opt.eventignore:append('FocusLost')
+end
+
+-- Fix for undotree git diff integration
+if is_os_windows then
+  vim.env.PATH = vim.env.PATH .. ';C:\\Program Files\\Git\\usr\\bin'
 end
 
 -- [[ Setting options ]]
@@ -328,14 +333,14 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- Define the operatorfunc to yank + highlight + restore cursor
 _G.yank_and_restore_cursor = function(type)
   if type == 'char' then
-    vim.cmd 'normal! `[v`]y'
+    vim.cmd('normal! `[v`]y')
   elseif type == 'line' then
-    vim.cmd 'normal! `[V`]y'
+    vim.cmd('normal! `[V`]y')
   elseif type == 'block' then
-    vim.cmd 'normal! `[\22`]y' -- \22 is <C-v> for block
+    vim.cmd('normal! `[\22`]y') -- \22 is <C-v> for block
   end
 
-  vim.highlight.on_yank { higroup = 'IncSearch', timeout = 200 }
+  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
 
   vim.defer_fn(function()
     if _G._saved_cursor then
@@ -354,8 +359,8 @@ end, { expr = true, noremap = true })
 -- Visual mode 'y' remap to yank + restore cursor
 vim.keymap.set('x', 'y', function()
   _G._saved_cursor = vim.api.nvim_win_get_cursor(0)
-  vim.cmd 'normal! y'
-  vim.highlight.on_yank { higroup = 'IncSearch', timeout = 200 }
+  vim.cmd('normal! y')
+  vim.highlight.on_yank({ higroup = 'IncSearch', timeout = 200 })
   vim.defer_fn(function()
     pcall(vim.api.nvim_win_set_cursor, 0, _G._saved_cursor)
   end, 10)
@@ -447,10 +452,10 @@ end)()
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
-local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
+local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
 if not vim.loop.fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
+  vim.fn.system({ 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath })
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
@@ -497,15 +502,15 @@ require('lazy').setup({
         changedelete = { text = '󱣳' },
       },
       on_attach = function(bufnr)
-        local gitsigns = require 'gitsigns'
+        local gitsigns = require('gitsigns')
 
-        require('which-key').add {
+        require('which-key').add({
           { mode = { 'n' }, { '<leader>g', group = '[g]it', hidden = false } },
           { mode = { 'n' }, { '<leader>gr', group = '[g]it [r]eset hunk', hidden = false } },
-        }
+        })
         vim.keymap.set('n', '<leader>grh', gitsigns.reset_hunk, { buffer = bufnr, desc = 'Git [R]eset hunk' })
         vim.keymap.set('v', '<leader>grh', function()
-          gitsigns.reset_hunk { vim.fn.line '.', vim.fn.line 'v' }
+          gitsigns.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') })
         end, { buffer = bufnr, desc = 'Git [R]eset selected hunk' })
       end,
     },
@@ -588,7 +593,7 @@ require('lazy').setup({
 -- We are using the plenary plugin to make loading all lua config files within
 -- a folder more dynamic. See this file for an example: ./lua/custom/settings/init.lua
 -- Each folder you import needs to have it's own init.lua file following the example.
-require 'custom.settings'
+require('custom.settings')
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
