@@ -45,6 +45,7 @@ return {
     local vaults = {
       {
         name = 'Obsidian Vault',
+        daily_notes_folder = 'Daily-Notes',
         path = pick_path({
           windows = {
             '~/Documents/Obsidian Vaults/Obsidian Vault',
@@ -59,6 +60,7 @@ return {
       },
       {
         name = 'AACI',
+        daily_notes_folder = 'Daily Notes',
         path = pick_path({
           windows = {
             'D:\\Obsidian\\Vaults\\AACI\\AACI',
@@ -93,7 +95,11 @@ return {
     local workspaces = {}
     for _, v in ipairs(vaults) do
       if v.path ~= nil then
-        table.insert(workspaces, { name = v.name, path = v.path })
+        table.insert(workspaces, {
+          name = v.name,
+          path = v.path,
+          daily_notes_folder = v.daily_notes_folder or 'Daily Notes',
+        })
       end
       -- NOTE: Unresolved vault notifications moved to config() to avoid
       -- triggering inside neo-tree/telescope buffer autocommands
@@ -197,9 +203,19 @@ return {
       local filename = month_num .. '-' .. day_num .. '-' .. year .. '.md'
 
       local vault_root = get_vault_root()
-      local dir = vault_root .. '/Daily Notes/' .. year .. '/' .. month_folder
-      local filepath = dir .. '/' .. filename
 
+      -- Resolve the daily-notes subfolder for the current vault
+      local daily_folder = 'Daily Notes' -- fallback default
+      local normalized_root = vim.fs.normalize(vault_root)
+      for _, ws in ipairs(opts.workspaces) do
+        if vim.fs.normalize(ws.path) == normalized_root then
+          daily_folder = ws.daily_notes_folder or daily_folder
+          break
+        end
+      end
+
+      local dir = vault_root .. '/' .. daily_folder .. '/' .. year .. '/' .. month_folder
+      local filepath = dir .. '/' .. filename
       -- Normalize for comparison
       local target = vim.fs.normalize(filepath)
       local current = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
