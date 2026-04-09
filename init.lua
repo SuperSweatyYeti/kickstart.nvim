@@ -158,12 +158,12 @@ function is_os_darwin()
 end
 
 -- Disable focus tracking ( In linux neovim tries to re-grab window focus )
-if is_os_linux then
+if is_os_linux() then
   vim.opt.eventignore:append('FocusLost')
 end
 
 -- Fix for undotree git diff integration
-if is_os_windows then
+if is_os_windows() then
   vim.env.PATH = vim.env.PATH .. ';C:\\Program Files\\Git\\usr\\bin'
 end
 
