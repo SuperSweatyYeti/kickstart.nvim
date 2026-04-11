@@ -11,6 +11,7 @@ return {
     -- ─────────────────────────────────────────────────────────
     -- Disable netrw (same as your nvim-tree config)
     -- ─────────────────────────────────────────────────────────
+    
     vim.g.loaded_netrw = 1
     vim.g.loaded_netrwPlugin = 1
 
@@ -300,7 +301,7 @@ return {
       hide_root_node = true,
       enable_git_status = true,
       enable_diagnostics = true,
-      enable_modified_markers = true,
+      enable_modified_markers = false,
       enable_opened_markers = true,
 
       event_handlers = {
@@ -310,6 +311,8 @@ return {
             update_neo_tree_winbar()
             pcall(vim.keymap.del, 'n', '<leader>pwbfo')
             pcall(vim.keymap.del, 'n', '<leader>pwbfc')
+            -- Hide signcolumn to remove stray bullets from other plugins
+            vim.opt_local.signcolumn = 'no'
           end,
         },
         {
@@ -347,12 +350,12 @@ return {
         },
         icon = {
           folder_closed = '',
-          folder_open = '',
+          folder_open = '',
           folder_empty = '󰉖',
           folder_empty_open = '󰷏',
         },
         modified = {
-          symbol = '',
+          symbol = '', -- Using custom icon
           highlight = 'NeoTreeModified',
         },
         name = {
@@ -433,6 +436,7 @@ return {
               neo_tree_commands.go_to_parent(state)
             end,
             desc = 'Go to parent folder',
+            
           },
           ['p'] = {
             function(state)
@@ -498,7 +502,7 @@ return {
               local buf_info = neo_tree_utils.index_by_path(opened_buffers, node.path)
               if buf_info and buf_info.modified then
                 return {
-                  text = ' [+] ',
+                  text = '[+]',
                   highlight = 'NeoTreeModified',
                 }
               end
