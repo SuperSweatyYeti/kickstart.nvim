@@ -169,63 +169,33 @@ end
 -- Keymap to visually select everything in the current buffer
 vim.keymap.set('n', '<leader>vaa', 'ggVG', { noremap = true, desc = '[v]isually select [a]ll text from current buffer' })
 -- Keymap to delete everything in the current buffer AND DON'T clobber system clipboard add to yank history instead
-if is_os_windows() then
-  vim.keymap.set('n', '<leader>vad', function()
-    local in_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CLIENT ~= nil or vim.env.SSH_CONNECTION ~= nil
+vim.keymap.set('n', '<leader>vad', function()
+  local in_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CLIENT ~= nil or vim.env.SSH_CONNECTION ~= nil
 
-    local prev_contents = vim.fn.getreg('"')
-    local prev_type = vim.fn.getregtype('"')
+  local prev_contents = vim.fn.getreg('"')
+  local prev_type = vim.fn.getregtype('"')
 
-    local prev_plus, prev_plus_type, prev_star, prev_star_type
-    if not in_ssh then
-      prev_plus = vim.fn.getreg('+')
-      prev_plus_type = vim.fn.getregtype('+')
-      prev_star = vim.fn.getreg('*')
-      prev_star_type = vim.fn.getregtype('*')
-    end
+  local prev_plus, prev_plus_type, prev_star, prev_star_type
+  if not in_ssh then
+    prev_plus = vim.fn.getreg('+')
+    prev_plus_type = vim.fn.getregtype('+')
+    prev_star = vim.fn.getreg('*')
+    prev_star_type = vim.fn.getregtype('*')
+  end
 
-    vim.cmd('normal! ggVGd')
+  vim.cmd('normal! ggVGd')
 
-    local deleted_contents = vim.fn.getreg('"')
-    local deleted_type = vim.fn.getregtype('"')
+  local deleted_contents = vim.fn.getreg('"')
+  local deleted_type = vim.fn.getregtype('"')
 
-    vim.fn.setreg('1', deleted_contents, deleted_type)
-    vim.fn.setreg('"', prev_contents, prev_type)
+  vim.fn.setreg('1', deleted_contents, deleted_type)
+  vim.fn.setreg('"', prev_contents, prev_type)
 
-    if not in_ssh then
-      vim.fn.setreg('+', prev_plus, prev_plus_type)
-      vim.fn.setreg('*', prev_star, prev_star_type)
-    end
-  end, { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
-end
--- Keymap to delete everything in the current buffer AND DON'T clobber system clipboard add to yank history instead
--- Keymap to yank everything in the current buffer V2
-if is_os_linux() then
-  vim.keymap.set('n', '<leader>vad', function()
-    local in_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CLIENT ~= nil or vim.env.SSH_CONNECTION ~= nil
-
-    -- Save clipboard registers before the delete
-    local prev_plus, prev_plus_type, prev_star, prev_star_type
-    if not in_ssh then
-      prev_plus = vim.fn.getreg('+')
-      prev_plus_type = vim.fn.getregtype('+')
-      prev_star = vim.fn.getreg('*')
-      prev_star_type = vim.fn.getregtype('*')
-    end
-
-    -- Yank everything first so it enters yanky history
-    vim.cmd('normal! ggVGy')
-
-    -- Now delete into black hole register
-    vim.cmd('normal! ggVG"_d')
-
-    -- Restore system clipboard registers
-    if not in_ssh then
-      vim.fn.setreg('+', prev_plus, prev_plus_type)
-      vim.fn.setreg('*', prev_star, prev_star_type)
-    end
-  end, { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
-end
+  if not in_ssh then
+    vim.fn.setreg('+', prev_plus, prev_plus_type)
+    vim.fn.setreg('*', prev_star, prev_star_type)
+  end
+end, { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
 
 -- Add which-key-group
 require('which-key').add({
