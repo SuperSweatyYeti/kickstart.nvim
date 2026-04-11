@@ -88,40 +88,44 @@ end, { desc = 'Toggle whitespace + EOL markers' })
 -- Buffer Actions
 -- =======================================
 
-local function refresh_nvim_tree()
+local function refresh_file_tree()
   local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
   if ok then
     nvim_tree_api.tree.reload()
+  end
+  local ok, manager = pcall(require, 'neo-tree.sources.manager')
+  if ok then
+    manager.refresh('filesystem')
   end
 end
 
 -- Easier to close buffer
 vim.keymap.set('n', '<leader>C', function()
   vim.cmd('q')
-  refresh_nvim_tree()
+  refresh_file_tree()
 end, { desc = '[C]lose Buffer' })
 
 -- Easier to refresh current buffer
 vim.keymap.set('n', '<leader>br', function()
   vim.cmd('e!')
-  refresh_nvim_tree()
+  refresh_file_tree()
 end, { desc = '[r]efresh Buffer discard buffer changes' })
 
 -- Easier to refresh ALL buffers
 vim.keymap.set('n', '<leader>bR', function()
   vim.cmd('bufdo e')
-  refresh_nvim_tree()
+  refresh_file_tree()
 end, { desc = '[r]efresh ALL Buffers check for file updates' })
 
 -- Easier to delete buffer
 vim.keymap.set('n', '<leader>bd', function()
   vim.cmd('bw')
-  refresh_nvim_tree()
+  refresh_file_tree()
 end, { desc = '[d]elete buffer' })
 
 vim.keymap.set('n', '<leader>bD', function()
   vim.cmd('bw!')
-  refresh_nvim_tree()
+  refresh_file_tree()
 end, { desc = '[D]elete buffer [F]orce' })
 
 -- Filetypes to keep when wiping buffers
@@ -145,7 +149,7 @@ vim.keymap.set('n', '<leader>bca', function()
       end
     end
   end
-  refresh_nvim_tree()
+  refresh_file_tree()
 end, { desc = 'Wipeout all other file buffers' })
 
 local buffer_close_all_keymap_ignored_filetypes = {
