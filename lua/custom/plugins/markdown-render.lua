@@ -37,6 +37,16 @@ return {
         color = '#4273ca',
         name = 'Powershell',
       },
+      bash = {
+        icon = '',
+        color = '#1bbc68',
+        name = 'Bash',
+      },
+      sh = {
+        icon = '',
+        color = '#1bbc68',
+        name = 'Sh',
+      },
     }
     require('nvim-web-devicons').set_icon_by_filetype {
       powershell = 'ps1',

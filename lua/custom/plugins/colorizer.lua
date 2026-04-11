@@ -42,13 +42,13 @@ return {
           -- parsers can contain values used in `user_default_options`
           sass = { enable = false, parsers = { 'css' } }, -- Enable sass colors
           -- Highlighting mode.  'background'|'foreground'|'virtualtext'
-          mode = 'virtualtext', -- Set the display mode
+          mode = 'background', -- Set the display mode
           -- Virtualtext character to use
           virtualtext = '▆',
           -- Display virtualtext inline with color.  boolean|'before'|'after'.  True sets to 'after'
           virtualtext_inline = true,
           -- Virtualtext highlight mode: 'background'|'foreground'
-          virtualtext_mode = 'foreground',
+          virtualtext_mode = 'background',
           -- update color values even if buffer is not focused
           -- example use: cmp_menu, cmp_docs
           always_update = false,
