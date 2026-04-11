@@ -87,7 +87,7 @@ return {
       mt_dir_entry.display = function(entry)
         local text = utils.transform_path({}, entry.value)
         return displayer({
-          { '', 'Directory' },
+          { '', 'Directory' },
           { text, 'TelescopeResultsNormal' },
         })
       end
@@ -128,7 +128,7 @@ return {
                 local name = vim.fn.fnamemodify(item, ':t')
                 local stat = vim.uv.fs_stat(item)
                 if stat and stat.type == 'directory' then
-                  table.insert(lines, '' .. name)
+                  table.insert(lines, ' ' .. name)
                   table.insert(hl_lines, 'Directory')
                 else
                   table.insert(lines, ' ' .. name)
