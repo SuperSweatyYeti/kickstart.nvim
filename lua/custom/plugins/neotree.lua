@@ -440,8 +440,8 @@ return {
             end,
             desc = 'Go to next expanded folder below',
           },
-          ['C'] = 'close_node',
-          ['z'] = 'close_all_nodes',
+          ['c'] = 'close_node',
+          ['C'] = 'close_all_nodes',
           ['R'] = 'refresh',
           ['m'] = 'rename',
           ['a'] = 'add',
@@ -471,6 +471,7 @@ return {
         -- Custom components registered per-source
         -- ─────────────────────────────────────────────────────
         components = {
+          -- Override name: bold white for loaded buffers, bold orange for visible
           visible_buffer_name = function(config, node, state)
             local cc = require('neo-tree.sources.common.components')
             local result = cc.name(config, node, state)
@@ -487,19 +488,23 @@ return {
             return result
           end,
 
+          -- [+] for modified files, … for folders with modified children
+          -- Uses state.opened_buffers which has { modified = bool, loaded = bool } per path
           modified_custom = function(config, node, state)
-            local modified_buffers = state.modified_buffers or {}
+            local opened_buffers = state.opened_buffers or {}
+            local neo_tree_utils = require('neo-tree.utils')
 
             if node.type == 'file' then
-              if modified_buffers[node.path] then
+              local buf_info = neo_tree_utils.index_by_path(opened_buffers, node.path)
+              if buf_info and buf_info.modified then
                 return {
-                  text = ' ● ',
+                  text = ' [+] ',
                   highlight = 'NeoTreeModified',
                 }
               end
             elseif node.type == 'directory' then
-              for buf_path, _ in pairs(modified_buffers) do
-                if vim.startswith(buf_path, node.path .. '/') then
+              for buf_path, buf_info in pairs(opened_buffers) do
+                if buf_info.modified and vim.startswith(buf_path, node.path .. '/') then
                   return {
                     text = ' … ',
                     highlight = config.folder_highlight or 'NeoTreeModifiedFolderIcon',
@@ -509,6 +514,103 @@ return {
             end
 
             return {}
+          end,
+
+          -- ─────────────────────────────────────────────────────
+          -- Custom indent component matching nvim-tree style:
+          --   ├ for non-last children (item connector)
+          --   └ for last child (corner)
+          --   │ for parent continuation lines (edge)
+          -- ─────────────────────────────────────────────────────
+          indent = function(config, node, state)
+            local highlights = require('neo-tree.ui.highlights')
+            local file_nesting = require('neo-tree.sources.common.file-nesting')
+
+            if not state.skip_marker_at_level then
+              state.skip_marker_at_level = {}
+            end
+
+            local indent_size = config.indent_size or 2
+            local padding = config.padding or 0
+            local level = node.level
+            local with_markers = config.with_markers
+            local with_expanders = config.with_expanders == nil and file_nesting.is_enabled()
+              or config.with_expanders
+            local marker_highlight = config.highlight or highlights.INDENT_MARKER
+            local expander_highlight = config.expander_highlight or config.highlight or highlights.EXPANDER
+            local skip_marker = state.skip_marker_at_level
+
+            -- nvim-tree style markers
+            local edge_marker = config.indent_marker or '│'        -- parent continuation
+            local corner_marker = config.last_indent_marker or '└' -- last child
+            local item_marker = config.item_marker or '├'          -- non-last child
+
+            local function get_expander()
+              if with_expanders and require('neo-tree.utils').is_expandable(node) then
+                return node:is_expanded() and (config.expander_expanded or '')
+                  or (config.expander_collapsed or '')
+              end
+            end
+
+            if indent_size == 0 or level < 2 or not with_markers then
+              local len = indent_size * level + padding
+              local expander = get_expander()
+              if level == 0 or not expander then
+                return {
+                  text = string.rep(' ', len),
+                }
+              end
+              return {
+                text = string.rep(' ', len - vim.fn.strdisplaywidth(expander) - 1) .. expander .. ' ',
+                highlight = expander_highlight,
+              }
+            end
+
+            skip_marker[level] = node.is_last_child
+            local indent = {}
+
+            if padding > 0 then
+              table.insert(indent, { text = string.rep(' ', padding) })
+            end
+
+            for i = 1, level do
+              local char = ''
+              local spaces_count = indent_size
+              local highlight = nil
+
+              if i > 1 and not skip_marker[i] or i == level then
+                spaces_count = spaces_count - 1
+                highlight = marker_highlight
+
+                if i == level then
+                  -- At the node's own level
+                  local expander = get_expander()
+                  if expander then
+                    char = expander
+                    highlight = expander_highlight
+                  elseif node.is_last_child then
+                    -- └ corner for last child
+                    char = corner_marker
+                    spaces_count = spaces_count - (vim.api.nvim_strwidth(corner_marker) - 1)
+                  else
+                    -- ├ item connector for non-last children
+                    char = item_marker
+                    spaces_count = spaces_count - (vim.api.nvim_strwidth(item_marker) - 1)
+                  end
+                else
+                  -- │ continuation line for parent levels
+                  char = edge_marker
+                end
+              end
+
+              table.insert(indent, {
+                text = char .. string.rep(' ', spaces_count),
+                highlight = highlight,
+                no_next_padding = true,
+              })
+            end
+
+            return indent
           end,
         },
 
