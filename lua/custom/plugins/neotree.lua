@@ -11,7 +11,7 @@ return {
     -- ─────────────────────────────────────────────────────────
     -- Disable netrw (same as your nvim-tree config)
     -- ─────────────────────────────────────────────────────────
-    
+
     vim.g.loaded_netrw = 1
     vim.g.loaded_netrwPlugin = 1
 
@@ -301,7 +301,7 @@ return {
       hide_root_node = true,
       enable_git_status = true,
       enable_diagnostics = true,
-      enable_modified_markers = false,
+      enable_modified_markers = true,
       enable_opened_markers = true,
 
       event_handlers = {
@@ -311,8 +311,6 @@ return {
             update_neo_tree_winbar()
             pcall(vim.keymap.del, 'n', '<leader>pwbfo')
             pcall(vim.keymap.del, 'n', '<leader>pwbfc')
-            -- Hide signcolumn to remove stray bullets from other plugins
-            vim.opt_local.signcolumn = 'no'
           end,
         },
         {
@@ -365,6 +363,10 @@ return {
         },
         git_status = {
           symbols = {
+            -- Change type
+            added = '',
+            modified = '',
+            -- Status type
             unstaged = '󰜥',
             staged = '',
             untracked = '?',
@@ -376,7 +378,6 @@ return {
           align = 'right',
         },
       },
-
       renderers = {
         directory = {
           { 'indent' },
@@ -436,7 +437,6 @@ return {
               neo_tree_commands.go_to_parent(state)
             end,
             desc = 'Go to parent folder',
-            
           },
           ['p'] = {
             function(state)
@@ -632,7 +632,7 @@ return {
             ['f'] = 'filter_on_submit',
             ['F'] = 'clear_filter',
             ['H'] = 'toggle_hidden',
-            ['/'] = 'fuzzy_finder',
+            ['/'] = 'none',
           },
         },
       },
