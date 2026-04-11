@@ -26,28 +26,32 @@ do
     vim.g.clipboard = {
       name = 'OSC 52',
       copy = {
-        ['+'] = require('vim.ui.clipboard.osc52').copy '+',
-        ['*'] = require('vim.ui.clipboard.osc52').copy '*',
+        ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
+        ['*'] = require('vim.ui.clipboard.osc52').copy('*'),
       },
       paste = {
-        ['+'] = function() return nil end,
-        ['*'] = function() return nil end,
+        ['+'] = function()
+          return nil
+        end,
+        ['*'] = function()
+          return nil
+        end,
       },
     }
 
     local ok_osc, osc52 = pcall(require, 'osc52')
     if ok_osc then
-      osc52.setup {
+      osc52.setup({
         max_length = 50000,
         trim = false,
         silent = true,
-      }
+      })
 
       vim.api.nvim_create_autocmd('TextYankPost', {
         group = vim.api.nvim_create_augroup('custom_osc52_yank_only', { clear = true }),
         callback = function()
           if vim.v.event.operator == 'y' then
-            osc52.copy_register '"'
+            osc52.copy_register('"')
           end
         end,
       })
@@ -60,7 +64,7 @@ end
 do
   local ok_yanky, yanky = pcall(require, 'yanky')
   if ok_yanky then
-    yanky.setup {}
+    yanky.setup({})
   end
 
   local picker_opts = {
@@ -94,15 +98,15 @@ do
 
   ---@param keys string  the raw key(s) to feed, e.g. "d", "c", "x", "s"
   local function op_to_reg1(keys)
-    local prev_contents = vim.fn.getreg '"'
-    local prev_type = vim.fn.getregtype '"'
+    local prev_contents = vim.fn.getreg('"')
+    local prev_type = vim.fn.getregtype('"')
 
     local prev_plus, prev_plus_type, prev_star, prev_star_type
     if not in_ssh then
-      prev_plus = vim.fn.getreg '+'
-      prev_plus_type = vim.fn.getregtype '+'
-      prev_star = vim.fn.getreg '*'
-      prev_star_type = vim.fn.getregtype '*'
+      prev_plus = vim.fn.getreg('+')
+      prev_plus_type = vim.fn.getregtype('+')
+      prev_star = vim.fn.getreg('*')
+      prev_star_type = vim.fn.getregtype('*')
     end
 
     local group = vim.api.nvim_create_augroup('_yank_preserve_swap', { clear = true })
@@ -111,8 +115,8 @@ do
       group = group,
       once = true,
       callback = function()
-        local deleted_contents = vim.fn.getreg '"'
-        local deleted_type = vim.fn.getregtype '"'
+        local deleted_contents = vim.fn.getreg('"')
+        local deleted_type = vim.fn.getregtype('"')
 
         vim.fn.setreg('1', deleted_contents, deleted_type)
         vim.fn.setreg('"', prev_contents, prev_type)
@@ -135,30 +139,29 @@ do
   -- d/c are operators — Vim will wait for a motion natively,
   -- so dd, dw, d$, D, cc, cw, c$, C all work through these.
   vim.keymap.set('n', 'd', function()
-    op_to_reg1 'd'
+    op_to_reg1('d')
   end, { noremap = true, silent = true, desc = 'Delete -> reg 1 (preserve yank)' })
   vim.keymap.set('n', 'c', function()
-    op_to_reg1 'c'
+    op_to_reg1('c')
   end, { noremap = true, silent = true, desc = 'Change -> reg 1 (preserve yank)' })
   vim.keymap.set('n', 'x', function()
-    op_to_reg1 'x'
+    op_to_reg1('x')
   end, { noremap = true, silent = true, desc = 'x -> reg 1 (preserve yank)' })
   vim.keymap.set('n', 's', function()
-    op_to_reg1 's'
+    op_to_reg1('s')
   end, { noremap = true, silent = true, desc = 's -> reg 1 (preserve yank)' })
 
   -- Visual mode
   vim.keymap.set('x', 'd', function()
-    op_to_reg1 'd'
+    op_to_reg1('d')
   end, { noremap = true, silent = true, desc = 'V delete -> reg 1 (preserve yank)' })
   vim.keymap.set('x', 'c', function()
-    op_to_reg1 'c'
+    op_to_reg1('c')
   end, { noremap = true, silent = true, desc = 'V change -> reg 1 (preserve yank)' })
 
   -- Visual paste: don't overwrite last yank with replaced text
   vim.keymap.set('x', 'p', '"_dP', { noremap = true, silent = true, desc = 'Visual paste (preserve yank)' })
 end
-
 
 -- ====================================================
 -- Select All Keymaps
@@ -166,41 +169,71 @@ end
 -- Keymap to visually select everything in the current buffer
 vim.keymap.set('n', '<leader>vaa', 'ggVG', { noremap = true, desc = '[v]isually select [a]ll text from current buffer' })
 -- Keymap to delete everything in the current buffer AND DON'T clobber system clipboard add to yank history instead
-vim.keymap.set('n', '<leader>vad', function()
-  local in_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CLIENT ~= nil or vim.env.SSH_CONNECTION ~= nil
+if is_os_windows() then
+  vim.keymap.set('n', '<leader>vad', function()
+    local in_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CLIENT ~= nil or vim.env.SSH_CONNECTION ~= nil
 
-  local prev_contents = vim.fn.getreg '"'
-  local prev_type = vim.fn.getregtype '"'
+    local prev_contents = vim.fn.getreg('"')
+    local prev_type = vim.fn.getregtype('"')
 
-  local prev_plus, prev_plus_type, prev_star, prev_star_type
-  if not in_ssh then
-    prev_plus = vim.fn.getreg '+'
-    prev_plus_type = vim.fn.getregtype '+'
-    prev_star = vim.fn.getreg '*'
-    prev_star_type = vim.fn.getregtype '*'
-  end
+    local prev_plus, prev_plus_type, prev_star, prev_star_type
+    if not in_ssh then
+      prev_plus = vim.fn.getreg('+')
+      prev_plus_type = vim.fn.getregtype('+')
+      prev_star = vim.fn.getreg('*')
+      prev_star_type = vim.fn.getregtype('*')
+    end
 
-  vim.cmd 'normal! ggVGd'
+    vim.cmd('normal! ggVGd')
 
-  local deleted_contents = vim.fn.getreg '"'
-  local deleted_type = vim.fn.getregtype '"'
+    local deleted_contents = vim.fn.getreg('"')
+    local deleted_type = vim.fn.getregtype('"')
 
-  vim.fn.setreg('1', deleted_contents, deleted_type)
-  vim.fn.setreg('"', prev_contents, prev_type)
+    vim.fn.setreg('1', deleted_contents, deleted_type)
+    vim.fn.setreg('"', prev_contents, prev_type)
 
-  if not in_ssh then
-    vim.fn.setreg('+', prev_plus, prev_plus_type)
-    vim.fn.setreg('*', prev_star, prev_star_type)
-  end
-end, { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
+    if not in_ssh then
+      vim.fn.setreg('+', prev_plus, prev_plus_type)
+      vim.fn.setreg('*', prev_star, prev_star_type)
+    end
+  end, { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
+end
+-- Keymap to delete everything in the current buffer AND DON'T clobber system clipboard add to yank history instead
+if is_os_linux() then
+  vim.keymap.set('n', '<leader>vad', function()
+    local in_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CLIENT ~= nil or vim.env.SSH_CONNECTION ~= nil
 
+    local prev_contents = vim.fn.getreg('"')
+    local prev_type = vim.fn.getregtype('"')
+
+    local prev_plus, prev_plus_type, prev_star, prev_star_type
+    if not in_ssh then
+      prev_plus = vim.fn.getreg('+')
+      prev_plus_type = vim.fn.getregtype('+')
+      prev_star = vim.fn.getreg('*')
+      prev_star_type = vim.fn.getregtype('*')
+    end
+
+    vim.cmd('normal! ggVGd')
+
+    local deleted_contents = vim.fn.getreg('"')
+    local deleted_type = vim.fn.getregtype('"')
+
+    vim.fn.setreg('1', deleted_contents, deleted_type)
+    vim.fn.setreg('"', prev_contents, prev_type)
+
+    if not in_ssh then
+      vim.fn.setreg('+', prev_plus, prev_plus_type)
+      vim.fn.setreg('*', prev_star, prev_star_type)
+    end
+  end, { noremap = true, desc = '[v]isually select [a]ll text from current buffer and [d]elete' })
+end
 -- Keymap to yank everything in the current buffer V2
 -- Add which-key-group
-require('which-key').add {
+require('which-key').add({
   { mode = { 'n' }, { '<leader>v', group = '[v]isual selection', hidden = false } },
   { mode = { 'n' }, { '<leader>va', group = '[v]isually select [a]ll', hidden = false } },
-}
+})
 vim.keymap.set('n', '<leader>vay', function()
   vim.cmd('%y')
 end, { desc = '[v]isually select [a]ll text from current buffer and [y]ank' })
-
