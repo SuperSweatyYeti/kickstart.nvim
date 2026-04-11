@@ -338,7 +338,7 @@ return {
         },
         indent = {
           indent_size = 2,
-          padding = 0,
+          padding = 1,
           with_markers = true,
           indent_marker = '│',
           last_indent_marker = '└',
@@ -534,25 +534,23 @@ return {
             local padding = config.padding or 0
             local level = node.level
             local with_markers = config.with_markers
-            local with_expanders = config.with_expanders == nil and file_nesting.is_enabled()
-              or config.with_expanders
+            local with_expanders = config.with_expanders == nil and file_nesting.is_enabled() or config.with_expanders
             local marker_highlight = config.highlight or highlights.INDENT_MARKER
             local expander_highlight = config.expander_highlight or config.highlight or highlights.EXPANDER
             local skip_marker = state.skip_marker_at_level
 
-            -- nvim-tree style markers
-            local edge_marker = config.indent_marker or '│'        -- parent continuation
-            local corner_marker = config.last_indent_marker or '└' -- last child
-            local item_marker = config.item_marker or '├'          -- non-last child
+            local edge_marker = config.indent_marker or '│'
+            local corner_marker = config.last_indent_marker or '└'
+            local item_marker = config.item_marker or '├'
 
             local function get_expander()
               if with_expanders and require('neo-tree.utils').is_expandable(node) then
-                return node:is_expanded() and (config.expander_expanded or '')
-                  or (config.expander_collapsed or '')
+                return node:is_expanded() and (config.expander_expanded or '') or (config.expander_collapsed or '')
               end
             end
 
-            if indent_size == 0 or level < 2 or not with_markers then
+            -- Only skip for root (level 0)
+            if indent_size == 0 or level < 1 or not with_markers then
               local len = indent_size * level + padding
               local expander = get_expander()
               if level == 0 or not expander then
@@ -578,28 +576,28 @@ return {
               local spaces_count = indent_size
               local highlight = nil
 
-              if i > 1 and not skip_marker[i] or i == level then
+              if i == level then
+                -- This is the node's own level — draw the connector
                 spaces_count = spaces_count - 1
                 highlight = marker_highlight
 
-                if i == level then
-                  -- At the node's own level
-                  local expander = get_expander()
-                  if expander then
-                    char = expander
-                    highlight = expander_highlight
-                  elseif node.is_last_child then
-                    -- └ corner for last child
-                    char = corner_marker
-                    spaces_count = spaces_count - (vim.api.nvim_strwidth(corner_marker) - 1)
-                  else
-                    -- ├ item connector for non-last children
-                    char = item_marker
-                    spaces_count = spaces_count - (vim.api.nvim_strwidth(item_marker) - 1)
-                  end
+                local expander = get_expander()
+                if expander then
+                  char = expander
+                  highlight = expander_highlight
+                elseif node.is_last_child then
+                  char = corner_marker
+                  spaces_count = spaces_count - (vim.api.nvim_strwidth(corner_marker) - 1)
                 else
-                  -- │ continuation line for parent levels
+                  char = item_marker
+                  spaces_count = spaces_count - (vim.api.nvim_strwidth(item_marker) - 1)
+                end
+              else
+                -- Parent continuation levels — draw │ if parent is not last child
+                if not skip_marker[i] then
                   char = edge_marker
+                  spaces_count = spaces_count - 1
+                  highlight = marker_highlight
                 end
               end
 
