@@ -119,14 +119,7 @@ return {
           ['x'] = { char = '', hl_group = 'ObsidianDone' },
         },
       },
-      mappings = {
-        ['<CR>'] = {
-          action = function()
-            return require('obsidian.util').smart_action()
-          end,
-          opts = { noremap = false, expr = true, buffer = true, desc = 'Obsidian smart action' },
-        },
-      },
+      mappings = {},
     }
   end,
 
@@ -148,6 +141,17 @@ return {
     end
 
     require('obsidian').setup(opts)
+
+    -- Set <CR> mapping only on markdown file buffers to avoid
+    -- overwriting neo-tree/nvim-tree/special buffer mappings
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'markdown',
+      callback = function(args)
+        vim.keymap.set('n', '<CR>', function()
+          return require('obsidian.util').smart_action()
+        end, { buffer = args.buf, expr = true, noremap = false, desc = 'Obsidian smart action' })
+      end,
+    })
 
     -- Notify about unresolved vaults here, safely outside autocommand context
     local resolved_names = {}
