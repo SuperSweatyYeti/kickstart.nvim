@@ -268,6 +268,35 @@ return {
         :find()
     end
 
+    -- Find files (including hidden) → expand folders in tree and put cursor on the file
+    local function telescope_find_files_hidden_reveal()
+      local builtin = require('telescope.builtin')
+      local actions = require('telescope.actions')
+      local action_state = require('telescope.actions.state')
+
+      builtin.find_files({
+        hidden = true,
+        no_ignore = true,
+        attach_mappings = function(prompt_bufnr)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local entry = action_state.get_selected_entry()
+            if not entry then
+              return
+            end
+
+            local filepath = entry.path or entry.filename
+            if not filepath then
+              return
+            end
+
+            nvim_tree_api.tree.find_file({ buf = filepath, open = true, focus = true })
+          end)
+          return true
+        end,
+      })
+    end
+
     -- Find files → expand folders in tree and put cursor on the file
     local function telescope_find_files_reveal()
       local builtin = require('telescope.builtin')
@@ -456,6 +485,7 @@ return {
       -- Telescope pickers that reveal back in tree
       vim.keymap.set('n', '<leader>sD', telescope_find_dirs, { buffer = bufnr, desc = '[s]earch [D]irectories (reveal in tree)' })
       vim.keymap.set('n', '<leader>sf', telescope_find_files_reveal, { buffer = bufnr, desc = '[s]earch [f]iles (reveal in tree)' })
+      vim.keymap.set('n', '<leader>sF', telescope_find_files_hidden_reveal, { buffer = bufnr, desc = '[s]earch [F]iles including hidden (reveal in tree)' })
     end
 
     -- Other Keymaps even without attach

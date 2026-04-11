@@ -207,6 +207,47 @@ return {
       })
     end
 
+    local function telescope_find_files_hidden_reveal()
+      local builtin = require('telescope.builtin')
+      local actions = require('telescope.actions')
+      local action_state = require('telescope.actions.state')
+
+      builtin.find_files({
+        prompt_title = 'Find Files (Include Hidden)',
+        hidden = true,
+        no_ignore = true,
+        attach_mappings = function(prompt_bufnr)
+          actions.select_default:replace(function()
+            actions.close(prompt_bufnr)
+            local entry = action_state.get_selected_entry()
+            if not entry then
+              return
+            end
+
+            local filepath = entry.path or entry.filename
+            if not filepath then
+              return
+            end
+
+            -- Ensure hidden/filtered items are visible in neo-tree
+            local state = require('neo-tree.sources.manager').get_state('filesystem')
+            if state and state.filtered_items and not state.filtered_items.visible then
+              state.filtered_items.visible = true
+            end
+
+            require('neo-tree.command').execute({
+              action = 'focus',
+              source = 'filesystem',
+              position = 'left',
+              reveal_file = filepath,
+              reveal_force_cwd = false,
+            })
+          end)
+          return true
+        end,
+      })
+    end
+
     -- ─────────────────────────────────────────────────────────
     -- Which-key group registration
     -- ─────────────────────────────────────────────────────────
@@ -268,6 +309,10 @@ return {
       telescope_find_files_reveal = function(_)
         telescope_find_files_reveal()
       end,
+    
+          telescope_find_files_hidden_reveal = function(_)
+            telescope_find_files_hidden_reveal()
+          end,
     }
 
     -- ─────────────────────────────────────────────────────────
@@ -467,6 +512,12 @@ return {
             end,
             desc = '[s]earch [f]iles (reveal in tree)',
           },
+          ['<leader>sF'] = {
+            function()
+              telescope_find_files_hidden_reveal()
+            end,
+            desc = '[s]earch [F]iles including hidden (reveal in tree)',
+          },
         },
       },
 
@@ -624,7 +675,7 @@ return {
         },
         filtered_items = {
           visible = false,
-          hide_dotfiles = false,
+          hide_dotfiles = true,
           hide_gitignored = false,
         },
         window = {
