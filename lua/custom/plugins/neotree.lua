@@ -30,8 +30,10 @@ return {
       NeoTreeGitStaged = { fg = '#9ece6a' },
     }
 
+    local git_highlight_groups = {}
     for group, hl in pairs(git_icon_colors) do
       vim.api.nvim_set_hl(0, group, hl)
+      git_highlight_groups[group] = true
     end
 
     vim.api.nvim_set_hl(0, 'NeoTreeModified', { fg = '#ff9e64' })
@@ -57,7 +59,7 @@ return {
       end,
     })
 
-    -- ─────────────────────────────────────────────────────────
+    -- ──────────────────────────────────────��──────────────────
     -- Helpers: telescope pickers that reveal in tree
     -- ─────────────────────────────────────────────────────────
     local function telescope_find_dirs()
@@ -229,7 +231,6 @@ return {
               return
             end
 
-            -- Ensure hidden/filtered items are visible in neo-tree
             local state = require('neo-tree.sources.manager').get_state('filesystem')
             if state and state.filtered_items and not state.filtered_items.visible then
               state.filtered_items.visible = true
@@ -339,52 +340,26 @@ return {
     end
 
     -- ─────────────────────────────────────────────────────────
-    -- Helper: should this directory node show the … icon for
-    -- a given modified buffer path?
-    --
-    -- The rule is simple: show on exactly ONE folder — the
-    -- deepest ancestor whose contents toward the file are
-    -- actually visible in the tree. That means:
-    --
-    --   • If THIS node is collapsed → show here. Nothing
-    --     beneath is visible, so this is the deepest visible
-    --     ancestor.
-    --
-    --   • If THIS node is expanded:
-    --       - File is a direct child → show here (immediate
-    --         parent).
-    --       - The child subdir toward the file is collapsed
-    --         → don't show here, that child will show it
-    --         (it's visible and will hit the "collapsed" case).
-    --       - The child subdir toward the file is expanded
-    --         → don't show here, the icon belongs deeper.
-    --       - The child subdir doesn't exist in children
-    --         → show here (this is the deepest visible).
+    -- Shared helper: is_most_relevant_ancestor
     -- ─────────────────────────────────────────────────────────
-    local function should_show_modified_icon(node, buf_path, state)
-      local norm_buf = vim.fs.normalize(buf_path)
+    local function is_most_relevant_ancestor(node, target_path, state)
+      local norm_target = vim.fs.normalize(target_path)
       local norm_node = vim.fs.normalize(node.path)
 
-      -- Must be an ancestor of the buffer
-      if not vim.startswith(norm_buf, norm_node .. '/') then
+      if not vim.startswith(norm_target, norm_node .. '/') then
         return false
       end
 
-      -- If this node is collapsed, nothing beneath it is visible.
-      -- This is the deepest visible folder — show icon here.
       if not node:is_expanded() then
         return true
       end
 
-      -- This node is expanded. Check what's inside.
-      local relative = norm_buf:sub(#norm_node + 2)
+      local relative = norm_target:sub(#norm_node + 2)
 
-      -- File is a direct child (no more slashes in relative path)
       if not relative:find('/') then
         return true
       end
 
-      -- File is deeper. Find the direct child subdir on the path.
       local first_segment = relative:match('^([^/]+)')
       local child_dir_path = norm_node .. '/' .. first_segment
 
@@ -394,16 +369,58 @@ return {
       for _, cid in ipairs(child_ids) do
         local c = tree:get_node(cid)
         if c and c.type == 'directory' and vim.fs.normalize(c.path) == child_dir_path then
-          -- Child subdir exists and is visible in the tree.
-          -- Whether it's expanded or collapsed, IT will handle
-          -- showing the icon (collapsed → shows it; expanded →
-          -- delegates deeper). Don't show on this node.
           return false
         end
       end
 
-      -- The child subdir isn't in the tree at all.
-      -- This node is the deepest visible ancestor.
+      return true
+    end
+
+    -- ─────────────────────────────────────────────────────────
+    -- Git folder color helper.
+    --
+    -- Neo-tree already decided this folder has a git highlight.
+    -- We intercept and only keep it on the most relevant folder.
+    --
+    -- The approach: render cc.name() for each visible child
+    -- directory to see if neo-tree would also give IT a git
+    -- highlight. If any child dir would get a git highlight,
+    -- this folder should defer (strip its color).
+    --
+    -- This avoids depending on node.git_status or any internal
+    -- field — we just ask neo-tree's own name component what
+    -- highlight it would produce for each child.
+    -- ─────────────────────────────────────────────────────────
+    local function is_most_relevant_git_folder(node, config, state)
+      if node.type ~= 'directory' then
+        return false
+      end
+
+      -- Collapsed → deepest visible ancestor → keep color
+      if not node:is_expanded() then
+        return true
+      end
+
+      -- Expanded: check if any visible child directory would
+      -- also receive a git highlight from neo-tree.
+      local cc = require('neo-tree.sources.common.components')
+      local tree = state.tree
+      local child_ids = node:get_child_ids()
+
+      for _, cid in ipairs(child_ids) do
+        local c = tree:get_node(cid)
+        if c and c.type == 'directory' then
+          local child_result = cc.name(config, c, state)
+          if child_result.highlight and git_highlight_groups[child_result.highlight] then
+            -- A child dir also has git color → defer to it
+            return false
+          end
+        end
+      end
+
+      -- No child directory has git color → all git changes are
+      -- direct child files (or this is the immediate parent).
+      -- Keep the color here.
       return true
     end
 
@@ -480,7 +497,6 @@ return {
             -- Change type
             added = '',
             modified = '',
-            -- Status type
             unstaged = '󰜥',
             staged = '',
             untracked = '?',
@@ -591,16 +607,18 @@ return {
       },
 
       filesystem = {
-        -- ─────────────────────────────────────────────────────
-        -- Custom components registered per-source
-        -- ─────────────────────────────────────────────────────
         components = {
-          -- Override name: bold white for loaded buffers, bold orange for visible
           visible_buffer_name = function(config, node, state)
             local cc = require('neo-tree.sources.common.components')
             local result = cc.name(config, node, state)
 
-            if node.type ~= 'directory' and node.path then
+            if node.type == 'directory' then
+              if result.highlight and git_highlight_groups[result.highlight] then
+                if not is_most_relevant_git_folder(node, config, state) then
+                  result.highlight = 'NeoTreeDirectoryName'
+                end
+              end
+            elseif node.path then
               local visible = vim.g.neo_tree_visible_file
               if visible and vim.fs.normalize(node.path) == visible then
                 result.highlight = 'NeoTreeVisibleFile'
@@ -612,7 +630,6 @@ return {
             return result
           end,
 
-          -- [+] for modified files, … for the single most relevant ancestor folder
           modified_custom = function(config, node, state)
             local opened_buffers = state.opened_buffers or {}
 
@@ -627,7 +644,7 @@ return {
               end
             elseif node.type == 'directory' then
               for buf_path, buf_info in pairs(opened_buffers) do
-                if buf_info.modified and should_show_modified_icon(node, buf_path, state) then
+                if buf_info.modified and is_most_relevant_ancestor(node, buf_path, state) then
                   return {
                     text = ' … ',
                     highlight = config.folder_highlight or 'NeoTreeModifiedFolderIcon',
@@ -639,12 +656,6 @@ return {
             return {}
           end,
 
-          -- ─────────────────────────────────────────────────────
-          -- Custom indent component matching nvim-tree style:
-          --   ├ for non-last children (item connector)
-          --   └ for last child (corner)
-          --   │ for parent continuation lines (edge)
-          -- ─────────────────────────────────────────────────────
           indent = function(config, node, state)
             local highlights = require('neo-tree.ui.highlights')
             local file_nesting = require('neo-tree.sources.common.file-nesting')
@@ -672,7 +683,6 @@ return {
               end
             end
 
-            -- Only skip for root (level 0)
             if indent_size == 0 or level < 1 or not with_markers then
               local len = indent_size * level + padding
               local expander = get_expander()
@@ -700,7 +710,6 @@ return {
               local highlight = nil
 
               if i == level then
-                -- This is the node's own level — draw the connector
                 spaces_count = spaces_count - 1
                 highlight = marker_highlight
 
@@ -716,7 +725,6 @@ return {
                   spaces_count = spaces_count - (vim.api.nvim_strwidth(item_marker) - 1)
                 end
               else
-                -- Parent continuation levels — draw │ if parent is not last child
                 if not skip_marker[i] then
                   char = edge_marker
                   spaces_count = spaces_count - 1
