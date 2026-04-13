@@ -45,7 +45,7 @@ return {
     -- ─────────────────────────────────────────────────────────
     vim.g.neo_tree_visible_file = nil
 
-    vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter' }, {
+    vim.api.nvim_create_autocmd({ 'BufEnter', 'WinEnter', 'BufModifiedSet' }, {
       callback = function()
         local bufname = vim.api.nvim_buf_get_name(0)
         if bufname ~= '' and vim.bo.buftype == '' then
@@ -309,10 +309,10 @@ return {
       telescope_find_files_reveal = function(_)
         telescope_find_files_reveal()
       end,
-    
-          telescope_find_files_hidden_reveal = function(_)
-            telescope_find_files_hidden_reveal()
-          end,
+
+      telescope_find_files_hidden_reveal = function(_)
+        telescope_find_files_hidden_reveal()
+      end,
     }
 
     -- ─────────────────────────────────────────────────────────
@@ -336,6 +336,75 @@ return {
           pcall(vim.api.nvim_set_option_value, 'winbar', winbar_str, { win = win })
         end
       end
+    end
+
+    -- ─────────────────────────────────────────────────────────
+    -- Helper: should this directory node show the … icon for
+    -- a given modified buffer path?
+    --
+    -- The rule is simple: show on exactly ONE folder — the
+    -- deepest ancestor whose contents toward the file are
+    -- actually visible in the tree. That means:
+    --
+    --   • If THIS node is collapsed → show here. Nothing
+    --     beneath is visible, so this is the deepest visible
+    --     ancestor.
+    --
+    --   • If THIS node is expanded:
+    --       - File is a direct child → show here (immediate
+    --         parent).
+    --       - The child subdir toward the file is collapsed
+    --         → don't show here, that child will show it
+    --         (it's visible and will hit the "collapsed" case).
+    --       - The child subdir toward the file is expanded
+    --         → don't show here, the icon belongs deeper.
+    --       - The child subdir doesn't exist in children
+    --         → show here (this is the deepest visible).
+    -- ─────────────────────────────────────────────────────────
+    local function should_show_modified_icon(node, buf_path, state)
+      local norm_buf = vim.fs.normalize(buf_path)
+      local norm_node = vim.fs.normalize(node.path)
+
+      -- Must be an ancestor of the buffer
+      if not vim.startswith(norm_buf, norm_node .. '/') then
+        return false
+      end
+
+      -- If this node is collapsed, nothing beneath it is visible.
+      -- This is the deepest visible folder — show icon here.
+      if not node:is_expanded() then
+        return true
+      end
+
+      -- This node is expanded. Check what's inside.
+      local relative = norm_buf:sub(#norm_node + 2)
+
+      -- File is a direct child (no more slashes in relative path)
+      if not relative:find('/') then
+        return true
+      end
+
+      -- File is deeper. Find the direct child subdir on the path.
+      local first_segment = relative:match('^([^/]+)')
+      local child_dir_path = norm_node .. '/' .. first_segment
+
+      local tree = state.tree
+      local child_ids = node:get_child_ids()
+
+      for _, cid in ipairs(child_ids) do
+        local c = tree:get_node(cid)
+        if c and c.type == 'directory' and vim.fs.normalize(c.path) == child_dir_path then
+          -- Child subdir exists and is visible in the tree.
+          -- Whether it's expanded or collapsed, IT will handle
+          -- showing the icon (collapsed → shows it; expanded →
+          -- delegates deeper). Don't show on this node.
+          return false
+        end
+      end
+
+      -- The child subdir isn't in the tree at all.
+      -- This node is the deepest visible ancestor.
+      return true
     end
 
     -- ─────────────────────────────────────────────────────────
@@ -543,13 +612,12 @@ return {
             return result
           end,
 
-          -- [+] for modified files, … for folders with modified children
-          -- Uses state.opened_buffers which has { modified = bool, loaded = bool } per path
+          -- [+] for modified files, … for the single most relevant ancestor folder
           modified_custom = function(config, node, state)
             local opened_buffers = state.opened_buffers or {}
-            local neo_tree_utils = require('neo-tree.utils')
 
             if node.type == 'file' then
+              local neo_tree_utils = require('neo-tree.utils')
               local buf_info = neo_tree_utils.index_by_path(opened_buffers, node.path)
               if buf_info and buf_info.modified then
                 return {
@@ -559,7 +627,7 @@ return {
               end
             elseif node.type == 'directory' then
               for buf_path, buf_info in pairs(opened_buffers) do
-                if buf_info.modified and vim.startswith(buf_path, node.path .. '/') then
+                if buf_info.modified and should_show_modified_icon(node, buf_path, state) then
                   return {
                     text = ' … ',
                     highlight = config.folder_highlight or 'NeoTreeModifiedFolderIcon',
