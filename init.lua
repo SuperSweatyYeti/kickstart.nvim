@@ -459,6 +459,16 @@ if not vim.loop.fs_stat(lazypath) then
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
+-- NOTE: Enable UI Version 2 in neovim 0.12+
+-- Enable UI v2 only if Neovim >= 0.12
+local v = vim.version()
+if (v.major > 0) or (v.major == 0 and v.minor >= 12) then
+  local ok, ui2 = pcall(require, "vim._core.ui2")
+  if ok and ui2 and ui2.enable then
+    ui2.enable({})
+  end
+end
+
 -- [[ Configure and install plugins ]]
 --
 --  To check the current status of your plugins, run
