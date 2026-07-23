@@ -42,7 +42,7 @@ do
     local ok_osc, osc52 = pcall(require, 'osc52')
     if ok_osc then
       osc52.setup({
-        max_length = 50000,
+        max_length = 100000,
         trim = false,
         silent = true,
       })
