@@ -30,10 +30,13 @@ vim.keymap.set({ 'n', 'v' }, '<S-l>', '<End>', {})
 vim.keymap.set({ 'v' }, '<', '<gv', { noremap = true })
 vim.keymap.set({ 'v' }, '>', '>gv', { noremap = true })
 -- Easier to navigate between panes
-vim.keymap.set({ 'n', 'v' }, '<C-h>', '<C-w>h', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, '<C-j>', '<C-w>j', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, '<C-k>', '<C-w>k', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, '<C-l>', '<C-w>l', { noremap = true })
+-- NOTE: Disabled because we are using herdr navigation plugin
+-- vim.keymap.set({ 'n', 'v' }, '<C-h>', '<C-w>h', { noremap = true })
+-- vim.keymap.set({ 'n', 'v' }, '<C-j>', '<C-w>j', { noremap = true })
+-- vim.keymap.set({ 'n', 'v' }, '<C-k>', '<C-w>k', { noremap = true })
+-- vim.keymap.set({ 'n', 'v' }, '<C-l>', '<C-w>l', { noremap = true })
+
+
 -- Resize panes with hjkl
 vim.keymap.set({ 'n', 'v' }, '<A-h>', '<C-w><', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, '<A-j>', '<C-w>+', { noremap = true })
