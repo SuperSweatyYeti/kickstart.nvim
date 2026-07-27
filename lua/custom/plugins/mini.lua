@@ -10,11 +10,14 @@ return { -- Collection of various small independent plugins/modules
     require('mini.ai').setup { n_lines = 500 }
 
     -- Add/delete/replace surroundings (brackets, quotes, etc.)
-    --
+    --  "Hellowsum"
     -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
     -- - sd'   - [S]urround [D]elete [']quotes
     -- - sr)'  - [S]urround [R]eplace [)] [']
     require('mini.surround').setup()
+
+    -- Similar to Noice
+    require('mini.notify').setup()
 
     -- VScode like indent highlighting
     require('mini.indentscope').setup {

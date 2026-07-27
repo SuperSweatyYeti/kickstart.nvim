@@ -225,6 +225,9 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+-- Set the command height to 0. ONLY SHOW WE WE ACTUALLY TYPE COMMANDS
+vim.o.cmdheight = 0
+
 -- NOTE: debugging lua code here
 -- Recursive function to print a table's contents
 
