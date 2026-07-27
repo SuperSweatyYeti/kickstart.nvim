@@ -17,8 +17,8 @@ return {
         yaml = { 'yamlfmt' },
         yml = { 'yamlfmt' },
         sh = { 'shfmt' },
-        zsh = { 'shfmt' },
-        zshrc = { 'shfmt' },
+        zsh = { 'beautysh' },
+        zshrc = { 'beautysh' },
         bash = { 'shfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },

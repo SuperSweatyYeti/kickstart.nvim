@@ -25,6 +25,10 @@ vim.keymap.set('x', 'x', function()
 end, { noremap = true, silent = true })
 
 vim.keymap.set('x', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape visual block mode' })
+
+-- Join lines without moving cursor
+-- vim.keymap.set('n', 'J', 'mzJ`z', { desc = "Join lines without moving cursor" })
+
 -- Quickly get to end and beggining of line
 vim.keymap.set({ 'n', 'v' }, '<S-h>', '<Home>', {})
 vim.keymap.set({ 'n', 'v' }, '<S-l>', '<End>', {})
