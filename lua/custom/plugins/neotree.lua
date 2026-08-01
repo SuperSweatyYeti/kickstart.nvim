@@ -160,7 +160,12 @@ return {
           attach_mappings = function(prompt_bufnr)
             actions.select_default:replace(function()
               actions.close(prompt_bufnr)
+
               local entry = action_state.get_selected_entry()
+              if not entry then
+                return
+              end
+
               local dir = Path:new({ cwd, entry.value }):absolute()
 
               require('neo-tree.command').execute({

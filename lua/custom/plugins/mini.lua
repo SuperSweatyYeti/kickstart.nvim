@@ -1,13 +1,16 @@
 return { -- Collection of various small independent plugins/modules
   'echasnovski/mini.nvim',
   config = function()
+    -- Similar to Noice
+    require('mini.notify').setup()
+
     -- Better Around/Inside textobjects
     --
     -- Examples:
     --  - va)  - [V]isually select [A]round [)]paren
     --  - yinq - [Y]ank [I]nside [N]ext [']quote
     --  - ci'  - [C]hange [I]nside [']quote
-    require('mini.ai').setup { n_lines = 500 }
+    require('mini.ai').setup({ n_lines = 500 })
 
     -- Add/delete/replace surroundings (brackets, quotes, etc.)
     --  "Hellowsum"
@@ -16,18 +19,15 @@ return { -- Collection of various small independent plugins/modules
     -- - sr)'  - [S]urround [R]eplace [)] [']
     require('mini.surround').setup()
 
-    -- Similar to Noice
-    require('mini.notify').setup()
-
     -- VScode like indent highlighting
-    require('mini.indentscope').setup {
+    require('mini.indentscope').setup({
       draw = {
         animation = require('mini.indentscope').gen_animation.none(), -- Disable animation for indent scope
       },
       mappings = {
         object_scope = 'is',
       },
-    }
+    })
 
     -- Simple and easy statusline.
     --  You could remove this setup call if you don't like it,

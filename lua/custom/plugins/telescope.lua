@@ -23,7 +23,7 @@ return {
         -- `cond` is a condition used to determine whether this plugin should be
         -- installed and loaded.
         cond = function()
-          return vim.fn.executable 'make' == 1
+          return vim.fn.executable('make') == 1
         end,
       },
       { 'nvim-telescope/telescope-ui-select.nvim' },
@@ -55,8 +55,8 @@ return {
 
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
-      local actions = require 'telescope.actions'
-      require('telescope').setup {
+      local actions = require('telescope.actions')
+      require('telescope').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
@@ -71,32 +71,32 @@ return {
             require('telescope.themes').get_dropdown(),
           },
         },
-      }
+      })
 
       -- Enable telescope extensions, if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
 
       -- See `:help telescope.builtin`
-      local builtin = require 'telescope.builtin'
+      local builtin = require('telescope.builtin')
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[s]earch [h]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[s]earch [k]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[s]earch [f]iles' })
       vim.keymap.set('n', '<leader>sF', function()
-        require('telescope.builtin').find_files {
+        require('telescope.builtin').find_files({
           hidden = true,
           prompt_title = 'Find Files (Include Hidden)',
-        }
+        })
       end, { desc = '[s]earch [f]iles include hidden' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[s]earch [s]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[s]earch current [w]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[s]earch by [g]rep' })
       vim.keymap.set('n', '<leader>sG', function()
-        builtin.live_grep {
+        builtin.live_grep({
           additional_args = function()
             return { '--no-ignore', '--hidden' }
           end,
-        }
+        })
       end, { desc = '[s]earch by [g]rep include hidden' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[s]earch [d]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[s]earch [r]esume' })
@@ -105,26 +105,26 @@ return {
       -- Search For Directories only
       -- Custom stuff to add folder icons and previewer
       vim.keymap.set('n', '<leader>sD', function()
-        local entry_display = require 'telescope.pickers.entry_display'
-        local pickers = require 'telescope.pickers'
-        local finders = require 'telescope.finders'
-        local previewers = require 'telescope.previewers'
-        local from_entry = require 'telescope.from_entry'
+        local entry_display = require('telescope.pickers.entry_display')
+        local pickers = require('telescope.pickers')
+        local finders = require('telescope.finders')
+        local previewers = require('telescope.previewers')
+        local from_entry = require('telescope.from_entry')
         local conf = require('telescope.config').values
-        local utils = require 'telescope.utils'
-        local Path = require 'plenary.path'
-        local actions = require 'telescope.actions'
-        local action_state = require 'telescope.actions.state'
+        local utils = require('telescope.utils')
+        local Path = require('plenary.path')
+        local actions = require('telescope.actions')
+        local action_state = require('telescope.actions.state')
 
         local cwd = vim.uv.cwd()
 
-        local displayer = entry_display.create {
+        local displayer = entry_display.create({
           separator = ' ',
           items = {
             { width = 2 },
             { remaining = true },
           },
-        }
+        })
 
         local lookup_keys = {
           ordinal = 1,
@@ -138,10 +138,10 @@ return {
 
         mt_dir_entry.display = function(entry)
           local text = utils.transform_path({}, entry.value)
-          return displayer {
+          return displayer({
             { '', 'Directory' },
             { text, 'TelescopeResultsNormal' },
-          }
+          })
         end
 
         mt_dir_entry.__index = function(t, k)
@@ -161,7 +161,7 @@ return {
           return rawget(t, rawget(lookup_keys, k))
         end
 
-        local dir_previewer = previewers.new_buffer_previewer {
+        local dir_previewer = previewers.new_buffer_previewer({
           title = 'Directory Preview',
           define_preview = function(self, entry)
             local p = from_entry.path(entry, true, false)
@@ -170,6 +170,7 @@ return {
             end
 
             local expanded = utils.path_expand(p)
+
             require('plenary.scandir').scan_dir_async(expanded, {
               hidden = true,
               depth = 1,
@@ -181,9 +182,11 @@ return {
 
                 local lines = {}
                 local hl_lines = {}
+
                 for _, item in ipairs(results) do
                   local name = vim.fn.fnamemodify(item, ':t')
                   local stat = vim.uv.fs_stat(item)
+
                   if stat and stat.type == 'directory' then
                     table.insert(lines, ' ' .. name)
                     table.insert(hl_lines, 'Directory')
@@ -195,14 +198,15 @@ return {
 
                 vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines)
 
-                local ns = vim.api.nvim_create_namespace 'dir_preview'
+                local ns = vim.api.nvim_create_namespace('dir_preview')
+
                 for i, hl_group in ipairs(hl_lines) do
                   vim.hl.range(self.state.bufnr, ns, hl_group, { i - 1, 0 }, { i - 1, #lines[i] })
                 end
               end),
             })
           end,
-        }
+        })
 
         pickers
           .new({}, {
@@ -213,19 +217,26 @@ return {
               end,
             }),
             previewer = dir_previewer,
-            sorter = conf.generic_sorter {},
+            sorter = conf.generic_sorter({}),
+
             attach_mappings = function(prompt_bufnr)
               actions.select_default:replace(function()
+                local entry = action_state.get_selected_entry()
+
                 actions.close(prompt_bufnr)
 
-                local entry = action_state.get_selected_entry()
+                if not entry then
+                  return
+                end
+
                 local dir = Path:new({ cwd, entry.value }):absolute()
 
-                -- open nvim-tree with the selected folder as root
-                local ok, nvim_tree_api = pcall(require, 'nvim-tree.api')
-                if ok then
-                  nvim_tree_api.tree.open { path = dir }
-                end
+                -- Open Neo-tree at selected directory
+                require('neo-tree.command').execute({
+                  source = 'filesystem',
+                  action = 'show',
+                  dir = dir,
+                })
               end)
 
               return true
@@ -236,24 +247,24 @@ return {
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to telescope to change theme, layout, etc.
-        builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
+        builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown({
           winblend = 10,
           previewer = false,
-        })
+        }))
       end, { desc = '[/] Fuzzily search in current buffer' })
 
       -- Also possible to pass additional configuration options.
       --  See `:help telescope.builtin.live_grep()` for information about particular keys
       vim.keymap.set('n', '<leader>s/', function()
-        builtin.live_grep {
+        builtin.live_grep({
           grep_open_files = true,
           prompt_title = 'Live Grep in Open Files',
-        }
+        })
       end, { desc = '[s]earch [/] in Open Files' })
 
       -- Shortcut for searching your neovim configuration files
       vim.keymap.set('n', '<leader>sn', function()
-        builtin.find_files { cwd = vim.fn.stdpath 'config' }
+        builtin.find_files({ cwd = vim.fn.stdpath('config') })
       end, { desc = '[s]earch [n]eovim files' })
     end,
   },
