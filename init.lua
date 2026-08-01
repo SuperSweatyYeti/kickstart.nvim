@@ -228,6 +228,10 @@ vim.opt.scrolloff = 10
 -- Set the command height to 0. ONLY SHOW WE WE ACTUALLY TYPE COMMANDS
 vim.o.cmdheight = 0
 
+-- Never fold sections of files
+vim.opt.foldenable = false
+vim.opt.foldlevelstart = 99
+
 -- NOTE: debugging lua code here
 -- Recursive function to print a table's contents
 
