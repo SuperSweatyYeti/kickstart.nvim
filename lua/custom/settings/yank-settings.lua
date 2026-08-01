@@ -158,6 +158,13 @@ do
   vim.keymap.set('x', 'c', function()
     op_to_reg1('c')
   end, { noremap = true, silent = true, desc = 'V change -> reg 1 (preserve yank)' })
+  -- YES overwrite if in visual and press x 
+  -- CUT and paste
+  vim.keymap.set('x', 'x', 'x', {
+    noremap = true,
+    silent = true,
+    desc = 'Visual x -> overwrite yank',
+  })
 
   -- Visual paste: don't overwrite last yank with replaced text
   vim.keymap.set('x', 'p', '"_dP', { noremap = true, silent = true, desc = 'Visual paste (preserve yank)' })
