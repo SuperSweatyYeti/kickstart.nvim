@@ -225,8 +225,8 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
--- Set the command height to 0. ONLY SHOW WE WE ACTUALLY TYPE COMMANDS
-vim.o.cmdheight = 0
+-- Set the command height to 0. ONLY COMMAND INPUT LINE WHEN WE ACTUALLY TYPE COMMANDS
+vim.o.cmdheight = 1
 
 -- Never fold sections of files
 vim.opt.foldenable = false
