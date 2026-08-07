@@ -56,10 +56,12 @@ return {
       end
       ps_source.complete = function(self, params, callback)
         local current_file = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':p')
-        local dir = vim.fn.fnamemodify(current_file, ':h')
+        -- Find project root (.git), fall back to current file's directory
+        local root = vim.fs.root(0, '.git') or vim.fn.fnamemodify(current_file, ':h')
         local items = {}
-        local ps_files = vim.fn.glob(dir .. '/*.ps1', false, true)
-        vim.list_extend(ps_files, vim.fn.glob(dir .. '/*.psm1', false, true))
+        -- Search recursively through the entire project
+        local ps_files = vim.fn.glob(root .. '/**/*.ps1', false, true)
+        vim.list_extend(ps_files, vim.fn.glob(root .. '/**/*.psm1', false, true))
         for _, file in ipairs(ps_files) do
           if vim.fn.fnamemodify(file, ':p') ~= current_file then
             local ok, lines = pcall(vim.fn.readfile, file)
@@ -69,7 +71,7 @@ return {
               local in_param_block = false
               local paren_depth = 0
               for i, line in ipairs(lines) do
-                -- Track param() blocks so we can label parameters vs variables
+                -- Track param() blocks to skip parameters (PSES already handles those)
                 if line:match('[Pp]aram%s*%(') then
                   in_param_block = true
                   paren_depth = 0
@@ -96,23 +98,35 @@ return {
                   })
                 end
 
-                -- Match variable/parameter: $var, $script:var, $global:var, [type]$var
+                -- Match variables and parameters
                 local var_name = line:match('^%s*(%$[%w_:]+)%s*=')
                   or line:match('^%s*%[[%w%.%[%]]+%]%s*(%$[%w_:]+)')
                 if var_name and not seen_vars[var_name] then
                   seen_vars[var_name] = true
-                  local is_param = in_param_block
-                  table.insert(items, {
-                    label = var_name,
-                    kind = is_param
-                      and require('cmp.types').lsp.CompletionItemKind.Field
-                      or require('cmp.types').lsp.CompletionItemKind.Variable,
-                    detail = (is_param and 'param ' or 'var ') .. filename .. ':' .. i,
-                    documentation = {
-                      kind = 'markdown',
-                      value = '**' .. var_name .. '** (' .. (is_param and 'parameter' or 'variable') .. ')\n\nDefined in `' .. filename .. '` (line ' .. i .. ')',
-                    },
-                  })
+                  if in_param_block then
+                    -- Parameters: suggest as -ParamName (how you actually type them)
+                    local param_label = '-' .. var_name:gsub('^%$', '')
+                    table.insert(items, {
+                      label = param_label,
+                      kind = require('cmp.types').lsp.CompletionItemKind.Field,
+                      detail = 'param ' .. filename .. ':' .. i,
+                      documentation = {
+                        kind = 'markdown',
+                        value = '**' .. param_label .. '**\n\nParameter defined in `' .. filename .. '` (line ' .. i .. ')',
+                      },
+                    })
+                  else
+                    -- Variables: suggest as $VarName
+                    table.insert(items, {
+                      label = var_name,
+                      kind = require('cmp.types').lsp.CompletionItemKind.Variable,
+                      detail = 'var ' .. filename .. ':' .. i,
+                      documentation = {
+                        kind = 'markdown',
+                        value = '**' .. var_name .. '**\n\nDefined in `' .. filename .. '` (line ' .. i .. ')',
+                      },
+                    })
+                  end
                 end
               end
             end
@@ -150,6 +164,13 @@ return {
               local abbr = vim_item.abbr or ''
               -- kind 6 = Variable in LSP spec
               if raw_kind == 6 and not abbr:match('^%s*%$') then
+                vim_item.kind = 'Param'
+              end
+            end
+            -- Relabel our custom source parameters from "Field" to "Param"
+            if entry.source.name == 'ps_functions' then
+              local detail = entry:get_completion_item().detail or ''
+              if detail:match('^param ') then
                 vim_item.kind = 'Param'
               end
             end
