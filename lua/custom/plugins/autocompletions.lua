@@ -38,6 +38,53 @@ return {
       local luasnip = require 'luasnip'
       luasnip.config.setup {}
 
+      -- NOTE:
+      -- Custom cmp sourcing for Powershell: parses function names from .ps1/.psm1 files
+      -- in the same directory. Bridges the gap where PSES gd can find
+      -- cross-file functions but its completion engine cannot.
+      local ps_source = {}
+      ps_source.new = function()
+        return setmetatable({}, { __index = ps_source })
+      end
+      ps_source.get_trigger_characters = function()
+        return { '-' }
+      end
+      ps_source.is_available = function()
+        local ft = vim.bo.filetype
+        return ft == 'ps1' or ft == 'powershell'
+      end
+      ps_source.complete = function(self, params, callback)
+        local current_file = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':p')
+        local dir = vim.fn.fnamemodify(current_file, ':h')
+        local items = {}
+        local ps_files = vim.fn.glob(dir .. '/*.ps1', false, true)
+        vim.list_extend(ps_files, vim.fn.glob(dir .. '/*.psm1', false, true))
+        for _, file in ipairs(ps_files) do
+          if vim.fn.fnamemodify(file, ':p') ~= current_file then
+            local ok, lines = pcall(vim.fn.readfile, file)
+            if ok and lines then
+              local filename = vim.fn.fnamemodify(file, ':t')
+              for i, line in ipairs(lines) do
+                local func_name = line:match('^%s*[Ff]unction%s+([%w%-_]+)')
+                if func_name then
+                  table.insert(items, {
+                    label = func_name,
+                    kind = require('cmp.types').lsp.CompletionItemKind.Function,
+                    detail = filename .. ':' .. i,
+                    documentation = {
+                      kind = 'markdown',
+                      value = '**' .. func_name .. '**\n\nDefined in `' .. filename .. '` (line ' .. i .. ')',
+                    },
+                  })
+                end
+              end
+            end
+          end
+        end
+        callback({ items = items })
+      end
+      cmp.register_source('ps_functions', ps_source.new())
+
       cmp.setup {
         snippet = {
           expand = function(args)
@@ -98,6 +145,7 @@ return {
             -- You can also disable this in the filetype settings below.
           },
           { name = 'nvim_lsp' },
+          { name = 'ps_functions' },
           { name = 'luasnip' },
           { name = 'path' },
         },
