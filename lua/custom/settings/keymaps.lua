@@ -12,8 +12,8 @@ vim.keymap.set('x', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 
 vim.keymap.set('c', 'JJ', '<Esc><Esc>', { noremap = true, silent = true, desc = 'Escape Command mode' })
 -- ONLY EVER Paste last Yank
 -- Move lines up or down
-vim.keymap.set({'v'}, 'J', ":m  '>+1<CR>gv=gv", { silent = true, desc = "Move lines down in visual selection mode" })
-vim.keymap.set({'v'}, 'K', ":m  '<-2<CR>gv=gv", { silent = true, desc = "Move lines up in visual selection mode" })
+vim.keymap.set({'v'}, '<down>', ":m  '>+1<CR>gv=gv", { silent = true, desc = "Move lines down in visual selection mode" })
+vim.keymap.set({'v'}, '<up>', ":m  '<-2<CR>gv=gv", { silent = true, desc = "Move lines up in visual selection mode" })
 
 -- Normal mode 'x': delete char into register 0 'last yank'
 vim.keymap.set('n', 'x', function()
