@@ -39,15 +39,16 @@ return {
       luasnip.config.setup {}
 
       -- NOTE:
-      -- Custom cmp sourcing for Powershell: parses function names from .ps1/.psm1 files
-      -- in the same directory. Bridges the gap where PSES gd can find
-      -- cross-file functions but its completion engine cannot.
+      -- Custom cmp sourcing for Powershell: parses function names and variable
+      -- declarations from .ps1/.psm1 files in the same directory. Bridges the
+      -- gap where PSES gd can find cross-file symbols but its completion
+      -- engine cannot.
       local ps_source = {}
       ps_source.new = function()
         return setmetatable({}, { __index = ps_source })
       end
       ps_source.get_trigger_characters = function()
-        return { '-' }
+        return { '-', '$' }
       end
       ps_source.is_available = function()
         local ft = vim.bo.filetype
@@ -64,7 +65,24 @@ return {
             local ok, lines = pcall(vim.fn.readfile, file)
             if ok and lines then
               local filename = vim.fn.fnamemodify(file, ':t')
+              local seen_vars = {}
+              local in_param_block = false
+              local paren_depth = 0
               for i, line in ipairs(lines) do
+                -- Track param() blocks so we can label parameters vs variables
+                if line:match('[Pp]aram%s*%(') then
+                  in_param_block = true
+                  paren_depth = 0
+                end
+                if in_param_block then
+                  for ch in line:gmatch('.') do
+                    if ch == '(' then paren_depth = paren_depth + 1 end
+                    if ch == ')' then paren_depth = paren_depth - 1 end
+                  end
+                  if paren_depth <= 0 then in_param_block = false end
+                end
+
+                -- Match function declarations
                 local func_name = line:match('^%s*[Ff]unction%s+([%w%-_]+)')
                 if func_name then
                   table.insert(items, {
@@ -74,6 +92,25 @@ return {
                     documentation = {
                       kind = 'markdown',
                       value = '**' .. func_name .. '**\n\nDefined in `' .. filename .. '` (line ' .. i .. ')',
+                    },
+                  })
+                end
+
+                -- Match variable/parameter: $var, $script:var, $global:var, [type]$var
+                local var_name = line:match('^%s*(%$[%w_:]+)%s*=')
+                  or line:match('^%s*%[[%w%.%[%]]+%]%s*(%$[%w_:]+)')
+                if var_name and not seen_vars[var_name] then
+                  seen_vars[var_name] = true
+                  local is_param = in_param_block
+                  table.insert(items, {
+                    label = var_name,
+                    kind = is_param
+                      and require('cmp.types').lsp.CompletionItemKind.Field
+                      or require('cmp.types').lsp.CompletionItemKind.Variable,
+                    detail = (is_param and 'param ' or 'var ') .. filename .. ':' .. i,
+                    documentation = {
+                      kind = 'markdown',
+                      value = '**' .. var_name .. '** (' .. (is_param and 'parameter' or 'variable') .. ')\n\nDefined in `' .. filename .. '` (line ' .. i .. ')',
                     },
                   })
                 end
@@ -92,6 +129,34 @@ return {
           end,
         },
         completion = { completeopt = 'menu,menuone,noinsert' },
+
+        -- Show source labels in completion menu so you can tell
+        -- where each suggestion comes from
+        formatting = {
+          format = function(entry, vim_item)
+            local source_labels = {
+              nvim_lsp = '[LSP]',
+              ps_functions = '[PS]',
+              copilot = '[AI]',
+              luasnip = '[Snip]',
+              path = '[Path]',
+            }
+            -- PSES returns cmdlet parameters as "Variable" (kind=6) because in
+            -- PowerShell parameters are variables. Override the display for LSP
+            -- items that look like parameters (no $ prefix).
+            local ft = vim.bo.filetype
+            if (ft == 'ps1' or ft == 'powershell') and entry.source.name == 'nvim_lsp' then
+              local raw_kind = entry:get_completion_item().kind
+              local abbr = vim_item.abbr or ''
+              -- kind 6 = Variable in LSP spec
+              if raw_kind == 6 and not abbr:match('^%s*%$') then
+                vim_item.kind = 'Param'
+              end
+            end
+            vim_item.menu = source_labels[entry.source.name] or entry.source.name
+            return vim_item
+          end,
+        },
 
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
