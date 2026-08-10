@@ -41,7 +41,7 @@ return {
       -- Register custom PowerShell completion source (cross-file functions,
       -- context-aware parameters, and project-scoped variables).
       -- See lua/custom/completion/ps_source.lua for implementation.
-      local ps_source = require('custom.completion.ps_source')
+      local ps_source = require('custom.completion.powershell')
       cmp.register_source('ps_functions', ps_source.new())
 
       cmp.setup({
@@ -65,7 +65,7 @@ return {
             }
             -- PowerShell-specific formatting (PSES param/variable fixups
             -- and custom source relabeling). See ps_source.format().
-            require('custom.completion.ps_source').format(entry, vim_item)
+            require('custom.completion.powershell').format(entry, vim_item)
             vim_item.menu = source_labels[entry.source.name] or entry.source.name
             return vim_item
           end,

@@ -20,7 +20,7 @@ end
 
 ps_source.is_available = function()
   local ft = vim.bo.filetype
-  return ft == 'ps1' or ft == 'powershell'
+  return ft == 'ps1' or ft == 'psm1' or ft == 'powershell'
 end
 
 --- Determine which function (if any) is being called at the cursor.
