@@ -26,6 +26,7 @@ return {
         'lua',
         'markdown',
         'yaml',
+        'xml',
         'vim',
         'vimdoc',
       }
