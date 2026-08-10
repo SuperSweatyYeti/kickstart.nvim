@@ -54,11 +54,41 @@ return {
         local ft = vim.bo.filetype
         return ft == 'ps1' or ft == 'powershell'
       end
+      --- Determine which function (if any) is being called at the cursor.
+      --- Walks backwards from the cursor through the current line (and
+      --- preceding continuation lines) to find the first bare command word,
+      --- respecting pipes and semicolons as command boundaries.
+      ps_source._calling_function = function()
+        local row = vim.api.nvim_win_get_cursor(0)[1] -- 1-based
+        local line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1] or ''
+        local col = vim.api.nvim_win_get_cursor(0)[2] -- 0-based byte offset
+        -- Only look at text up to the cursor
+        local before = line:sub(1, col)
+        -- If the line is a continuation (backtick at end of prev line), prepend it
+        while row > 1 do
+          local prev = vim.api.nvim_buf_get_lines(0, row - 2, row - 1, false)[1] or ''
+          if prev:match('`%s*$') then
+            before = prev:gsub('`%s*$', ' ') .. before
+            row = row - 1
+          else
+            break
+          end
+        end
+        -- Take the last command segment (after the last pipe or semicolon)
+        local segment = before:match('[|;]%s*(.-)$') or before
+        -- The first word in the segment is the command name
+        local cmd = segment:match('^%s*([%w%-_]+)')
+        return cmd
+      end
+
       ps_source.complete = function(self, params, callback)
         local current_file = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':p')
         -- Find project root (.git), fall back to current file's directory
         local root = vim.fs.root(0, '.git') or vim.fn.fnamemodify(current_file, ':h')
         local items = {}
+        -- Map of lowercase function name -> list of parameter items.
+        -- Populated during file scanning, then filtered by calling context.
+        local func_params = {}
         -- Search recursively through the entire project
         local ps_files = vim.fn.glob(root .. '/**/*.ps1', false, true)
         vim.list_extend(ps_files, vim.fn.glob(root .. '/**/*.psm1', false, true))
@@ -70,29 +100,13 @@ return {
               local seen_vars = {}
               local in_param_block = false
               local paren_depth = 0
+              local current_func = nil -- tracks the function whose param() block we're inside
               for i, line in ipairs(lines) do
-                -- Track param() blocks to skip parameters (PSES already handles those)
-                if line:match('[Pp]aram%s*%(') then
-                  in_param_block = true
-                  paren_depth = 0
-                end
-                if in_param_block then
-                  for ch in line:gmatch('.') do
-                    if ch == '(' then
-                      paren_depth = paren_depth + 1
-                    end
-                    if ch == ')' then
-                      paren_depth = paren_depth - 1
-                    end
-                  end
-                  if paren_depth <= 0 then
-                    in_param_block = false
-                  end
-                end
-
-                -- Match function declarations
+                -- Match function declarations (before param tracking so
+                -- the function line itself isn't considered "inside" its own param block)
                 local func_name = line:match('^%s*[Ff]unction%s+([%w%-_]+)')
                 if func_name then
+                  current_func = func_name
                   table.insert(items, {
                     label = func_name,
                     kind = require('cmp.types').lsp.CompletionItemKind.Function,
@@ -104,24 +118,49 @@ return {
                   })
                 end
 
-                -- Match variables and parameters
-                local var_name = line:match('^%s*(%$[%w_:]+)%s*=') or line:match('^%s*%[[%w%.%[%]]+%]%s*(%$[%w_:]+)')
-                if var_name and not seen_vars[var_name] then
-                  seen_vars[var_name] = true
-                  if in_param_block then
-                    -- Parameters: suggest as -ParamName (how you actually type them)
+                -- Track param() blocks to associate parameters with their function
+                if line:match('[Pp]aram%s*%(') then
+                  in_param_block = true
+                  paren_depth = 0
+                end
+                if in_param_block then
+                  for ch in line:gmatch('.') do
+                    if ch == '(' then
+                      paren_depth = paren_depth + 1
+                    elseif ch == ')' then
+                      paren_depth = paren_depth - 1
+                    end
+                  end
+
+                  -- Collect parameters and associate them with current_func
+                  local var_name = line:match('^%s*(%$[%w_:]+)') or line:match('^%s*%[[%w%.%[%]]+%]%s*(%$[%w_:]+)')
+                  if var_name and current_func then
+                    local key = current_func:lower()
+                    if not func_params[key] then
+                      func_params[key] = {}
+                    end
                     local param_label = '-' .. var_name:gsub('^%$', '')
-                    table.insert(items, {
+                    table.insert(func_params[key], {
                       label = param_label,
                       kind = require('cmp.types').lsp.CompletionItemKind.Field,
                       detail = 'param ' .. filename .. ':' .. i,
                       documentation = {
                         kind = 'markdown',
-                        value = '**' .. param_label .. '**\n\nParameter defined in `' .. filename .. '` (line ' .. i .. ')',
+                        value = '**' .. param_label .. '**\n\nParameter of `' .. current_func .. '`\nDefined in `' .. filename .. '` (line ' .. i .. ')',
                       },
                     })
-                  else
-                    -- Variables: suggest as $VarName
+                  end
+
+                  if paren_depth <= 0 then
+                    in_param_block = false
+                  end
+                end
+
+                -- Match script/module-scoped variables (skip anything inside a param block)
+                if not in_param_block then
+                  local var_name = line:match('^%s*(%$[%w_:]+)%s*=') or line:match('^%s*%[[%w%.%[%]]+%]%s*(%$[%w_:]+)')
+                  if var_name and not seen_vars[var_name] then
+                    seen_vars[var_name] = true
                     table.insert(items, {
                       label = var_name,
                       kind = require('cmp.types').lsp.CompletionItemKind.Variable,
@@ -137,6 +176,16 @@ return {
             end
           end
         end
+
+        -- Only include parameters for the function currently being called
+        local calling = self._calling_function()
+        if calling then
+          local key = calling:lower()
+          if func_params[key] then
+            vim.list_extend(items, func_params[key])
+          end
+        end
+
         callback({ items = items })
       end
       cmp.register_source('ps_functions', ps_source.new())
@@ -190,6 +239,7 @@ return {
                 end
               end
             end
+
             -- Relabel our custom source parameters from "Field" to "Param"
             if entry.source.name == 'ps_functions' then
               local detail = entry:get_completion_item().detail or ''
