@@ -22,6 +22,21 @@
 local ps_source = {}
 
 -- ---------------------------------------------------------------------------
+-- Path helpers
+-- ---------------------------------------------------------------------------
+local is_windows = is_os_windows and is_os_windows() or (vim.fn.has('win32') == 1)
+local sep = is_windows and '\\' or '/'
+
+--- Normalise a file path to use the OS-native separator.
+local function normalise_path(p)
+  if is_windows then
+    return (p:gsub('/', '\\'))
+  else
+    return (p:gsub('\\', '/'))
+  end
+end
+
+-- ---------------------------------------------------------------------------
 -- Cache: avoid re-scanning files on every completion request
 -- ---------------------------------------------------------------------------
 local cache = {
@@ -90,42 +105,69 @@ end
 -- Import reference parsing
 -- ---------------------------------------------------------------------------
 
+--- Extract a .ps1/.psm1 file path from an argument string.
+--- Handles quoted paths (stops at closing quote) and unquoted paths
+--- (stops at first whitespace), so trailing flags like -Force are ignored.
+---
+--- The returned path has the leading ./ or $PSScriptRoot/ stripped so it
+--- is relative to the importing file's directory.  Returns nil if the
+--- argument doesn't look like a local file import.
+local function extract_path(s)
+  local path
+  -- Double-quoted:  "./path/mod.psm1"  or  "$PSScriptRoot/path/mod.psm1"
+  path = s:match('^"([^"]+%.psm?1)"')
+  if not path then
+    -- Single-quoted:  './path/mod.psm1'
+    path = s:match("^'([^']+%.psm?1)'")
+  end
+  if not path then
+    -- Unquoted: everything up to the first whitespace
+    path = s:match('^(%S+%.psm?1)')
+  end
+  if not path then
+    return nil
+  end
+  -- Strip the leading ./ .\ $PSScriptRoot/ $PSScriptRoot\
+  -- so the result is relative to the importing file's directory
+  local rel = path:match('^%.[\\/](.+)') or path:match('^%$PSScriptRoot[\\/](.+)')
+  return rel
+end
+
 --- Try to extract a file path reference from a single line of PowerShell.
 --- Returns nil if the line doesn't contain a recognised import pattern.
 ---
---- Recognised patterns (case-insensitive):
----   . .\path.ps1              . ./path.ps1
----   . $PSScriptRoot\path      . "$PSScriptRoot/path"
----   Import-Module .\path      Import-Module $PSScriptRoot\path
----   Import-Module -Name .\p   Import-Module -Name $PSScriptRoot\p
----   using module .\path       using module $PSScriptRoot\path
+--- Recognised patterns (case-insensitive, with or without quotes,
+--- with arbitrary trailing flags like -Force -WarningAction etc.):
+---   . .\path.ps1                                  . ./path.ps1
+---   . $PSScriptRoot\path                          . "$PSScriptRoot/path"
+---   Import-Module .\path -Force                   Import-Module $PSScriptRoot\path
+---   Import-Module -Name .\path -Force              Import-Module -Name $PSScriptRoot\p
+---   using module .\path                           using module $PSScriptRoot\path
 local function parse_import(line)
   -- Strip inline comments so we don't follow commented-out imports
   local code = line:match('^(.-)#') or line
 
-  -- 1. Dot-source:  . .\path  |  . $PSScriptRoot\path
-  local ref = code:match('^%s*%.%s+["\']?%.[\\/](.+%.psm?1)["\']?')
-    or code:match('^%s*%.%s+["\']?%$PSScriptRoot[\\/](.+%.psm?1)["\']?')
-  if ref then
-    return ref
+  -- 1. Dot-source:  . <path>
+  local after = code:match('^%s*%.%s+(.*)')
+  if after then
+    local ref = extract_path(after)
+    if ref then return ref end
   end
 
-  -- 2. Import-Module (with optional -Name flag)
-  --    Import-Module .\mod.psm1
-  --    Import-Module -Name "$PSScriptRoot\mod.psm1"
-  ref = code:match('^%s*[Ii]mport%-[Mm]odule%s+%-[Nn]ame%s+["\']?%.[\\/](.+%.psm?1)["\']?')
-    or code:match('^%s*[Ii]mport%-[Mm]odule%s+%-[Nn]ame%s+["\']?%$PSScriptRoot[\\/](.+%.psm?1)["\']?')
-    or code:match('^%s*[Ii]mport%-[Mm]odule%s+["\']?%.[\\/](.+%.psm?1)["\']?')
-    or code:match('^%s*[Ii]mport%-[Mm]odule%s+["\']?%$PSScriptRoot[\\/](.+%.psm?1)["\']?')
-  if ref then
-    return ref
+  -- 2. Import-Module [-Name] <path>
+  after = code:match('^%s*[Ii]mport%-[Mm]odule%s+(.*)')
+  if after then
+    -- Strip optional -Name parameter
+    local after_name = after:match('^%-[Nn]ame%s+(.*)')
+    local ref = extract_path(after_name or after)
+    if ref then return ref end
   end
 
-  -- 3. using module .\path  |  using module $PSScriptRoot\path
-  ref = code:match('^%s*[Uu]sing%s+[Mm]odule%s+["\']?%.[\\/](.+%.psm?1)["\']?')
-    or code:match('^%s*[Uu]sing%s+[Mm]odule%s+["\']?%$PSScriptRoot[\\/](.+%.psm?1)["\']?')
-  if ref then
-    return ref
+  -- 3. using module <path>
+  after = code:match('^%s*[Uu]sing%s+[Mm]odule%s+(.*)')
+  if after then
+    local ref = extract_path(after)
+    if ref then return ref end
   end
 
   return nil
@@ -172,9 +214,9 @@ local function collect_files(current_file)
       for _, line in ipairs(lines) do
         local ref = parse_import(line)
         if ref then
-          -- Normalise separators
-          ref = ref:gsub('/', '\\')
-          local full = vim.fn.fnamemodify(file_dir .. '/' .. ref, ':p')
+          -- Normalise separators to match the current OS
+          ref = normalise_path(ref)
+          local full = vim.fn.fnamemodify(file_dir .. sep .. ref, ':p')
           if not seen[full] and vim.fn.filereadable(full) == 1 then
             seen[full] = true
             table.insert(result, full)
@@ -369,5 +411,70 @@ ps_source.format = function(entry, vim_item)
 
   return false
 end
+
+-- ---------------------------------------------------------------------------
+-- Debug: run :PSCompletionDebug to see what files are discovered and why
+-- ---------------------------------------------------------------------------
+vim.api.nvim_create_user_command('PSCompletionDebug', function()
+  local current_file = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':p')
+  local current_dir = vim.fn.fnamemodify(current_file, ':h')
+  local out = { '=== PS Completion Debug ===' }
+  table.insert(out, 'Current file: ' .. current_file)
+  table.insert(out, 'Current dir:  ' .. current_dir)
+  table.insert(out, '')
+
+  -- Show what each buffer line parses to
+  table.insert(out, '--- Import parsing (buffer lines) ---')
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local import_count = 0
+  for i, line in ipairs(lines) do
+    local ref = parse_import(line)
+    if ref then
+      import_count = import_count + 1
+      local ref_norm = normalise_path(ref)
+      local full = vim.fn.fnamemodify(current_dir .. sep .. ref_norm, ':p')
+      local readable = vim.fn.filereadable(full) == 1
+      table.insert(out, string.format('  L%-4d %s', i, line:sub(1, 80)))
+      table.insert(out, string.format('        ref:      %s', ref))
+      table.insert(out, string.format('        resolved: %s', full))
+      table.insert(out, string.format('        exists:   %s', tostring(readable)))
+    end
+  end
+  if import_count == 0 then
+    table.insert(out, '  (no import lines detected)')
+  end
+  table.insert(out, '')
+
+  -- Show full file list from collect_files
+  table.insert(out, '--- Discovered files ---')
+  local files = collect_files(current_file)
+  if #files == 0 then
+    table.insert(out, '  (none)')
+  end
+  for _, f in ipairs(files) do
+    table.insert(out, '  ' .. f)
+  end
+  table.insert(out, '')
+  table.insert(out, string.format('Total: %d files (excluding current)', #files))
+
+  -- Show in a floating scratch buffer
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, out)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].bufhidden = 'wipe'
+  local width = math.min(120, vim.o.columns - 4)
+  local height = math.min(#out + 1, vim.o.lines - 4)
+  vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    style = 'minimal',
+    border = 'rounded',
+    title = ' PS Completion Debug ',
+    title_pos = 'center',
+  })
+end, { desc = 'Debug PowerShell completion file discovery' })
 
 return ps_source
