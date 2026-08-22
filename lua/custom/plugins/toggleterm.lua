@@ -20,7 +20,8 @@ return {
         return 'sh'
       end,
 
-      vim.keymap.set('t', 'JJ', [[<C-\><C-n>]]),
+      -- Normal Control + '['  to exit to normal mode
+      vim.keymap.set('t', '<C-[>', [[<C-\><C-n>]]),
       vim.keymap.set('n', '<leader>t', [[:ToggleTerm<enter>]], { desc = 'ToggleTerm' }),
       vim.keymap.set('t', '<C-k>', [[<C-\><C-n><C-w>k]], {}),
       vim.keymap.set('t', '<C-h>', [[<C-\><C-n><C-w>h]], {}),
