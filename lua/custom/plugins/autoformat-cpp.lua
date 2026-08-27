@@ -338,7 +338,34 @@ return {
             #   Foo()
             #       : a(1), b(2), c(3)
             #
-            PackConstructorInitializers: BinPack,
+            #
+            # Example:
+            #
+            #   Rectangle(int length, int width)
+            #       : length(length),
+            #         width(width)
+            #   {
+            #   }
+            #
+            # instead of packing them like:
+            #
+            #   Rectangle(int length, int width) : length(length),
+            #                                      width(width) {}
+            #
+            #PackConstructorInitializers: BinPack,
+            #PackConstructorInitializers: CurrentLine,
+
+            # Always break constructor initializer lists onto their own lines.
+            #
+            #   Rectangle(int length, int width)
+            #       : length(length),
+            #         width(width)
+            #   {
+            #   }
+            #
+            PackConstructorInitializers: Never,
+
+
 
 
             # ==================================================================
