@@ -7,9 +7,11 @@ return {
       -- C / C++ FORMATTER
       -- ======================================================================
       --
-      -- clangd  -> language server
-      -- clang-format -> formatter
-      -- conform.nvim -> runs the formatter
+      -- clangd        -> language server
+      -- clang-format  -> code formatter
+      -- conform.nvim  -> runs clang-format
+      --
+      -- This file contains the C/C++ formatting configuration.
       --
       -- ======================================================================
 
@@ -31,7 +33,7 @@ return {
       --
       -- We start with the LLVM preset and override individual options.
       --
-      -- Available built-in presets include:
+      -- Built-in presets include:
       --
       --   LLVM
       --   Google
@@ -51,6 +53,18 @@ return {
             # BASE STYLE
             # ==================================================================
 
+            # Start with the LLVM formatting style.
+            #
+            # Other presets:
+            #
+            #   LLVM
+            #   Google
+            #   Chromium
+            #   Mozilla
+            #   WebKit
+            #   Microsoft
+            #   GNU
+            #
             BasedOnStyle: LLVM,
 
 
@@ -66,7 +80,7 @@ return {
             #   4
             #   8
             #
-            # 4 is a common C++ choice.
+            # We are using 4 spaces.
             #
             IndentWidth: 4,
 
@@ -74,10 +88,10 @@ return {
             #
             TabWidth: 4,
 
-            # Whether clang-format should use actual tab characters.
+            # Never use actual tab characters for indentation.
             #
             # Never:
-            #   Always use spaces.
+            #   Use spaces.
             #
             # ForIndentation:
             #   Tabs may be used for indentation.
@@ -91,7 +105,7 @@ return {
             #
             # true:
             #
-            #   switch (x)
+            #   switch (value)
             #   {
             #       case 1:
             #           foo();
@@ -100,7 +114,7 @@ return {
             #
             # false:
             #
-            #   switch (x)
+            #   switch (value)
             #   {
             #   case 1:
             #       foo();
@@ -109,14 +123,14 @@ return {
             #
             IndentCaseLabels: true,
 
-            # Indent access modifiers relative to the class.
+            # Move access modifiers relative to normal class indentation.
             #
             # With -4:
             #
             #   class Foo
             #   {
             #   private:
-            #       int x;
+            #       int value;
             #
             #   public:
             #       void foo();
@@ -129,14 +143,7 @@ return {
             # BRACES
             # ==================================================================
 
-            # Where opening braces are placed.
-            #
-            # Allman:
-            #
-            #   if (condition)
-            #   {
-            #       foo();
-            #   }
+            # Keep the opening brace on the same line.
             #
             # Attach:
             #
@@ -144,18 +151,20 @@ return {
             #       foo();
             #   }
             #
-            # Other major styles:
+            # Allman would produce:
             #
-            #   Stroustrup
-            #   GNU
+            #   if (condition)
+            #   {
+            #       foo();
+            #   }
             #
             BreakBeforeBraces: Attach,
 
-            # Allow empty functions on one line.
+            # Allow completely empty functions to stay on one line.
             #
             #   Foo() {}
             #
-            # Options include:
+            # Other common values:
             #
             #   None
             #   Empty
@@ -166,37 +175,33 @@ return {
 
             # Don't put short if statements on one line.
             #
-            # false would allow things like:
+            # Keeps:
+            #
+            #   if (x)
+            #   {
+            #       foo();
+            #   }
+            #
+            # instead of:
             #
             #   if (x) foo();
             #
             AllowShortIfStatementsOnASingleLine: Never,
 
-            # Don't collapse short loops.
+            # Don't collapse short loops onto one line.
             #
-            # false keeps:
-            #
-            #   while (x)
-            #   {
-            #       foo();
-            #   }
-            #
-            # rather than:
-            #
-            #   while (x) foo();
-            #
-            AllowShortLoopsOnASingleLine: true,
+            AllowShortLoopsOnASingleLine: false,
 
-            # Don't collapse arbitrary short blocks.
+            # Don't collapse short blocks onto one line.
             #
-            AllowShortBlocksOnASingleLine: true,
+            AllowShortBlocksOnASingleLine: false,
 
 
             # ==================================================================
             # LINE LENGTH
             # ==================================================================
 
-            # Preferred maximum line length.
+            # Maximum preferred line length.
             #
             # Common choices:
             #
@@ -213,58 +218,44 @@ return {
             # SPACING
             # ==================================================================
 
-            # Spaces before parentheses.
+            # Add spaces around assignment operators.
             #
-            # Control:
+            #   int size = 10;
+            #   size += 5;
             #
-            #   if (condition)
-            #   while (condition)
-            #   for (condition)
+            # instead of:
             #
-            # Function calls remain:
+            #   int size=10;
+            #   size+=5;
             #
-            #   foo();
-            #
-            SpaceBeforeParens: Control,
+            SpaceBeforeAssignmentOperators: true,
 
-            # Spaces inside parentheses.
-            #
-            # false:
+            # Don't put spaces immediately inside parentheses.
             #
             #   foo(x, y);
             #
-            # true:
+            # instead of:
             #
             #   foo( x, y );
             #
             SpacesInParentheses: false,
 
-            # Spaces inside square brackets.
-            #
-            # false:
+            # Don't put spaces inside square brackets.
             #
             #   array[index]
             #
+            # instead of:
+            #
+            #   array[ index ]
+            #
             SpacesInSquareBrackets: false,
-
-            # Spaces inside empty parentheses.
-            #
-            #   foo()
-            #
-            SpacesInEmptyParentheses: false,
-
-            # Spaces around assignment operators.
-            #
-            #   x = 10;
-            #
-            SpaceBeforeAssignmentOperators: true,
 
 
             # ==================================================================
             # POINTERS
             # ==================================================================
 
-            # Where * is placed.
+            # Put * next to the type.
             #
             # Left:
             #
@@ -285,7 +276,7 @@ return {
             # REFERENCES
             # ==================================================================
 
-            # Where & is placed.
+            # Put & next to the type.
             #
             # Left:
             #
@@ -302,13 +293,13 @@ return {
             # FUNCTION PARAMETERS / ARGUMENTS
             # ==================================================================
 
-            # Keep function arguments on the same line when possible.
+            # Keep function arguments together on one line when possible.
             #
             # true:
             #
             #   foo(first, second, third);
             #
-            # false tends toward:
+            # false may produce:
             #
             #   foo(
             #       first,
@@ -317,9 +308,9 @@ return {
             #
             BinPackArguments: true,
 
-            # Keep function parameters on the same line when possible.
+            # Keep function parameters together on one line when possible.
             #
-            #   void foo(int a, int b, int c);
+            #   void foo(int first, int second, int third);
             #
             BinPackParameters: true,
 
@@ -328,7 +319,7 @@ return {
             # CONSTRUCTORS
             # ==================================================================
 
-            # Indentation of constructor initializer lists.
+            # Number of spaces used to indent constructor initializers.
             #
             # Example:
             #
@@ -354,29 +345,18 @@ return {
             # CLASSES
             # ==================================================================
 
-            # Namespace indentation.
+            # Don't add indentation inside namespaces.
             #
-            # None:
-            #
-            #   namespace foo
-            #   {
-            #   class Bar
-            #   {
-            #   };
-            #   }
-            #
-            # All:
-            #
-            #   namespace foo
-            #   {
-            #       class Bar
-            #       {
-            #       };
-            #   }
+            # namespace foo
+            # {
+            # class Foo
+            # {
+            # };
+            # }
             #
             NamespaceIndentation: None,
 
-            # Where a class inheritance list breaks.
+            # How inheritance lists are broken.
             #
             # Example:
             #
@@ -392,7 +372,7 @@ return {
             # TEMPLATES
             # ==================================================================
 
-            # Always put template declarations on their own line.
+            # Put template declarations on their own line.
             #
             #   template <typename T>
             #   class Foo
@@ -406,7 +386,7 @@ return {
             # INCLUDES
             # ==================================================================
 
-            # Automatically sort includes.
+            # Sort #include directives.
             #
             # Options:
             #
@@ -416,9 +396,7 @@ return {
             #
             SortIncludes: CaseSensitive,
 
-            # Regroup include blocks.
-            #
-            # Useful when you want system/project includes separated.
+            # Regroup include blocks when sorting.
             #
             IncludeBlocks: Regroup,
 
@@ -427,7 +405,7 @@ return {
             # COMMENTS
             # ==================================================================
 
-            # Allow clang-format to reflow comments.
+            # Allow clang-format to reflow long comments.
             #
             # true:
             #   Long comments may be wrapped.
@@ -439,10 +417,8 @@ return {
 
             # Align trailing comments.
             #
-            # Example:
-            #
             #   int x = 1;          // value
-            #   int longVariable;   // another value
+            #   int longerName = 2; // another value
             #
             AlignTrailingComments: true,
 
@@ -451,7 +427,7 @@ return {
             # EMPTY LINES
             # ==================================================================
 
-            # Maximum consecutive blank lines.
+            # Maximum number of consecutive blank lines.
             #
             # 0 = no blank lines
             # 1 = one blank line
@@ -464,21 +440,21 @@ return {
             # OPERATORS
             # ==================================================================
 
-            # Where binary operators go when lines wrap.
-            #
-            # None:
+            # Keep binary operators at the end of wrapped lines.
             #
             #   auto result = first + second +
             #                 third;
             #
-            # Beginning:
+            # Beginning would produce:
             #
             #   auto result = first + second
             #                 + third;
             #
             BreakBeforeBinaryOperators: None,
 
-            # Formatting of ternary operators.
+            # Keep ternary operators in the conventional position.
+            #
+            #   auto result = condition ? first : second;
             #
             BreakBeforeTernaryOperators: false,
 
@@ -487,10 +463,7 @@ return {
             # STRING LITERALS
             # ==================================================================
 
-            # Allow clang-format to break long string literals.
-            #
-            # false:
-            #   Don't split them.
+            # Don't automatically split long string literals.
             #
             BreakStringLiterals: false,
 
@@ -501,7 +474,7 @@ return {
 
             # Formatting language standard.
             #
-            # Options include:
+            # Options:
             #
             #   Cpp03
             #   Cpp11
@@ -513,7 +486,7 @@ return {
             #
             Standard: Latest,
 
-            # C++11 braced initializer formatting.
+            # Use C++11-style braced initializer formatting.
             #
             Cpp11BracedListStyle: true,
 
@@ -522,25 +495,23 @@ return {
             # ALIGNMENT
             # ==================================================================
 
-            # Align consecutive assignments?
-            #
-            # false:
+            # Don't align consecutive assignments.
             #
             #   int x = 1;
             #   int longerName = 2;
             #
-            # true:
+            # instead of:
             #
             #   int x          = 1;
             #   int longerName = 2;
             #
             AlignConsecutiveAssignments: None,
 
-            # Align consecutive declarations?
+            # Don't align consecutive declarations.
             #
             AlignConsecutiveDeclarations: None,
 
-            # Align consecutive macros?
+            # Don't align consecutive macros.
             #
             AlignConsecutiveMacros: None,
 
@@ -567,7 +538,7 @@ return {
             # NAMESPACES
             # ==================================================================
 
-            # Add comments to namespace closing braces.
+            # Add a comment when closing a namespace.
             #
             #   } // namespace foo
             #
