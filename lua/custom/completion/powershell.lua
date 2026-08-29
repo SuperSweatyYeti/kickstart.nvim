@@ -22,9 +22,19 @@
 --
 -- is a variable.
 --
--- PSES can return the former as a Variable completion with "$Year"
--- as the insertion text. This source fixes the insertion text and
--- displays the item as Param when completion is being requested after "-".
+-- This source:
+--   * discovers sibling and imported PowerShell files
+--   * parses project-local functions, parameters and variables
+--   * handles Windows/Linux paths consistently
+--   * parses the current buffer instead of the stale on-disk file
+--   * avoids stale completion caches
+--   * displays PSES variables as parameters when completing after "-"
+--
+-- NOTE:
+-- Formatting can change how a completion is DISPLAYED, but it cannot
+-- reliably change the insertion text of an item owned by nvim-lsp.
+-- PSES insertion-text rewriting therefore needs to be handled separately
+-- if PSES actually sends "$Year" as its insertion text.
 
 local ps_source = {}
 
@@ -32,18 +42,55 @@ local ps_source = {}
 -- Path helpers
 -- ---------------------------------------------------------------------------
 
-local is_windows =
-  is_os_windows and is_os_windows()
-  or vim.fn.has('win32') == 1
+local is_windows = is_os_windows()
 
-local sep = is_windows and '\\' or '/'
-
-local function normalise_path(p)
-  if is_windows then
-    return p:gsub('/', '\\')
+local function normalise_path(path)
+  if not path or path == '' then
+    return path
   end
 
-  return p:gsub('\\', '/')
+  -- vim.fs.normalize is available on modern Neovim and handles both
+  -- separators and "." / ".." components.
+  if vim.fs and vim.fs.normalize then
+    return vim.fs.normalize(path)
+  end
+
+  if is_windows then
+    return path:gsub('/', '\\')
+  end
+
+  return path:gsub('\\', '/')
+end
+
+local function absolute_path(path, base)
+  if not path or path == '' then
+    return nil
+  end
+
+  path = normalise_path(path)
+
+  -- Windows drive path.
+  if is_windows and path:match('^%a:[\\/]') then
+    return normalise_path(path)
+  end
+
+  -- POSIX absolute path.
+  if path:sub(1, 1) == '/' then
+    return normalise_path(path)
+  end
+
+  if base and base ~= '' then
+    return normalise_path(
+      vim.fn.fnamemodify(
+        base .. '/' .. path,
+        ':p'
+      )
+    )
+  end
+
+  return normalise_path(
+    vim.fn.fnamemodify(path, ':p')
+  )
 end
 
 -- ---------------------------------------------------------------------------
@@ -57,19 +104,31 @@ local cache = {
   timestamp = 0,
 }
 
-local CACHE_TTL = 10
+local CACHE_TTL = 2
 
-ps_source._invalidate_cache = function()
+local function invalidate_cache()
+  cache.items = nil
+  cache.func_params = nil
   cache.file_set = nil
+  cache.timestamp = 0
 end
 
-vim.api.nvim_create_autocmd('BufWritePost', {
-  pattern = { '*.ps1', '*.psm1' },
-  callback = function()
-    ps_source._invalidate_cache()
-  end,
-  desc = 'Invalidate PS completion cache when a PowerShell file is saved',
-})
+ps_source._invalidate_cache = invalidate_cache
+
+vim.api.nvim_create_autocmd(
+  {
+    'BufWritePost',
+    'BufEnter',
+    'BufFilePost',
+  },
+  {
+    pattern = { '*.ps1', '*.psm1' },
+    callback = function()
+      invalidate_cache()
+    end,
+    desc = 'Invalidate PowerShell completion cache',
+  }
+)
 
 ps_source.new = function()
   return setmetatable({}, { __index = ps_source })
@@ -85,6 +144,29 @@ ps_source.is_available = function()
   return ft == 'ps1'
     or ft == 'psm1'
     or ft == 'powershell'
+end
+
+-- ---------------------------------------------------------------------------
+-- Current buffer helpers
+-- ---------------------------------------------------------------------------
+
+local function get_current_line()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+
+  return vim.api.nvim_buf_get_lines(
+    0,
+    cursor[1] - 1,
+    cursor[1],
+    false
+  )[1] or ''
+end
+
+local function get_before_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local line = get_current_line()
+
+  -- nvim_win_get_cursor() uses a zero-based byte column.
+  return line:sub(1, cursor[2])
 end
 
 -- ---------------------------------------------------------------------------
@@ -109,21 +191,17 @@ end
 ---     $obj.Y
 ---
 --- return false.
+
 local function is_parameter_context()
-  local cursor = vim.api.nvim_win_get_cursor(0)
+  local before_cursor = get_before_cursor()
 
-  local line =
-    vim.api.nvim_buf_get_lines(
-      0,
-      cursor[1] - 1,
-      cursor[1],
-      false
-    )[1] or ''
-
-  local before_cursor =
-    line:sub(1, cursor[2])
-
-  return before_cursor:match('-%w*$') ~= nil
+  -- A PowerShell parameter starts with "-" and continues until whitespace
+  -- or another token boundary.
+  --
+  -- This deliberately does NOT require the completion label itself to
+  -- contain "-". PSES may report "Year" as a Variable.
+  return before_cursor:match('-%a[%w_-]*$') ~= nil
+    or before_cursor:match('-%w*$') ~= nil
 end
 
 --- Return the current PowerShell parameter prefix.
@@ -131,19 +209,9 @@ end
 ---     Get-Date -Y
 ---
 --- returns "-Y".
+
 local function get_parameter_prefix()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-
-  local line =
-    vim.api.nvim_buf_get_lines(
-      0,
-      cursor[1] - 1,
-      cursor[1],
-      false
-    )[1] or ''
-
-  local before_cursor =
-    line:sub(1, cursor[2])
+  local before_cursor = get_before_cursor()
 
   return before_cursor:match('-%w*$')
 end
@@ -165,9 +233,9 @@ ps_source._calling_function = function()
       false
     )[1] or ''
 
-  local before =
-    line:sub(1, col)
+  local before = line:sub(1, col)
 
+  -- Handle PowerShell continuation using the backtick.
   while row > 1 do
     local previous =
       vim.api.nvim_buf_get_lines(
@@ -188,9 +256,17 @@ ps_source._calling_function = function()
     end
   end
 
+  -- Only consider the command after the most recent pipeline or
+  -- statement separator.
   local segment =
     before:match('[|;]%s*(.-)$')
     or before
+
+  -- Remove common PowerShell invocation syntax.
+  segment =
+    segment:gsub('^%s*&%s*', '')
+  segment =
+    segment:gsub('^%s*%.%s+', '')
 
   return segment:match(
     '^%s*([%w%-_]+)'
@@ -202,8 +278,15 @@ end
 -- ---------------------------------------------------------------------------
 
 local function extract_path(s)
+  if not s then
+    return nil
+  end
+
+  s = vim.trim(s)
+
   local path
 
+  -- Quoted path.
   path =
     s:match(
       '^"([^"]+%.psm?1)"'
@@ -216,6 +299,7 @@ local function extract_path(s)
       )
   end
 
+  -- Unquoted path.
   if not path then
     path =
       s:match(
@@ -227,43 +311,48 @@ local function extract_path(s)
     return nil
   end
 
-  return path:match(
-    '^%.[\\/](.+)'
-  ) or path:match(
-    '^%$PSScriptRoot[\\/](.+)'
-  )
+  return path
 end
 
 local function parse_import(line)
+  -- Strip comments while preserving quoted strings reasonably well.
   local code =
-    line:match('^(.-)#')
+    line:match('^(.-)%s*#')
     or line
 
-  -- Dot source
+  code = vim.trim(code)
+
+  -- Dot source:
+  --
+  --     . ./foo.ps1
+  --     . "$PSScriptRoot/foo.ps1"
   local after =
     code:match(
-      '^%s*%.%s+(.*)'
+      '^%.%s+(.+)'
     )
 
   if after then
-    local ref =
-      extract_path(after)
+    local ref = extract_path(after)
 
     if ref then
       return ref
     end
   end
 
-  -- Import-Module
+  -- Import-Module:
+  --
+  --     Import-Module ./foo.psm1
+  --     Import-Module -Name ./foo.psm1
+  --     import-module "$PSScriptRoot/foo.psm1"
   after =
     code:match(
-      '^%s*[Ii]mport%-[Mm]odule%s+(.*)'
+      '^[Ii]mport%-[Mm]odule%s+(.+)'
     )
 
   if after then
     local after_name =
       after:match(
-        '^%-[Nn]ame%s+(.*)'
+        '^%-[Nn]ame%s+(.+)'
       )
 
     local ref =
@@ -276,10 +365,12 @@ local function parse_import(line)
     end
   end
 
-  -- using module
+  -- using module:
+  --
+  --     using module ./foo.psm1
   after =
     code:match(
-      '^%s*[Uu]sing%s+[Mm]odule%s+(.*)'
+      '^[Uu]sing%s+[Mm]odule%s+(.+)'
     )
 
   if after then
@@ -295,10 +386,53 @@ local function parse_import(line)
 end
 
 -- ---------------------------------------------------------------------------
+-- Resolve imported path
+-- ---------------------------------------------------------------------------
+
+local function resolve_import(file, ref)
+  if not ref then
+    return nil
+  end
+
+  ref = vim.trim(ref)
+
+  -- Expand the PowerShell variable that is useful for local modules.
+  ref =
+    ref:gsub(
+      '^%$PSScriptRoot[\\/]',
+      ''
+    )
+
+  local file_dir =
+    vim.fn.fnamemodify(
+      file,
+      ':h'
+    )
+
+  -- Absolute path.
+  if ref:sub(1, 1) == '/'
+    or (
+      is_windows
+      and ref:match('^%a:[\\/]')
+    )
+  then
+    return normalise_path(ref)
+  end
+
+  return absolute_path(
+    ref,
+    file_dir
+  )
+end
+
+-- ---------------------------------------------------------------------------
 -- File discovery
 -- ---------------------------------------------------------------------------
 
 local function collect_files(current_file)
+  current_file =
+    normalise_path(current_file)
+
   local current_dir =
     vim.fn.fnamemodify(
       current_file,
@@ -311,7 +445,7 @@ local function collect_files(current_file)
 
   local result = {}
 
-  -- Sibling files
+  -- Sibling files.
   local siblings =
     vim.fn.glob(
       current_dir .. '/*.ps1',
@@ -330,42 +464,35 @@ local function collect_files(current_file)
 
   for _, file in ipairs(siblings) do
     local full =
-      vim.fn.fnamemodify(
-        file,
-        ':p'
+      normalise_path(
+        vim.fn.fnamemodify(
+          file,
+          ':p'
+        )
       )
 
     if not seen[full] then
       seen[full] = true
-      table.insert(
-        result,
-        full
-      )
+      table.insert(result, full)
     end
   end
 
-  -- Imported files
+  -- Imported files.
   local queue = {
     current_file,
   }
 
-  while #queue > 0 do
-    local file =
-      table.remove(
-        queue,
-        1
-      )
+  local queue_index = 1
 
-    local file_dir =
-      vim.fn.fnamemodify(
-        file,
-        ':h'
-      )
+  while queue_index <= #queue do
+    local file = queue[queue_index]
+    queue_index = queue_index + 1
 
-    local ok
     local lines
 
     if file == current_file then
+      -- IMPORTANT:
+      -- Parse the current buffer, not the saved file on disk.
       lines =
         vim.api.nvim_buf_get_lines(
           0,
@@ -373,47 +500,51 @@ local function collect_files(current_file)
           -1,
           false
         )
-
-      ok = true
     else
+      local ok
+
       ok, lines =
         pcall(
           vim.fn.readfile,
           file
         )
+
+      if not ok then
+        lines = nil
+      end
     end
 
-    if ok and lines then
+    if lines then
       for _, line in ipairs(lines) do
         local ref =
           parse_import(line)
 
         if ref then
-          ref =
-            normalise_path(ref)
-
           local full =
-            vim.fn.fnamemodify(
-              file_dir
-                .. sep
-                .. ref,
-              ':p'
+            resolve_import(
+              file,
+              ref
             )
 
-          if not seen[full]
-            and vim.fn.filereadable(full) == 1
-          then
-            seen[full] = true
+          if full then
+            full =
+              normalise_path(full)
 
-            table.insert(
-              result,
-              full
-            )
+            if not seen[full]
+              and vim.fn.filereadable(full) == 1
+            then
+              seen[full] = true
 
-            table.insert(
-              queue,
-              full
-            )
+              table.insert(
+                result,
+                full
+              )
+
+              table.insert(
+                queue,
+                full
+              )
+            end
           end
         end
       end
@@ -427,18 +558,45 @@ end
 -- Parse PowerShell files
 -- ---------------------------------------------------------------------------
 
-local function parse_file(
+local function get_file_lines(
   file,
-  items,
-  func_params
+  current_file
 )
+  if file == current_file then
+    return vim.api.nvim_buf_get_lines(
+      0,
+      0,
+      -1,
+      false
+    )
+  end
+
   local ok, lines =
     pcall(
       vim.fn.readfile,
       file
     )
 
-  if not ok or not lines then
+  if not ok then
+    return nil
+  end
+
+  return lines
+end
+
+local function parse_file(
+  file,
+  current_file,
+  items,
+  func_params
+)
+  local lines =
+    get_file_lines(
+      file,
+      current_file
+    )
+
+  if not lines then
     return
   end
 
@@ -449,16 +607,23 @@ local function parse_file(
     )
 
   local seen_vars = {}
+  local seen_params = {}
+
   local in_param_block = false
   local paren_depth = 0
+
   local current_func = nil
+  local function_brace_depth = 0
 
   local CompletionItemKind =
     require('cmp.types').lsp.CompletionItemKind
 
   for i, line in ipairs(lines) do
 
+    -- ---------------------------------------------------------------
     -- Function declaration
+    -- ---------------------------------------------------------------
+
     local func_name =
       line:match(
         '^%s*[Ff]unction%s+([%w%-_]+)'
@@ -466,11 +631,13 @@ local function parse_file(
 
     if func_name then
       current_func = func_name
+      function_brace_depth = 0
 
       table.insert(
         items,
         {
           label = func_name,
+
           kind =
             CompletionItemKind.Function,
 
@@ -495,7 +662,31 @@ local function parse_file(
       )
     end
 
+    -- ---------------------------------------------------------------
+    -- Track function braces.
+    -- ---------------------------------------------------------------
+
+    if current_func then
+      for ch in line:gmatch('.') do
+        if ch == '{' then
+          function_brace_depth =
+            function_brace_depth + 1
+        elseif ch == '}' then
+          function_brace_depth =
+            function_brace_depth - 1
+        end
+      end
+
+      if function_brace_depth < 0 then
+        current_func = nil
+        function_brace_depth = 0
+      end
+    end
+
+    -- ---------------------------------------------------------------
     -- Param block
+    -- ---------------------------------------------------------------
+
     if line:match(
       '[Pp]aram%s*%('
     ) then
@@ -532,43 +723,47 @@ local function parse_file(
           func_params[key] = {}
         end
 
-        local param_label =
-          '-'
-          .. var_name:gsub(
-            '^%$',
-            ''
-          )
+        if not seen_params[var_name] then
+          seen_params[var_name] = true
 
-        table.insert(
-          func_params[key],
-          {
-            label = param_label,
+          local param_label =
+            '-'
+            .. var_name:gsub(
+              '^%$',
+              ''
+            )
 
-            kind =
-              CompletionItemKind.Field,
+          table.insert(
+            func_params[key],
+            {
+              label = param_label,
 
-            detail =
-              'param '
-              .. filename
-              .. ':'
-              .. i,
+              kind =
+                CompletionItemKind.Field,
 
-            documentation = {
-              kind = 'markdown',
-
-              value =
-                '**'
-                .. param_label
-                .. '**\n\nParameter of `'
-                .. current_func
-                .. '`\nDefined in `'
+              detail =
+                'param '
                 .. filename
-                .. '` (line '
-                .. i
-                .. ')',
-            },
-          }
-        )
+                .. ':'
+                .. i,
+
+              documentation = {
+                kind = 'markdown',
+
+                value =
+                  '**'
+                  .. param_label
+                  .. '**\n\nParameter of `'
+                  .. current_func
+                  .. '`\nDefined in `'
+                  .. filename
+                  .. '` (line '
+                  .. i
+                  .. ')',
+              },
+            }
+          )
+        end
       end
 
       if paren_depth <= 0 then
@@ -576,7 +771,10 @@ local function parse_file(
       end
     end
 
+    -- ---------------------------------------------------------------
     -- Variables
+    -- ---------------------------------------------------------------
+
     if not in_param_block then
       local var_name =
         line:match(
@@ -625,6 +823,53 @@ local function parse_file(
 end
 
 -- ---------------------------------------------------------------------------
+-- Build cache
+-- ---------------------------------------------------------------------------
+
+local function build_cache(current_file)
+  local ps_files =
+    collect_files(current_file)
+
+  local sorted =
+    vim.deepcopy(ps_files)
+
+  table.sort(sorted)
+
+  local file_set_key =
+    table.concat(
+      sorted,
+      '|'
+    )
+
+  local items = {}
+  local func_params = {}
+
+  for _, file in ipairs(ps_files) do
+    parse_file(
+      file,
+      current_file,
+      items,
+      func_params
+    )
+  end
+
+  cache.items =
+    vim.deepcopy(items)
+
+  cache.func_params =
+    vim.deepcopy(func_params)
+
+  cache.file_set =
+    file_set_key
+
+  -- Use wall-clock time rather than os.clock().
+  cache.timestamp =
+    vim.uv.hrtime() / 1e9
+
+  return items, func_params
+end
+
+-- ---------------------------------------------------------------------------
 -- Custom completion
 -- ---------------------------------------------------------------------------
 
@@ -638,6 +883,17 @@ ps_source.complete = function(
       vim.api.nvim_buf_get_name(0),
       ':p'
     )
+
+  current_file =
+    normalise_path(current_file)
+
+  if current_file == '' then
+    callback({
+      items = {},
+    })
+
+    return
+  end
 
   local ps_files =
     collect_files(current_file)
@@ -654,61 +910,29 @@ ps_source.complete = function(
     )
 
   local now =
-    os.clock()
+    vim.uv.hrtime() / 1e9
+
+  local items
+  local func_params
 
   if cache.file_set == file_set_key
+    and cache.items
+    and cache.func_params
     and (now - cache.timestamp) < CACHE_TTL
   then
-    local items =
+    items =
       vim.deepcopy(
         cache.items
       )
 
-    local calling =
-      self._calling_function()
-
-    if calling
-      and cache.func_params[
-        calling:lower()
-      ]
-    then
-      vim.list_extend(
-        items,
-        cache.func_params[
-          calling:lower()
-        ]
+    func_params =
+      vim.deepcopy(
+        cache.func_params
       )
-    end
-
-    callback({
-      items = items,
-    })
-
-    return
+  else
+    items, func_params =
+      build_cache(current_file)
   end
-
-  local items = {}
-  local func_params = {}
-
-  for _, file in ipairs(ps_files) do
-    parse_file(
-      file,
-      items,
-      func_params
-    )
-  end
-
-  cache.items =
-    vim.deepcopy(items)
-
-  cache.func_params =
-    func_params
-
-  cache.file_set =
-    file_set_key
-
-  cache.timestamp =
-    now
 
   local calling =
     self._calling_function()
@@ -720,7 +944,9 @@ ps_source.complete = function(
     if func_params[key] then
       vim.list_extend(
         items,
-        func_params[key]
+        vim.deepcopy(
+          func_params[key]
+        )
       )
     end
   end
@@ -732,22 +958,6 @@ end
 
 -- ---------------------------------------------------------------------------
 -- Formatting
--- ---------------------------------------------------------------------------
---
--- PSES built-in parameters are reported as:
---
---     kind = Variable
---     label = Year
---
--- We must NOT require the label itself to contain "-".
---
--- Instead, inspect the actual cursor context:
---
---     Get-Date -
---              ^
---
--- If we are completing after "-", a Variable completion from PSES is
--- treated visually as a PowerShell parameter.
 -- ---------------------------------------------------------------------------
 
 ps_source.format = function(
@@ -763,7 +973,10 @@ ps_source.format = function(
     return false
   end
 
-  -- Our project-local source
+  -- ---------------------------------------------------------------
+  -- Our project-local source.
+  -- ---------------------------------------------------------------
+
   if entry.source.name == 'ps_functions' then
     local item =
       entry:get_completion_item()
@@ -778,32 +991,46 @@ ps_source.format = function(
     return true
   end
 
-  -- PSES / nvim-lsp
+  -- ---------------------------------------------------------------
+  -- PSES / nvim-lsp.
+  --
+  -- PSES can report built-in PowerShell parameters as Variables.
+  --
+  -- Example:
+  --
+  --     Year
+  --
+  -- with:
+  --
+  --     kind = Variable
+  --
+  -- When completion is being requested after "-", display it as:
+  --
+  --     -Year
+  --
+  -- IMPORTANT:
+  -- This changes the display only. The actual insertion text belongs
+  -- to the LSP completion item.
+  -- ---------------------------------------------------------------
+
   if entry.source.name == 'nvim_lsp' then
     local item =
       entry:get_completion_item()
 
-    -- LSP CompletionItemKind.Variable = 6
-    if item.kind == 6 then
-      -- The important distinction:
-      --
-      --     $Year      -> variable
-      --     -Year      -> parameter
-      --
-      -- PSES gives us "Year" as a Variable. Determine whether the
-      -- completion is being requested in "-parameter" context.
-      if is_parameter_context() then
-        vim_item.kind = 'Param'
+    -- LSP CompletionItemKind.Variable = 6.
+    if item.kind == 6
+      and is_parameter_context()
+    then
+      vim_item.kind = 'Param'
 
-        -- Make the display explicitly look like a PowerShell parameter.
-        local abbr =
-          vim_item.abbr or item.label or ''
+      local abbr =
+        vim_item.abbr
+        or item.label
+        or ''
 
-        -- Don't add another "-" if cmp/PSES already supplied one.
-        if not abbr:match('^%-') then
-          vim_item.abbr =
-            '-' .. abbr
-        end
+      if not abbr:match('^%-') then
+        vim_item.abbr =
+          '-' .. abbr
       end
     end
 
@@ -826,6 +1053,9 @@ vim.api.nvim_create_user_command(
         ':p'
       )
 
+    current_file =
+      normalise_path(current_file)
+
     local current_dir =
       vim.fn.fnamemodify(
         current_file,
@@ -834,19 +1064,35 @@ vim.api.nvim_create_user_command(
 
     local out = {
       '=== PS Completion Debug ===',
+      'Platform: '
+        .. (is_windows and 'Windows' or 'Linux/Unix'),
+
       'Current file: ' .. current_file,
       'Current dir:  ' .. current_dir,
       '',
+
       '--- Current completion context ---',
+
+      'Before cursor: '
+        .. get_before_cursor(),
+
       'Parameter context: '
         .. tostring(
           is_parameter_context()
         ),
+
       'Parameter prefix: '
         .. tostring(
           get_parameter_prefix()
         ),
+
+      'Calling function: '
+        .. tostring(
+          ps_source._calling_function()
+        ),
+
       '',
+
       '--- Import parsing ---',
     }
 
@@ -868,19 +1114,15 @@ vim.api.nvim_create_user_command(
         import_count =
           import_count + 1
 
-        local ref_norm =
-          normalise_path(ref)
-
         local full =
-          vim.fn.fnamemodify(
-            current_dir
-              .. sep
-              .. ref_norm,
-            ':p'
+          resolve_import(
+            current_file,
+            ref
           )
 
         local readable =
-          vim.fn.filereadable(full) == 1
+          full ~= nil
+          and vim.fn.filereadable(full) == 1
 
         table.insert(
           out,
@@ -903,7 +1145,7 @@ vim.api.nvim_create_user_command(
           out,
           string.format(
             '        resolved: %s',
-            full
+            tostring(full)
           )
         )
 
@@ -925,6 +1167,7 @@ vim.api.nvim_create_user_command(
     end
 
     table.insert(out, '')
+
     table.insert(
       out,
       '--- Discovered files ---'
@@ -957,6 +1200,42 @@ vim.api.nvim_create_user_command(
       )
     )
 
+    table.insert(
+      out,
+      ''
+    )
+
+    table.insert(
+      out,
+      '--- Cache ---'
+    )
+
+    table.insert(
+      out,
+      'Cache populated: '
+        .. tostring(
+          cache.items ~= nil
+        )
+    )
+
+    table.insert(
+      out,
+      'Cache file set: '
+        .. tostring(
+          cache.file_set
+        )
+    )
+
+    table.insert(
+      out,
+      'Cache age: '
+        .. string.format(
+          '%.3fs',
+          (vim.uv.hrtime() / 1e9)
+            - cache.timestamp
+        )
+    )
+
     local buf =
       vim.api.nvim_create_buf(
         false,
@@ -973,6 +1252,7 @@ vim.api.nvim_create_user_command(
 
     vim.bo[buf].modifiable = false
     vim.bo[buf].bufhidden = 'wipe'
+    vim.bo[buf].filetype = 'text'
 
     local width =
       math.min(
