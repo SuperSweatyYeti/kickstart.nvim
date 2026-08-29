@@ -244,7 +244,7 @@ SpaceBeforeAssignmentOperators: true
 #
 #   foo( x, y );
 #
-SpacesInParentheses: false
+SpacesInParentheses: true
 
 # Don't put spaces inside square brackets.
 #
@@ -282,7 +282,7 @@ SpacesInSquareBrackets: false
 #   "Left" keeps consistency with the C++ config.
 #   Change to "Right" for a more C-idiomatic style.
 #
-PointerAlignment: Left
+PointerAlignment: Right
 
 
 # ======================================================================
