@@ -1,0 +1,607 @@
+-- ---------------------------------------------------------------------------
+-- Blink.cmp
+-- ---------------------------------------------------------------------------
+--
+-- Blink is the actual completion engine.
+--
+-- nvim-cmp is disabled, but we retain minimal compatibility for:
+--
+--   require('cmp')
+--   require('cmp_nvim_lsp')
+--
+-- The PowerShell completion source is a NATIVE Blink source:
+--
+--   custom.completion.powershell
+--
+-- It is loaded directly by Blink and does NOT use blink.compat.
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- cmp_nvim_lsp compatibility
+-- ---------------------------------------------------------------------------
+
+package.preload['cmp_nvim_lsp'] = function()
+  local M = {}
+
+  function M.default_capabilities(capabilities)
+    capabilities = capabilities or vim.lsp.protocol.make_client_capabilities()
+
+    capabilities.textDocument = capabilities.textDocument or {}
+
+    capabilities.textDocument.completion = capabilities.textDocument.completion or {}
+
+    capabilities.textDocument.completion.completionItem = capabilities.textDocument.completion.completionItem or {}
+
+    capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+    return capabilities
+  end
+
+  M.update_capabilities = M.default_capabilities
+
+  return M
+end
+
+-- ---------------------------------------------------------------------------
+-- Minimal nvim-cmp compatibility
+-- ---------------------------------------------------------------------------
+
+package.preload['cmp'] = function()
+  local M = {}
+
+  local config = {
+    sources = {
+      { name = 'copilot' },
+      { name = 'nvim_lsp' },
+      { name = 'ps_functions' },
+      { name = 'luasnip' },
+      { name = 'path' },
+      { name = 'buffer' },
+    },
+  }
+
+  local function blink_sources(sources)
+    local result = {}
+
+    for _, source in ipairs(sources or {}) do
+      local name = type(source) == 'string' and source or source.name
+
+      if name == 'nvim_lsp' then
+        name = 'lsp'
+      elseif name == 'luasnip' then
+        name = 'snippets'
+      elseif name == 'cmp_luasnip' then
+        name = 'snippets'
+      elseif name == 'cmp_path' then
+        name = 'path'
+      end
+
+      if name then
+        local item
+
+        if type(source) == 'string' then
+          item = {
+            name = name,
+          }
+        else
+          item = vim.deepcopy(source)
+          item.name = name
+        end
+
+        table.insert(result, item)
+      end
+    end
+
+    return result
+  end
+
+  function M.get_config()
+    return vim.deepcopy(config)
+  end
+
+  function M.setup(opts)
+    opts = opts or {}
+
+    if opts.sources then
+      config.sources = vim.deepcopy(opts.sources)
+
+      pcall(function()
+        require('blink.cmp').setup({
+          sources = {
+            default = blink_sources(opts.sources),
+          },
+        })
+      end)
+    end
+  end
+
+  function M.register_source(name, source)
+    M._registered_sources = M._registered_sources or {}
+
+    M._registered_sources[name] = source
+  end
+
+  M.mapping = {}
+
+  function M.mapping.preset()
+    return {}
+  end
+
+  function M.mapping.complete()
+    return function()
+      pcall(function()
+        require('blink.cmp').show()
+      end)
+    end
+  end
+
+  function M.mapping.confirm()
+    return function()
+      pcall(function()
+        require('blink.cmp').accept()
+      end)
+    end
+  end
+
+  function M.mapping.select_next_item()
+    return function()
+      pcall(function()
+        require('blink.cmp').select_next()
+      end)
+    end
+  end
+
+  function M.mapping.select_prev_item()
+    return function()
+      pcall(function()
+        require('blink.cmp').select_prev()
+      end)
+    end
+  end
+
+  function M.mapping.scroll_docs(direction)
+    return function()
+      pcall(function()
+        if direction < 0 then
+          require('blink.cmp').scroll_documentation_up()
+        else
+          require('blink.cmp').scroll_documentation_down()
+        end
+      end)
+    end
+  end
+
+  return M
+end
+
+-- ---------------------------------------------------------------------------
+-- Blink configuration
+-- ---------------------------------------------------------------------------
+
+return {
+  {
+    'saghen/blink.cmp',
+
+    version = '1.*',
+
+    event = 'InsertEnter',
+
+    dependencies = {
+      {
+        'L3MON4D3/LuaSnip',
+
+        build = (function()
+          if vim.fn.has('win32') == 1 or vim.fn.executable('make') == 0 then
+            return
+          end
+
+          return 'make install_jsregexp'
+        end)(),
+      },
+
+      'rafamadriz/friendly-snippets',
+
+      'giuxtaposition/blink-cmp-copilot',
+    },
+
+    opts = {
+      -- ---------------------------------------------------------------------
+      -- Keymaps
+      -- ---------------------------------------------------------------------
+
+      keymap = {
+        preset = 'none',
+
+        ['<C-n>'] = {
+          'select_next',
+          'fallback',
+        },
+
+        ['<Down>'] = {
+          'select_next',
+          'fallback',
+        },
+
+        ['<C-p>'] = {
+          'select_prev',
+          'fallback',
+        },
+
+        ['<Up>'] = {
+          'select_prev',
+          'fallback',
+        },
+
+        ['<C-y>'] = {
+          'accept',
+          'fallback',
+        },
+
+        ['<C-Space>'] = {
+          'show',
+          'fallback',
+        },
+
+        ['<C-K>'] = {
+          'scroll_documentation_up',
+          'fallback',
+        },
+
+        ['<C-J>'] = {
+          'scroll_documentation_down',
+          'fallback',
+        },
+
+        ['<C-L>'] = {
+          function(cmp)
+            local luasnip = require('luasnip')
+
+            if luasnip.expand_or_locally_jumpable() then
+              luasnip.expand_or_jump()
+              return true
+            end
+
+            return cmp.fallback()
+          end,
+        },
+
+        ['<C-H>'] = {
+          function(cmp)
+            local luasnip = require('luasnip')
+
+            if luasnip.locally_jumpable(-1) then
+              luasnip.jump(-1)
+              return true
+            end
+
+            return cmp.fallback()
+          end,
+        },
+      },
+
+      -- ---------------------------------------------------------------------
+      -- Completion
+      -- ---------------------------------------------------------------------
+
+      completion = {
+        list = {
+          selection = {
+            preselect = true,
+            auto_insert = false,
+          },
+        },
+
+        documentation = {
+          auto_show = true,
+          auto_show_delay_ms = 200,
+        },
+
+        menu = {
+          border = 'rounded',
+
+          draw = {
+            columns = {
+              {
+                'label',
+                'label_description',
+                gap = 1,
+              },
+
+              {
+                'kind_icon',
+                'kind',
+                gap = 1,
+              },
+
+              {
+                'source',
+                gap = 1,
+              },
+            },
+
+            components = {
+              source = {
+                text = function(ctx)
+                  local source_labels = {
+                    lsp = '[LSP]',
+                    ps_functions = '[PS]',
+                    copilot = '[AI]',
+                    snippets = '[Snip]',
+                    path = '[Path]',
+                    buffer = '[Buffer]',
+                  }
+
+                  return source_labels[ctx.source_name] or '[' .. ctx.source_name .. ']'
+                end,
+
+                highlight = 'Comment',
+              },
+            },
+          },
+        },
+      },
+
+      -- ---------------------------------------------------------------------
+      -- LuaSnip
+      -- ---------------------------------------------------------------------
+
+      snippets = {
+        preset = 'luasnip',
+
+        expand = function(snippet)
+          require('luasnip').lsp_expand(snippet)
+        end,
+
+        active = function()
+          return require('luasnip').in_snippet()
+        end,
+
+        jump = function(direction)
+          local luasnip = require('luasnip')
+
+          if direction == 1 then
+            luasnip.jump(1)
+          else
+            luasnip.jump(-1)
+          end
+        end,
+      },
+
+      -- ---------------------------------------------------------------------
+      -- Sources
+      -- ---------------------------------------------------------------------
+
+      sources = {
+        default = {
+          'copilot',
+          'lsp',
+          'ps_functions',
+          'snippets',
+          'path',
+          'buffer',
+        },
+
+        providers = {
+          -- ---------------------------------------------------------------
+          -- Native Blink LSP source
+          -- ---------------------------------------------------------------
+
+          lsp = {
+            name = 'LSP',
+            module = 'blink.cmp.sources.lsp',
+
+            transform_items = function(ctx, items)
+              local ft = vim.bo[ctx.bufnr].filetype
+
+              if ft ~= 'ps1' and ft ~= 'psm1' and ft ~= 'powershell' then
+                return items
+              end
+
+              local line = ctx.line or ''
+
+              local col = ctx.cursor[2]
+
+              local before_cursor = line:sub(1, col)
+
+              -- Only transform LSP variable completions when the cursor is
+              -- actually inside a PowerShell parameter token.
+              --
+              -- Examples:
+              --
+              --   Get-Date -
+              --   Get-Date -Y
+              --   Get-Date -Ye
+              --
+              local parameter_prefix = before_cursor:match('(%-%w*)$')
+
+              if not parameter_prefix then
+                return items
+              end
+
+              local completion_types = require('blink.cmp.types')
+
+              local FieldKind = completion_types.CompletionItemKind.Field
+
+              for _, item in ipairs(items) do
+                -- PSES reports PowerShell parameters as Variable.
+                if item.kind == 6 then
+                  local label = item.label or ''
+
+                  -- PSES may return:
+                  --
+                  --   Year
+                  --   $Year
+                  --   -Year
+                  --
+                  -- Normalize all three to:
+                  --
+                  --   Year
+                  local parameter_name = label:gsub('^%-', ''):gsub('^%$', '')
+
+                  if parameter_name ~= '' then
+                    -- IMPORTANT:
+                    --
+                    -- The label gets the "-" because this is what Blink displays.
+                    item.label = '-' .. parameter_name
+
+                    -- Keep matching against the parameter name WITHOUT
+                    -- introducing another "-" into Blink's replacement logic.
+                    --
+                    -- Blink is already completing inside the "-Y" token.
+                    item.filterText = parameter_name
+
+                    -- Explicitly insert only the parameter name.
+                    --
+                    -- The "-" already exists in the buffer.
+                    -- This prevents:
+                    --
+                    --   --Year
+                    --
+                    -- and produces:
+                    --
+                    --   -Year
+                    --
+                    local function strip_parameter_prefix(text)
+                      if not text then
+                        return nil
+                      end
+
+                      return text:gsub('^%-', ''):gsub('^%$', '')
+                    end
+
+                    if item.textEdit then
+                      if item.textEdit.newText then
+                        item.textEdit.newText = strip_parameter_prefix(item.textEdit.newText)
+                      end
+                    elseif item.insertText then
+                      item.insertText = strip_parameter_prefix(item.insertText)
+                    else
+                      item.insertText = parameter_name
+                    end
+
+                    -- This is the important visual/type fix.
+                    --
+                    -- Blink's Variable kind is what currently produces:
+                    --
+                    --   󰆦 Variable [PS]
+                    --
+                    -- Change it to Field so it is no longer presented as
+                    -- a PowerShell variable.
+                    item.kind = FieldKind
+
+                    item.labelDetails = item.labelDetails or {}
+
+                    item.labelDetails.description = 'PowerShell parameter'
+                  end
+                end
+              end
+
+              return items
+            end,
+          },
+
+          -- ---------------------------------------------------------------
+          -- Copilot
+          -- ---------------------------------------------------------------
+
+          copilot = {
+            name = 'Copilot',
+            module = 'blink-cmp-copilot',
+            score_offset = -3,
+          },
+
+          -- ---------------------------------------------------------------
+          -- LuaSnip
+          -- ---------------------------------------------------------------
+
+          snippets = {
+            name = 'Snippets',
+            module = 'blink.cmp.sources.snippets',
+          },
+
+          -- ---------------------------------------------------------------
+          -- Path
+          -- ---------------------------------------------------------------
+
+          path = {
+            name = 'Path',
+            module = 'blink.cmp.sources.path',
+          },
+
+          -- ---------------------------------------------------------------
+          -- Buffer
+          -- ---------------------------------------------------------------
+
+          buffer = {
+            name = 'Buffer',
+            module = 'blink.cmp.sources.buffer',
+          },
+
+          -- ---------------------------------------------------------------
+          -- Native PowerShell source
+          -- ---------------------------------------------------------------
+
+          ps_functions = {
+            name = 'ps_functions',
+            module = 'custom.completion.powershell',
+            score_offset = 10,
+          },
+        },
+      },
+
+      -- ---------------------------------------------------------------------
+      -- Appearance
+      -- ---------------------------------------------------------------------
+
+      appearance = {
+        nerd_font_variant = 'mono',
+      },
+
+      -- ---------------------------------------------------------------------
+      -- Signature help
+      -- ---------------------------------------------------------------------
+
+      signature = {
+        enabled = true,
+      },
+    },
+
+    config = function(_, opts)
+      require('luasnip.loaders.from_vscode').lazy_load()
+
+      local luasnip = require('luasnip')
+
+      luasnip.config.setup({})
+
+      require('blink.cmp').setup(opts)
+    end,
+  },
+
+  -- -------------------------------------------------------------------------
+  -- Disable nvim-cmp itself
+  -- -------------------------------------------------------------------------
+
+  {
+    'hrsh7th/nvim-cmp',
+    enabled = false,
+  },
+
+  -- -------------------------------------------------------------------------
+  -- Disable old nvim-cmp sources
+  -- -------------------------------------------------------------------------
+
+  {
+    'hrsh7th/cmp-nvim-lsp',
+    enabled = false,
+  },
+
+  {
+    'hrsh7th/cmp-path',
+    enabled = false,
+  },
+
+  {
+    'saadparwaiz1/cmp_luasnip',
+    enabled = false,
+  },
+}
