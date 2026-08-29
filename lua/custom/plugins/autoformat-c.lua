@@ -4,14 +4,16 @@ return {
 
     opts = function(_, opts)
       -- ======================================================================
-      -- C / C++ FORMATTER
+      -- C FORMATTER
       -- ======================================================================
       --
       -- clangd        -> language server
       -- clang-format  -> code formatter
       -- conform.nvim  -> runs clang-format
       --
-      -- This file contains the C/C++ formatting configuration.
+      -- This file contains the C formatting configuration.
+      --
+      -- C++ projects should use autoformat-cpp.lua instead.
       --
       -- ======================================================================
 
@@ -22,12 +24,10 @@ return {
       -- Filetypes
       -- ----------------------------------------------------------------------
 
-      opts.formatters_by_ft.cpp = { 'clang_format' }
-      opts.formatters_by_ft.objc = { 'clang_format' }
-      opts.formatters_by_ft.objcpp = { 'clang_format' }
+      opts.formatters_by_ft.c = { 'clang_format_c' }
 
       -- ======================================================================
-      -- clang-format
+      -- clang-format (C style)
       -- ======================================================================
       --
       -- We start with the LLVM preset and override individual options.
@@ -62,6 +62,25 @@ return {
 #   GNU
 #
 BasedOnStyle: LLVM
+
+
+# ======================================================================
+# LANGUAGE
+# ======================================================================
+
+# Explicitly target C.
+#
+# Options:
+#
+#   Cpp
+#   C
+#   Java
+#   JavaScript
+#   ObjC
+#   Proto
+#   CSharp
+#
+Language: C
 
 
 # ======================================================================
@@ -119,21 +138,6 @@ UseTab: Never
 #
 IndentCaseLabels: true
 
-# Move access modifiers relative to normal class indentation.
-#
-# With -4:
-#
-#   class Foo
-#   {
-#   private:
-#       int value;
-#
-#   public:
-#       void foo();
-#   };
-#
-AccessModifierOffset: -4
-
 
 # ======================================================================
 # BRACES
@@ -154,11 +158,18 @@ AccessModifierOffset: -4
 #       foo();
 #   }
 #
+# GNU would produce:
+#
+#   if (condition)
+#     {
+#       foo();
+#     }
+#
 BreakBeforeBraces: Attach
 
 # Allow completely empty functions to stay on one line.
 #
-#   Foo() {}
+#   void noop(void) {}
 #
 # Other common values:
 #
@@ -173,8 +184,7 @@ AllowShortFunctionsOnASingleLine: Empty
 #
 # Keeps:
 #
-#   if (x)
-#   {
+#   if (x) {
 #       foo();
 #   }
 #
@@ -265,24 +275,14 @@ SpacesInSquareBrackets: false
 #
 #   int * ptr;
 #
+# NOTE:
+#   In C, "Right" is more traditional.  K&R and the
+#   Linux kernel style both use "int *ptr".
+#
+#   "Left" keeps consistency with the C++ config.
+#   Change to "Right" for a more C-idiomatic style.
+#
 PointerAlignment: Left
-
-
-# ======================================================================
-# REFERENCES
-# ======================================================================
-
-# Put & next to the type.
-#
-# Left:
-#
-#   int& value;
-#
-# Right:
-#
-#   int &value;
-#
-ReferenceAlignment: Left
 
 
 # ======================================================================
@@ -312,95 +312,24 @@ BinPackParameters: true
 
 
 # ======================================================================
-# CONSTRUCTORS
+# STRUCTS / ENUMS
 # ======================================================================
 
-# Number of spaces used to indent constructor initializers.
+# Allow short enums on a single line.
 #
-# Example:
+# true:
 #
-#   Rectangle(int length, int width)
-#       : length(length),
-#         width(width)
-#   {
-#   }
+#   enum Color { RED, GREEN, BLUE };
 #
-ConstructorInitializerIndentWidth: 4
-
-# How constructor initializers are packed.
+# false:
 #
-# BinPack:
-#
-#   Foo()
-#       : a(1), b(2), c(3)
-#
-#
-# Example:
-#
-#   Rectangle(int length, int width)
-#       : length(length),
-#         width(width)
-#   {
-#   }
-#
-# instead of packing them like:
-#
-#   Rectangle(int length, int width) : length(length),
-#                                      width(width) {}
-#
-# PackConstructorInitializers: BinPack
-# PackConstructorInitializers: CurrentLine
-
-# Always break constructor initializer lists onto their own lines.
-#
-#   Rectangle(int length, int width)
-#       : length(length),
-#         width(width)
-#   {
-#   }
-#
-PackConstructorInitializers: Never
-
-
-# ======================================================================
-# CLASSES
-# ======================================================================
-
-# Don't add indentation inside namespaces.
-#
-# namespace foo
-# {
-# class Foo
-# {
-# };
-# }
-#
-NamespaceIndentation: None
-
-# How inheritance lists are broken.
-#
-# Example:
-#
-#   class Square
-#       : public Shape
-#   {
+#   enum Color {
+#       RED,
+#       GREEN,
+#       BLUE
 #   };
 #
-BreakInheritanceList: BeforeColon
-
-
-# ======================================================================
-# TEMPLATES
-# ======================================================================
-
-# Put template declarations on their own line.
-#
-#   template <typename T>
-#   class Foo
-#   {
-#   };
-#
-AlwaysBreakTemplateDeclarations: Yes
+AllowShortEnumsOnASingleLine: false
 
 
 # ======================================================================
@@ -439,7 +368,7 @@ ReflowComments: true
 # Align trailing comments.
 #
 #   int x = 1;          // value
-#   int longerName = 2; // another value
+#   int longer_name = 2; // another value
 #
 AlignTrailingComments: true
 
@@ -463,19 +392,19 @@ MaxEmptyLinesToKeep: 1
 
 # Keep binary operators at the end of wrapped lines.
 #
-#   auto result = first + second +
-#                 third;
+#   int result = first + second +
+#                third;
 #
 # Beginning would produce:
 #
-#   auto result = first + second
-#                 + third;
+#   int result = first + second
+#                + third;
 #
 BreakBeforeBinaryOperators: None
 
 # Keep ternary operators in the conventional position.
 #
-#   auto result = condition ? first : second;
+#   int result = condition ? first : second;
 #
 BreakBeforeTernaryOperators: false
 
@@ -490,41 +419,18 @@ BreakStringLiterals: false
 
 
 # ======================================================================
-# C++ STANDARD
-# ======================================================================
-
-# Formatting language standard.
-#
-# Options:
-#
-#   Cpp03
-#   Cpp11
-#   Cpp14
-#   Cpp17
-#   Cpp20
-#   Cpp23
-#   Latest
-#
-Standard: Latest
-
-# Use C++11-style braced initializer formatting.
-#
-Cpp11BracedListStyle: true
-
-
-# ======================================================================
 # ALIGNMENT
 # ======================================================================
 
 # Don't align consecutive assignments.
 #
 #   int x = 1;
-#   int longerName = 2;
+#   int longer_name = 2;
 #
 # instead of:
 #
-#   int x          = 1;
-#   int longerName = 2;
+#   int x           = 1;
+#   int longer_name = 2;
 #
 AlignConsecutiveAssignments: None
 
@@ -534,36 +440,15 @@ AlignConsecutiveDeclarations: None
 
 # Don't align consecutive macros.
 #
+#   #define SHORT 1
+#   #define LONGER_NAME 2
+#
+# instead of:
+#
+#   #define SHORT       1
+#   #define LONGER_NAME 2
+#
 AlignConsecutiveMacros: None
-
-
-# ======================================================================
-# ACCESS MODIFIERS
-# ======================================================================
-
-# Add a blank line before logical access-modifier sections.
-#
-#   class Foo
-#   {
-#   private:
-#       int value;
-#
-#   public:
-#       void foo();
-#   };
-#
-EmptyLineBeforeAccessModifier: LogicalBlock
-
-
-# ======================================================================
-# NAMESPACES
-# ======================================================================
-
-# Add a comment when closing a namespace.
-#
-#   } // namespace foo
-#
-FixNamespaceComments: true
 ]]
 
       -- ======================================================================
@@ -588,7 +473,7 @@ FixNamespaceComments: true
 
       if is_os_windows() then
         local cache_dir = vim.fn.stdpath('cache')
-        local clang_format_file = cache_dir .. '/clang-format.nvim.yaml'
+        local clang_format_file = cache_dir .. '/clang-format-c.nvim.yaml'
 
         -- Make sure the cache directory exists.
         vim.fn.mkdir(cache_dir, 'p')
@@ -599,23 +484,15 @@ FixNamespaceComments: true
           clang_format_file
         )
 
-        opts.formatters.clang_format = {
+        opts.formatters.clang_format_c = {
+          command = 'clang-format',
           prepend_args = {
             '--style=file:' .. clang_format_file,
           },
         }
       else
-        -- clang-format's inline style syntax uses a flow mapping.
-        --
-        -- The YAML file above intentionally has NO trailing commas.
-        -- For the inline form, clang-format accepts commas between entries.
-        --
-        -- Convert the YAML key/value lines into the flow-mapping form by
-        -- simply passing the YAML document inside braces.
-        --
-        -- clang-format accepts the multi-line mapping on Linux/macOS.
-
-        opts.formatters.clang_format = {
+        opts.formatters.clang_format_c = {
+          command = 'clang-format',
           prepend_args = {
             '--style={' .. clang_format_style .. '}',
           },
