@@ -45,10 +45,7 @@ return {
       --
       -- ======================================================================
 
-      opts.formatters.clang_format = {
-        prepend_args = {
-          [[--style={
-
+      local clang_format_style = [[
             # ==================================================================
             # BASE STYLE
             # ==================================================================
@@ -570,10 +567,50 @@ return {
             #   } // namespace foo
             #
             FixNamespaceComments: true,
+      ]]
 
-          }]],
-        },
-      }
+      -- ======================================================================
+      -- PLATFORM-SPECIFIC clang-format CONFIGURATION
+      -- ======================================================================
+      --
+      -- Windows:
+      --   Passing the entire style through --style={...} can exceed the
+      --   Windows command-line length limit.
+      --
+      --   Therefore, write the style to a file and use:
+      --
+      --       --style=file:<path>
+      --
+      -- Linux/macOS:
+      --   Continue passing the style directly through --style={...}.
+      --
+      -- ======================================================================
+
+      if is_os_windows() then
+        local cache_dir = vim.fn.stdpath('cache')
+        local clang_format_file = cache_dir .. '/clang-format.nvim.yaml'
+
+        -- Make sure the cache directory exists.
+        vim.fn.mkdir(cache_dir, 'p')
+
+        -- Write the clang-format configuration to disk.
+        vim.fn.writefile(
+          vim.split(clang_format_style, '\n', { plain = true }),
+          clang_format_file
+        )
+
+        opts.formatters.clang_format = {
+          prepend_args = {
+            '--style=file:' .. clang_format_file,
+          },
+        }
+      else
+        opts.formatters.clang_format = {
+          prepend_args = {
+            '--style={\n' .. clang_format_style .. '\n}',
+          },
+        }
+      end
     end,
   },
 }
