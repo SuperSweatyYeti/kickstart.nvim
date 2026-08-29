@@ -1041,6 +1041,98 @@ ps_source.format = function(
 end
 
 -- ---------------------------------------------------------------------------
+-- Cross-file definition lookup
+-- ---------------------------------------------------------------------------
+
+--- Search all discovered project files for the definition of a
+--- PowerShell function or variable.
+---
+--- @param symbol string  The symbol to find.  Functions are matched
+---   by name (case-insensitive).  Variables must include the leading
+---   "$" (e.g. "$DownloadPath").
+---
+--- @return table|nil  { file = string, line = number } or nil.
+
+ps_source.find_definition = function(symbol)
+  local current_file = normalise_path(
+    vim.fn.fnamemodify(
+      vim.api.nvim_buf_get_name(0),
+      ':p'
+    )
+  )
+
+  if not current_file
+    or current_file == ''
+  then
+    return nil
+  end
+
+  -- Build the list: current file first, then siblings/imports.
+  local files =
+    collect_files(current_file)
+
+  table.insert(files, 1, current_file)
+
+  local is_var =
+    symbol:sub(1, 1) == '$'
+
+  local search_lower = symbol:lower()
+
+  for _, file in ipairs(files) do
+    local lines =
+      get_file_lines(
+        file,
+        current_file
+      )
+
+    if lines then
+      for i, line in ipairs(lines) do
+        if is_var then
+          -- Variable assignment.
+          local var =
+            line:match(
+              '^%s*(%$[%w_:]+)%s*='
+            )
+            or line:match(
+              '^%s*%[[%w%.%[%]]+%]'
+              .. '%s*(%$[%w_:]+)'
+            )
+
+          if var
+            and var:lower()
+              == search_lower
+          then
+            return {
+              file = file,
+              line = i,
+            }
+          end
+        else
+          -- Function definition.
+          local func =
+            line:match(
+              '^%s*[Ff]unction'
+              .. '%s+([%w%-_]+)'
+            )
+
+          if func
+            and func:lower()
+              == search_lower
+          then
+            return {
+              file = file,
+              line = i,
+            }
+          end
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
+-- ---------------------------------------------------------------------------
 -- Debug
 -- ---------------------------------------------------------------------------
 
@@ -1298,4 +1390,5 @@ vim.api.nvim_create_user_command(
 )
 
 return ps_source
+
 

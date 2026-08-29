@@ -138,6 +138,126 @@ return {
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
+
+                    -- PSES supports textDocument/definition but does not always
+          -- advertise it in its initial capabilities response (it may
+          -- rely on dynamic registration). Force-enable so that gd,
+          -- gr, etc. actually send the request to the server.
+          if client and client.name == 'powershell_es' then
+            client.server_capabilities.definitionProvider = client.server_capabilities.definitionProvider or true
+            client.server_capabilities.hoverProvider = client.server_capabilities.hoverProvider or true
+
+            -- Override gd for PowerShell: try PSES first, then fall
+            -- back to our cross-file parser for functions/variables
+            -- defined in sibling or imported .ps1/.psm1 files.
+            map('gd', function()
+              local pses_client = client
+              local params = vim.lsp.util.make_position_params(
+                0,
+                pses_client.offset_encoding
+              )
+
+              local results = vim.lsp.buf_request_sync(
+                0,
+                'textDocument/definition',
+                params,
+                3000
+              )
+
+              -- Check whether PSES returned any locations.
+              local has_lsp_result = false
+
+              if results then
+                for _, res in pairs(results) do
+                  if res.result then
+                    local r = res.result
+
+                    if not vim.islist(r) then
+                      r = { r }
+                    end
+
+                    if #r > 0 then
+                      has_lsp_result = true
+                      break
+                    end
+                  end
+                end
+              end
+
+              if has_lsp_result then
+                require('telescope.builtin').lsp_definitions()
+                return
+              end
+
+              -- Fallback: use our cross-file parser.
+              local word = vim.fn.expand('<cword>')
+              local line = vim.api.nvim_get_current_line()
+              local col = vim.api.nvim_win_get_cursor(0)[2]
+
+              -- Detect leading "$" so we search for the variable,
+              -- not a function of the same name.
+              local word_start = col - #word + 1
+
+              if word_start >= 1
+                and line:sub(word_start, word_start) == '$'
+              then
+                word = '$' .. word
+              elseif col >= 1
+                and line:sub(col, col) == '$'
+              then
+                word = '$' .. word
+              end
+
+              local ps_ok, ps =
+                pcall(
+                  require,
+                  'custom.completion.powershell'
+                )
+
+              local def =
+                ps_ok
+                and ps.find_definition
+                and ps.find_definition(word)
+
+              if def then
+                -- Push current position to the tag stack so <C-T>
+                -- returns the user to where they were.
+                local from = vim.fn.getpos('.')
+
+                vim.fn.settagstack(
+                  vim.fn.win_getid(),
+                  {
+                    items = {
+                      {
+                        tagname = word,
+                        from = from,
+                      },
+                    },
+                  },
+                  't'
+                )
+
+                vim.cmd(
+                  'edit '
+                  .. vim.fn.fnameescape(def.file)
+                )
+
+                vim.api.nvim_win_set_cursor(
+                  0,
+                  { def.line, 0 }
+                )
+
+                vim.cmd('normal! zz')
+              else
+                vim.notify(
+                  '[PS] No definition found for: '
+                    .. word,
+                  vim.log.levels.WARN
+                )
+              end
+            end, '[g]oto [d]efinition')
+          end
+
           if client and client.server_capabilities.documentHighlightProvider then
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
@@ -182,7 +302,7 @@ return {
         -- tsserver = {},
         --
 
-        lua_ls = {
+                lua_ls = {
           -- cmd = {...},
           -- filetypes { ...},
           -- capabilities = {},
@@ -205,6 +325,27 @@ return {
               },
               -- You can toggle below to ignore Lua_LS's noisy `missing-fields` warnings
               -- diagnostics = { disable = { 'missing-fields' } },
+            },
+          },
+        },
+
+        -- PowerShell Editor Services
+        -- Register powershell code blocks as ps1 files
+        -- .powershell will work as .ps1
+        powershell_es = {
+          bundle_path = vim.fn.stdpath 'data' .. '/mason/packages/powershell-editor-services',
+          filetypes = { 'ps1', 'powershell' },
+          settings = {
+            powershell = {
+              codeFormatting = {
+                Preset = 'OTBS',
+                UseCorrectCasing = true,
+                WhitespaceAroundOperator = true,
+                WhitespaceAfterSeparator = true,
+                AddWhitespaceAroundPipe = true,
+                AlignPropertyValuePairs = true,
+                PipelineIndentationStyle = 'IncreaseIndentationForFirstPipeline',
+              },
             },
           },
         },
@@ -232,7 +373,7 @@ return {
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-      require('mason-lspconfig').setup {
+            require('mason-lspconfig').setup {
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
@@ -244,29 +385,7 @@ return {
           end,
         },
       }
-      -- NOTE: Overide mason config for powershell_es
-      -- Register powershell code blocks as ps1 files
-      -- .powershell will work as .ps1
-      vim.lsp.config('powershell_es', {
-        bundle_path = vim.fn.stdpath 'data' .. '/mason/packages/powershell-editor-services',
-        filetypes = { 'ps1', 'powershell' },
-        capabilities = capabilities,
-        -- Override code formatter default setting
-        settings = {
-          powershell = {
-            codeFormatting = {
-              Preset = 'OTBS',
-              UseCorrectCasing = true,
-              WhitespaceAroundOperator = true,
-              WhitespaceAfterSeparator = true,
-              AddWhitespaceAroundPipe = true,
-              AlignPropertyValuePairs = true,
-              PipelineIndentationStyle = 'IncreaseIndentationForFirstPipeline',
-            },
-          },
-        },
-      })
-      vim.lsp.enable 'powershell_es'
     end,
   },
 }
+
