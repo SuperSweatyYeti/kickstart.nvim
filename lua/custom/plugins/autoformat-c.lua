@@ -452,52 +452,42 @@ AlignConsecutiveMacros: None
 ]]
 
       -- ======================================================================
-      -- PLATFORM-SPECIFIC clang-format CONFIGURATION
+      -- clang-format CONFIGURATION FILE
       -- ======================================================================
       --
-      -- Windows:
+      -- Write the YAML style to a temporary file and reference it with:
       --
-      --   The complete --style={...} configuration can exceed the Windows
-      --   command-line length limit.
+      --     --style=file:<path>
       --
-      --   Therefore, write the YAML to a temporary file and use:
+      -- The inline --style={...} approach breaks when the YAML contains
+      -- comments with example key: value pairs — clang-format's
+      -- flow-mapping parser treats them as duplicate keys.
       --
-      --       --style=file:<path>
-      --
-      -- Linux/macOS:
-      --
-      --   Pass the configuration directly using the clang-format inline
-      --   style syntax.
+      -- The temp-file approach works reliably on all platforms.
       --
       -- ======================================================================
 
-      if is_os_windows() then
-        local cache_dir = vim.fn.stdpath('cache')
-        local clang_format_file = cache_dir .. '/clang-format-c.nvim.yaml'
+      local cache_dir = vim.fn.stdpath('cache')
+      local clang_format_file = cache_dir .. '/clang-format-c.nvim.yaml'
 
-        -- Make sure the cache directory exists.
-        vim.fn.mkdir(cache_dir, 'p')
+      -- Make sure the cache directory exists.
+      vim.fn.mkdir(cache_dir, 'p')
 
-        -- Write valid YAML to the configuration file.
-        vim.fn.writefile(
-          vim.split(clang_format_style, '\n', { plain = true }),
-          clang_format_file
-        )
+      -- Write valid YAML to the configuration file.
+      vim.fn.writefile(
+        vim.split(clang_format_style, '\n', { plain = true }),
+        clang_format_file
+      )
 
-        opts.formatters.clang_format_c = {
-          command = 'clang-format',
-          prepend_args = {
-            '--style=file:' .. clang_format_file,
-          },
-        }
-      else
-        opts.formatters.clang_format_c = {
-          command = 'clang-format',
-          prepend_args = {
-            '--style={' .. clang_format_style .. '}',
-          },
-        }
-      end
+      opts.formatters.clang_format_c = {
+        command = 'clang-format',
+        stdin = true,
+        args = {
+          '--style=file:' .. clang_format_file,
+          '--assume-filename',
+          '$FILENAME',
+        },
+      }
     end,
   },
 }
