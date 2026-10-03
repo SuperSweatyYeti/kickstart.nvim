@@ -368,86 +368,145 @@ end, { noremap = true, silent = true })
 vim.keymap.set('n', 'yy', 'y_', { noremap = true, silent = true })
 
 -- NOTE: Dynamic plugin enablement based on internet access.
--- Some Plugins will throw annoying errors if there is no internet availability
--- e.g. copilot any plugin that uses AI.
--- Async internet check: tries each IP in order, stops on first success
--- Usage: pass the result of this to any plugin's `enabled` field
--- e.g. enabled = _G.internet_check.is_available
+-- Some plugins can throw annoying errors when there is no internet
+-- availability (e.g. Copilot or other AI/network-dependent plugins).
+-- The check runs asynchronously in the background and tries each IP
+-- address in order. The first successful ping marks the connection
+-- as available.
+-- Usage:
+-- enabled = _G.internet_check.is_available
+-- Usage end.
+-- The initial state is optimistic (`true`) so plugins are not
+-- accidentally disabled while the asynchronous check is running.
 _G.internet_check = (function()
-  local state = { available = true } -- optimistic default
+  local state = {
+    available = true,
+  }
 
-  local function ping_unix(ip, on_done)
-    local stdout = vim.uv.new_pipe()
-    local stderr = vim.uv.new_pipe()
-    local handle
-    handle = vim.uv.spawn('ping', {
-      args = { '-c', '2', '-W', '2', ip },
-      stdio = { nil, stdout, stderr },
-    }, function(code)
-      stdout:close()
-      stderr:close()
-      handle:close()
-      on_done(code == 0)
-    end)
-  end
-
-  local function ping_windows(ip, on_done)
-    local stdout = vim.uv.new_pipe()
-    local stderr = vim.uv.new_pipe()
-    local handle
-    handle = vim.uv.spawn('ping', {
-      args = { '-n', '2', '-w', '2000', ip },
-      stdio = { nil, stdout, stderr },
-    }, function(code)
-      stdout:close()
-      stderr:close()
-      handle:close()
-      on_done(code == 0)
-    end)
-  end
-
-  local ping = is_os_windows() and ping_windows or ping_unix
-
-  -- Ordered list of IPs to try — edit to add/remove/reorder
-  local dns_hosts = {
+  -- Ordered list of IPs to try.
+  -- These are IP addresses rather than hostnames so the check does
+  -- not depend on DNS working.
+  local hosts = {
     '1.1.1.1', -- Cloudflare
     '8.8.8.8', -- Google
     '9.9.9.9', -- Quad9
   }
 
-  -- Recursively try each IP in order, stop on first success
-  local function try_hosts(hosts, index, on_done)
+  ---
+  -- Build platform-specific ping arguments.
+  --
+  -- Windows:
+  --   -n 1       Send one echo request.
+  --   -w 2000    Wait up to 2000ms.
+  --
+  -- Unix/Linux/macOS/BSD/etc.:
+  --   -c 1       Send one echo request.
+  --
+  -- Unknown platforms fall back to the Unix-style arguments.
+  ---
+  local function get_ping_args(ip)
+    if is_os_windows() then
+      return {
+        '-n',
+        '1',
+        '-w',
+        '2000',
+        ip,
+      }
+    end
+
+    -- Linux, macOS/Darwin, and other Unix-like systems.
+    return {
+      '-c',
+      '1',
+      ip,
+    }
+  end
+
+  ---
+  -- Ping one host asynchronously.
+  --
+  -- @param ip string
+  -- @param on_done function(success)
+  ---
+  local function ping(ip, on_done)
+    local handle
+    local args = get_ping_args(ip)
+
+    handle = vim.uv.spawn('ping', {
+      args = args,
+      stdio = {
+        nil,
+        nil,
+        nil,
+      },
+    }, function(code)
+      -- Close the process handle when the ping finishes.
+      if handle and not handle:is_closing() then
+        handle:close()
+      end
+
+      -- Return to Neovim's main event loop before invoking callbacks.
+      vim.schedule(function()
+        on_done(code == 0)
+      end)
+    end)
+
+    -- `vim.uv.spawn()` can fail immediately if the executable
+    -- does not exist or cannot be started.
+    if not handle then
+      vim.schedule(function()
+        on_done(false)
+      end)
+    end
+  end
+
+  ---
+  -- Try each host in order.
+  -- Stop immediately after the first successful ping.
+  --
+  -- @param index number
+  -- @param on_done function(success)
+  ---
+  local function try_hosts(index, on_done)
     if index > #hosts then
       on_done(false)
       return
     end
+
     ping(hosts[index], function(ok)
       if ok then
         on_done(true)
-      else
-        try_hosts(hosts, index + 1, on_done)
+        return
       end
+
+      try_hosts(index + 1, on_done)
     end)
   end
 
-  -- Fire immediately at startup in the background
-  try_hosts(dns_hosts, 1, function(ok)
+  -- Fire immediately at startup in the background.
+  try_hosts(1, function(ok)
     state.available = ok
+
     if not ok then
-      vim.schedule(function()
-        vim.notify('No internet — network-dependent plugins disabled', vim.log.levels.WARN)
-      end)
+      vim.notify(
+        'No internet — network-dependent plugins disabled',
+        vim.log.levels.WARN
+      )
     end
   end)
 
   return {
-    -- Pass this function reference directly to `enabled =` in any plugin spec
+    ---
+    -- Returns the current internet availability state.
+    --
+    -- This can be passed directly to plugin `enabled =`.
+    ---
     is_available = function()
       return state.available
     end,
   }
 end)()
-
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath('data') .. '/lazy/lazy.nvim'
