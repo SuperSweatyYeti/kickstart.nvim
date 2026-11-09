@@ -182,76 +182,76 @@ return {
         :find()
     end
 
-    local function telescope_find_files_reveal()
+    local function reveal_in_neotree(filepath, show_hidden)
+      filepath = require('neo-tree.utils').normalize_path(vim.fn.fnamemodify(filepath, ':p'))
+
+      vim.schedule(function()
+        local manager = require('neo-tree.sources.manager')
+        local renderer = require('neo-tree.ui.renderer')
+
+        if show_hidden then
+          local state = manager.get_state('filesystem')
+          if state and state.filtered_items and not state.filtered_items.visible then
+            state.filtered_items.visible = true
+          end
+        end
+
+        require('neo-tree.command').execute({
+          action = 'focus',
+          source = 'filesystem',
+          position = 'left',
+          reveal_file = filepath,
+          reveal_force_cwd = false,
+        })
+
+        -- Wait for the async scan, then put the cursor on the file.
+        local tries = 0
+        local function try_focus()
+          tries = tries + 1
+          local state = manager.get_state('filesystem')
+          if state and state.tree and renderer.window_exists(state) and state.tree:get_node(filepath) then
+            renderer.focus_node(state, filepath)
+            return
+          end
+          if tries < 40 then
+            vim.defer_fn(try_focus, 50)
+          end
+        end
+        vim.defer_fn(try_focus, 50)
+      end)
+    end
+
+    local function telescope_reveal(opts, show_hidden)
       local builtin = require('telescope.builtin')
       local actions = require('telescope.actions')
       local action_state = require('telescope.actions.state')
 
-      builtin.find_files({
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local entry = action_state.get_selected_entry()
-            if not entry then
-              return
-            end
+      opts = opts or {}
+      opts.attach_mappings = function(prompt_bufnr)
+        actions.select_default:replace(function()
+          local entry = action_state.get_selected_entry() -- read before closing
+          actions.close(prompt_bufnr)
+          local filepath = entry and (entry.path or entry.filename or entry.value)
+          if filepath then
+            reveal_in_neotree(filepath, show_hidden)
+          end
+        end)
+        return true
+      end
 
-            local filepath = entry.path or entry.filename
-            if not filepath then
-              return
-            end
+      builtin.find_files(opts)
+    end
 
-            require('neo-tree.command').execute({
-              action = 'focus',
-              source = 'filesystem',
-              position = 'left',
-              reveal_file = filepath,
-              reveal_force_cwd = false,
-            })
-          end)
-          return true
-        end,
-      })
+    local function telescope_find_files_reveal()
+      telescope_reveal({}, false)
     end
 
     local function telescope_find_files_hidden_reveal()
-      local builtin = require('telescope.builtin')
-      local actions = require('telescope.actions')
-      local action_state = require('telescope.actions.state')
-
-      builtin.find_files({
+      telescope_reveal({
         prompt_title = 'Find Files (Include Hidden)',
         hidden = true,
         no_ignore = true,
-        attach_mappings = function(prompt_bufnr)
-          actions.select_default:replace(function()
-            actions.close(prompt_bufnr)
-            local entry = action_state.get_selected_entry()
-            if not entry then
-              return
-            end
-
-            local filepath = entry.path or entry.filename
-            if not filepath then
-              return
-            end
-
-            local state = require('neo-tree.sources.manager').get_state('filesystem')
-            if state and state.filtered_items and not state.filtered_items.visible then
-              state.filtered_items.visible = true
-            end
-
-            require('neo-tree.command').execute({
-              action = 'focus',
-              source = 'filesystem',
-              position = 'left',
-              reveal_file = filepath,
-              reveal_force_cwd = false,
-            })
-          end)
-          return true
-        end,
-      })
+      }, true)
     end
 
     -- ─────────────────────────────────────────────────────────
