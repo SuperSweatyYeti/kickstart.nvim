@@ -45,19 +45,6 @@ return { -- Collection of various small independent plugins/modules
       local data = MiniDiff.get_buf_data()
       vim.notify('Diff overlay ' .. ((data and data.overlay) and 'enabled' or 'disabled'))
     end, { desc = 'Toggle diff overlay' })
-    -- Turn the overlay on by default in every buffer so Claude's edits show up as
-    -- virtual text right away. Only done once per buffer, so <leader>ao still sticks
-    vim.api.nvim_create_autocmd('User', {
-      pattern = 'MiniDiffUpdated',
-      callback = function()
-        -- mini.diff fires this event from inside the updated buffer
-        local buf = vim.api.nvim_get_current_buf()
-        local data = MiniDiff.get_buf_data(buf)
-        if not data or data.overlay or vim.b[buf].minidiff_overlay_auto then return end
-        vim.b[buf].minidiff_overlay_auto = true
-        MiniDiff.toggle_overlay(buf)
-      end,
-    })
 
     -- Simple and easy statusline.
     --  You could remove this setup call if you don't like it,
